@@ -3,20 +3,21 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Entity\RapportHSE;
 use App\Form\UserType;
+use App\Entity\RapportHSE;
 use App\Form\RapportHSEType;
 use App\Repository\UserRepository;
 use App\Repository\RapportHSERepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/admin')]
 #[IsGranted('ROLE_ADMIN')]
@@ -140,40 +141,26 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/user/{id}/supprimer', name: 'app_admin_user_supprimer', requirements: ['id' => '\d+'])]
-    public function supprimerUser(
-        User $user,
-        EntityManagerInterface $entityManager
-    ): Response {
-        try {
-            $entityManager->remove($user);
-            $entityManager->flush();
-            $this->addFlash('success', 'L\'utilisateur a été supprimé avec succès !');
-        } catch (\Exception $e) {
-            $this->addFlash('error', 'Impossible de supprimer cet utilisateur car il a des rapports associés.');
-        }
-
-        return $this->redirectToRoute('app_admin_users');
-    }
-
     #[Route('/rapport/nouveau', name: 'app_admin_rapport_nouveau')]
     public function nouveauRapport(
         Request $request,
         EntityManagerInterface $entityManager,
-        SluggerInterface $slugger,
-        UserRepository $userRepository
+        SluggerInterface $slugger
     ): Response {
         $rapport = new RapportHSE();
+
+        // Initialiser la date et l'heure actuelles par défaut
+        $rapport->setDate(new \DateTime());
+        $rapport->setHeure(new \DateTime());
+
         $form = $this->createForm(RapportHSEType::class, $rapport);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Récupérer l'utilisateur par son code agent
-            $codeAgent = $form->get('codeAgt')->getData();
-            $user = $userRepository->findOneBy(['codeAgent' => $codeAgent]);
-
+            // Récupérer l'utilisateur sélectionné
+            $user = $form->get('user')->getData();
             if (!$user) {
-                $this->addFlash('error', 'Code agent introuvable !');
+                $this->addFlash('error', 'Veuillez sélectionner un agent !');
                 return $this->render('admin/nouveau_rapport.html.twig', [
                     'form' => $form,
                 ]);
@@ -182,8 +169,17 @@ class AdminController extends AbstractController
             // Associer l'utilisateur au rapport
             $rapport->setUser($user);
 
-            // Remplir automatiquement le nom depuis l'utilisateur
+            // Remplir automatiquement les champs depuis l'utilisateur sélectionné
+            $rapport->setCodeAgt($user->getCodeAgent());
             $rapport->setNom($user->getNom() . ' ' . $user->getPrenom());
+
+            // Utiliser la date et l'heure de création de l'utilisateur
+            if ($user->getDateCreation()) {
+                $rapport->setDate($user->getDateCreation());
+            }
+            if ($user->getHeureCreation()) {
+                $rapport->setHeure($user->getHeureCreation());
+            }
 
             // Gérer l'upload de la photo du constat
             $photoConstatFile = $form->get('photoConstatFile')->getData();
@@ -237,6 +233,46 @@ class AdminController extends AbstractController
 
         return $this->render('admin/nouveau_rapport.html.twig', [
             'form' => $form,
+        ]);
+    }
+
+    // Votre méthode getUserData reste inchangée
+    #[Route('/get-user-data', name: 'app_admin_get_user_data', methods: ['POST'])]
+    public function getUserData(Request $request, UserRepository $userRepository): JsonResponse
+    {
+        if (!$request->isXmlHttpRequest()) {
+            return new JsonResponse(['success' => false, 'message' => 'Requête non valide'], 400);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        // Accepter soit userId soit codeAgent
+        $userId = $data['userId'] ?? '';
+        $codeAgent = $data['codeAgent'] ?? '';
+
+        if (empty($userId) && empty($codeAgent)) {
+            return new JsonResponse(['success' => false, 'message' => 'ID utilisateur ou code agent manquant'], 400);
+        }
+
+        // Rechercher par ID ou par code agent
+        if (!empty($userId)) {
+            $user = $userRepository->find($userId);
+        } else {
+            $user = $userRepository->findOneBy(['codeAgent' => $codeAgent]);
+        }
+
+        if (!$user) {
+            return new JsonResponse(['success' => false, 'message' => 'Utilisateur introuvable'], 404);
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'codeAgent' => $user->getCodeAgent(),
+            'nom' => $user->getNom(),
+            'prenom' => $user->getPrenom(),
+            'nomComplet' => $user->getNom() . ' ' . $user->getPrenom(),
+            'dateCreation' => $user->getDateCreation() ? $user->getDateCreation()->format('Y-m-d') : null,
+            'heureCreation' => $user->getHeureCreation() ? $user->getHeureCreation()->format('H:i:s') : null
         ]);
     }
 
@@ -379,5 +415,21 @@ class AdminController extends AbstractController
 
         $this->addFlash('success', 'Le rapport HSE a été supprimé avec succès !');
         return $this->redirectToRoute('app_admin_rapports');
+    }
+
+    #[Route('/user/{id}/supprimer', name: 'app_admin_user_supprimer', requirements: ['id' => '\d+'])]
+    public function supprimerUser(
+        User $user,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            $entityManager->remove($user);
+            $entityManager->flush();
+            $this->addFlash('success', 'L\'utilisateur a été supprimé avec succès !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Impossible de supprimer cet utilisateur car il a des rapports associés.');
+        }
+
+        return $this->redirectToRoute('app_admin_users');
     }
 }

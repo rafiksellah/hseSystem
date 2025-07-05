@@ -3,6 +3,9 @@
 namespace App\Form;
 
 use App\Entity\RapportHSE;
+use App\Entity\User;
+use App\Repository\UserRepository;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -20,17 +23,47 @@ class RapportHSEType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            // Utiliser l'ID au lieu du codeAgent comme choice_value
+            ->add('user', EntityType::class, [
+                'class' => User::class,
+                'choice_label' => function (User $user) {
+                    return $user->getCodeAgent() . ' - ' . $user->getNom() . ' ' . $user->getPrenom();
+                },
+                'choice_value' => 'id',
+                'label' => 'Sélectionner un agent',
+                'placeholder' => 'Choisissez un agent...',
+                'attr' => [
+                    'class' => 'form-select',
+                    'id' => 'user-select'
+                ],
+                'query_builder' => function (UserRepository $repository) {
+                    return $repository->createQueryBuilder('u')
+                        ->andWhere('u.roles NOT LIKE :admin')
+                        ->setParameter('admin', '%ROLE_ADMIN%')
+                        ->orderBy('u.nom', 'ASC');
+                }
+            ])
             ->add('codeAgt', TextType::class, [
                 'label' => 'Code AGT',
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Code Agent'
+                    'readonly' => true,
+                    'id' => 'codeAgt'
+                ]
+            ])
+            ->add('nom', TextType::class, [
+                'label' => 'Nom complet',
+                'attr' => [
+                    'class' => 'form-control',
+                    'readonly' => true,
+                    'id' => 'nomComplet'
                 ]
             ])
             ->add('date', DateType::class, [
                 'label' => 'Date',
                 'widget' => 'single_text',
-                'data' => new \DateTime(), // Date automatique
+                // Supprimer la valeur par défaut pour permettre le remplissage automatique
+                // 'data' => new \DateTime(),
                 'attr' => [
                     'class' => 'form-control',
                     'readonly' => true
@@ -39,7 +72,8 @@ class RapportHSEType extends AbstractType
             ->add('heure', TimeType::class, [
                 'label' => 'Heure',
                 'widget' => 'single_text',
-                'data' => new \DateTime(), // Heure automatique
+                // Supprimer la valeur par défaut pour permettre le remplissage automatique
+                // 'data' => new \DateTime(),
                 'attr' => [
                     'class' => 'form-control',
                     'readonly' => true
@@ -168,8 +202,7 @@ class RapportHSEType extends AbstractType
                 'attr' => [
                     'class' => 'btn btn-success'
                 ]
-            ])
-        ;
+            ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
