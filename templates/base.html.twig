@@ -230,7 +230,13 @@
                                 <small class="text-white-50">MES RAPPORTS</small>
                             </div>
                         </li>
-
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_user_rapport_nouveau' ? 'active' : '' }}"
+                                href="{{ path('app_user_rapport_nouveau') }}">
+                                <i class="fas fa-plus-circle"></i>
+                                Nouveau rapport
+                            </a>
+                        </li>
                         <!-- Rapports de l'utilisateur -->
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_user_rapports' ? 'active' : '' }}"

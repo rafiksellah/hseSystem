@@ -5,13 +5,16 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Entity\RapportHSE;
 use App\Form\UserProfileType;
+use App\Form\UserRapportHSEType;
 use App\Repository\RapportHSERepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/user')]
@@ -157,6 +160,88 @@ class UserController extends AbstractController
             'stats' => $stats,
             'rapports_par_zone' => $rapportsParZone,
             'evolution_mensuelle' => $evolutionMensuelle,
+        ]);
+    }
+
+    #[Route('/rapport/nouveau', name: 'app_user_rapport_nouveau')]
+    public function nouveauRapport(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            throw $this->createAccessDeniedException('Vous devez être connecté pour créer un rapport.');
+        }
+
+        $rapport = new RapportHSE();
+
+        // Pré-remplir les informations de l'utilisateur connecté
+        $rapport->setUser($user);
+        $rapport->setCodeAgt($user->getCodeAgent());
+        $rapport->setNom($user->getNom() . ' ' . $user->getPrenom());
+        $rapport->setDate(new \DateTime());
+        $rapport->setHeure(new \DateTime());
+
+        $form = $this->createForm(UserRapportHSEType::class, $rapport);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Gérer l'upload de la photo du constat
+            $photoConstatFile = $form->get('photoConstatFile')->getData();
+            if ($photoConstatFile) {
+                $originalFilename = pathinfo($photoConstatFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoConstatFile->guessExtension();
+
+                try {
+                    $photoConstatFile->move(
+                        $this->getParameter('uploads_directory'),
+                        $newFilename
+                    );
+                    $rapport->setPhotoConstat($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo du constat');
+                }
+            }
+
+            // Gérer l'upload de la photo d'action
+            $photoActionFile = $form->get('photoActionFile')->getData();
+            if ($photoActionFile) {
+                $originalFilename = pathinfo($photoActionFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoActionFile->guessExtension();
+
+                try {
+                    $photoActionFile->move(
+                        $this->getParameter('uploads_directory'),
+                        $newFilename
+                    );
+                    $rapport->setPhotoActionCloturee($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo d\'action');
+                }
+            }
+
+            // Définir le statut en fonction de l'action clôturée
+            if ($rapport->getActionCloturee() === 'oui') {
+                $rapport->setStatut('Clôturé');
+            } else {
+                $rapport->setStatut('En cours');
+            }
+
+            $entityManager->persist($rapport);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Votre rapport HSE a été créé avec succès !');
+            return $this->redirectToRoute('app_user_rapports');
+        }
+
+        return $this->render('user/nouveau_rapport.html.twig', [
+            'form' => $form,
+            'user' => $user,
         ]);
     }
 }
