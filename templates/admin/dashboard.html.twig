@@ -1,0 +1,261 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Administration - HSE System{% endblock %}
+
+{% block page_title %}Administration - Dashboard{% endblock %}
+
+{% block body %}
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Utilisateurs</h5>
+                        <h2 class="mb-0">{{ total_users }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Rapports</h5>
+                        <h2 class="mb-0">{{ total_rapports }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">En cours</h5>
+                        <h2 class="mb-0">{{ rapports_en_cours }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Clôturés</h5>
+                        <h2 class="mb-0">{{ rapports_clotures }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions d'administration -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog"></i> Actions d'administration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ path('app_admin_user_nouveau') }}" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-user-plus"></i> Nouvel Utilisateur
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ path('app_admin_users') }}" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="fas fa-users"></i> Gérer les Utilisateurs
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-plus-circle"></i> Nouveau Rapport HSE
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-success btn-lg w-100">
+                            <i class="fas fa-list"></i> Tous les Rapports
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Derniers rapports -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> Derniers rapports créés
+                </h5>
+                <a href="{{ path('app_admin_rapports') }}" class="btn btn-sm btn-outline-primary">
+                    Voir tout
+                </a>
+            </div>
+            <div class="card-body">
+                {% if derniers_rapports is empty %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Aucun rapport créé pour le moment.</p>
+                    <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Créer le premier rapport
+                    </a>
+                </div>
+                {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Agent</th>
+                                <th>Date</th>
+                                <th>Heure</th>
+                                <th>Zone</th>
+                                <th>Description</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rapport in derniers_rapports %}
+                            <tr>
+                                <td>
+                                    <strong>{{ rapport.codeAgt }}</strong><br>
+                                    <small class="text-muted">{{ rapport.nom }}</small>
+                                </td>
+                                <td>{{ rapport.date|date('d/m/Y') }}</td>
+                                <td>{{ rapport.heure|date('H:i') }}</td>
+                                <td>
+                                    {% if rapport.zone %}
+                                    <span class="badge bg-secondary">{{ rapport.zone }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if rapport.descriptionAnomalie %}
+                                    <span class="text-truncate d-inline-block" style="max-width: 200px;"
+                                        title="{{ rapport.descriptionAnomalie }}">
+                                        {{ rapport.descriptionAnomalie }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if rapport.statut == 'En cours' %}
+                                    <span class="badge bg-warning">{{ rapport.statut }}</span>
+                                    {% else %}
+                                    <span class="badge bg-success">{{ rapport.statut }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('app_admin_rapport_detail', {'id': rapport.id}) }}"
+                                            class="btn btn-outline-primary" title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('app_admin_rapport_modifier', {'id': rapport.id}) }}"
+                                            class="btn btn-outline-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques supplémentaires -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie"></i> Répartition par statut
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="d-flex flex-column">
+                            <span class="fs-1 text-warning">{{ rapports_en_cours }}</span>
+                            <span class="text-muted">En cours</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex flex-column">
+                            <span class="fs-1 text-success">{{ rapports_clotures }}</span>
+                            <span class="text-muted">Clôturés</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Informations système
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-calendar text-primary me-2"></i>
+                        <strong>Date du jour:</strong> {{ "now"|date('d/m/Y') }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        <strong>Heure actuelle:</strong> {{ "now"|date('H:i') }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-user text-primary me-2"></i>
+                        <strong>Connecté en tant que:</strong> {{ app.user.nom }} {{ app.user.prenom }}
+                    </li>
+                    <li>
+                        <i class="fas fa-shield-alt text-primary me-2"></i>
+                        <strong>Rôle:</strong> Administrateur
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

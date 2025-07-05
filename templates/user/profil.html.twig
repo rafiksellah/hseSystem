@@ -1,0 +1,379 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Profil - HSE System{% endblock %}
+
+{% block page_title %}Mon Profil{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Informations du profil -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user"></i> Informations du Profil
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="profile-avatar mb-3">
+                            <i class="fas fa-user-circle fa-5x text-primary"></i>
+                        </div>
+                        <h4 class="mb-1">{{ user.nom }} {{ user.prenom }}</h4>
+                        <p class="text-muted mb-2">{{ user.email }}</p>
+                        <p class="text-muted mb-3">
+                            <strong>Code Agent:</strong>
+                            <span class="badge bg-primary">{{ user.codeAgent }}</span>
+                        </p>
+                        <p class="text-muted mb-3">
+                            <strong>Rôle:</strong>
+                            {% if 'ROLE_ADMIN' in user.roles %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-crown"></i> Administrateur
+                            </span>
+                            {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-user"></i> Utilisateur
+                            </span>
+                            {% endif %}
+                        </p>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="border-right">
+                                    <div class="h5 mb-0">{{ user.dateCreation|date('d/m/Y') }}</div>
+                                    <div class="small text-muted">Date d'inscription</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="h5 mb-0">{{ user.dateCreation|date('H:i') }}</div>
+                                <div class="small text-muted">Heure d'inscription</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistiques rapides -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar"></i> Mes Statistiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <div class="h4 mb-0 text-primary">{{ user.rapportsHSE|length }}</div>
+                            <div class="small text-muted">Rapports Total</div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        {% if 'ROLE_ADMIN' in user.roles %}
+                        <a href="{{ path('app_admin_rapports') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-list"></i> Voir tous les rapports
+                        </a>
+                        {% else %}
+                        <a href="{{ path('app_user_rapports') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-list"></i> Voir mes rapports
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de modification -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-edit"></i> Modifier mon Profil
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form_label(form.nom, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nom) }}
+                                {{ form_errors(form.nom) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form_label(form.prenom, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.prenom) }}
+                                {{ form_errors(form.prenom) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form_label(form.email, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.email) }}
+                                {{ form_errors(form.email) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form_label(form.codeAgent, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.codeAgent) }}
+                                {{ form_help(form.codeAgent) }}
+                                {{ form_errors(form.codeAgent) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-lock"></i> Changer le mot de passe
+                    </h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Laissez les champs vides si vous ne souhaitez pas changer votre mot de passe.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form_label(form.plainPassword.first, null, {'label_attr': {'class': 'form-label'}})
+                                }}
+                                {{ form_widget(form.plainPassword.first) }}
+                                {{ form_errors(form.plainPassword.first) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                {{ form_label(form.plainPassword.second, null, {'label_attr': {'class': 'form-label'}})
+                                }}
+                                {{ form_widget(form.plainPassword.second) }}
+                                {{ form_errors(form.plainPassword.second) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        {% if 'ROLE_ADMIN' in user.roles %}
+                        <a href="{{ path('app_admin_dashboard') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        {% else %}
+                        <a href="{{ path('app_user_dashboard') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer les modifications
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0 auto;
+        color: white;
+        font-size: 3rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-avatar i {
+        color: white !important;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0 !important;
+    }
+
+    .card-header h6 {
+        color: white !important;
+    }
+
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #d1d3e2;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: #667eea;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 8px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+    }
+
+    .badge {
+        font-size: 0.85em;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    .bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .bg-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    }
+
+    .bg-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        color: #5a5c69;
+        border-radius: 8px;
+    }
+
+    .border-right {
+        border-right: 1px solid #e3e6f0;
+        padding-right: 15px;
+    }
+
+    .text-primary {
+        color: #667eea !important;
+    }
+
+    .h5 {
+        font-weight: 700;
+        color: #5a5c69;
+    }
+
+    .small {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .hr {
+        border-top: 1px solid #e3e6f0;
+        margin: 2rem 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            font-size: 2.5rem;
+        }
+
+        .border-right {
+            border-right: none;
+            border-bottom: 1px solid #e3e6f0;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+    }
+
+    /* Animation pour les cartes */
+    .card {
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Style pour les messages d'erreur */
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+
+    /* Style pour les champs en erreur */
+    .form-control.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+</style>
+{% endblock %}

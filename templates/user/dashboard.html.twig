@@ -1,0 +1,232 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Dashboard - HSE System{% endblock %}
+
+{% block page_title %}Mon Dashboard HSE{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Mes Rapports Total
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_rapports }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                En Cours
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ rapports_en_cours }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Clôturés
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ rapports_clotures }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Taux de Clôture
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if total_rapports > 0 %}
+                                {{ ((rapports_clotures / total_rapports) * 100)|round(1) }}%
+                                {% else %}
+                                0%
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Derniers rapports -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-list"></i> Mes Derniers Rapports
+                    </h6>
+                    <a href="{{ path('app_user_rapports') }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-eye"></i> Voir tous
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if derniers_rapports %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Zone</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rapport in derniers_rapports %}
+                                <tr>
+                                    <td>{{ rapport.date|date('d/m/Y') }}</td>
+                                    <td>{{ rapport.zone ?? 'Non spécifiée' }}</td>
+                                    <td>
+                                        {% if rapport.statut == 'En cours' %}
+                                        <span class="badge bg-warning">{{ rapport.statut }}</span>
+                                        {% else %}
+                                        <span class="badge bg-success">{{ rapport.statut }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('app_user_rapport_detail', {id: rapport.id}) }}"
+                                            class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-muted">Aucun rapport trouvé pour le moment.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations profil -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-user"></i> Mon Profil
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="profile-avatar mb-3">
+                            <i class="fas fa-user-circle fa-5x text-gray-300"></i>
+                        </div>
+                        <h5 class="mb-1">{{ user.nom }} {{ user.prenom }}</h5>
+                        <p class="text-muted mb-2">{{ user.email }}</p>
+                        <p class="text-muted mb-3">
+                            <strong>Code Agent:</strong> {{ user.codeAgent }}
+                        </p>
+                        <p class="text-muted mb-4">
+                            <small>Membre depuis le {{ user.dateCreation|date('d/m/Y') }}</small>
+                        </p>
+                        <a href="{{ path('app_user_profil') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i> Modifier mon profil
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accès rapide -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-rocket"></i> Accès Rapide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ path('app_user_rapports') }}" class="btn btn-outline-primary btn-block mb-2">
+                        <i class="fas fa-list"></i> Mes Rapports
+                    </a>
+                    <a href="{{ path('app_user_statistiques') }}" class="btn btn-outline-info btn-block mb-2">
+                        <i class="fas fa-chart-bar"></i> Mes Statistiques
+                    </a>
+                    <a href="{{ path('app_user_profil') }}" class="btn btn-outline-secondary btn-block">
+                        <i class="fas fa-user-cog"></i> Mon Profil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
+    }
+
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}

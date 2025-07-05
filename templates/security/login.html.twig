@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion - HSE System{% endblock %}
+
+{% block content %} <!-- Changé de 'body' à 'content' -->
+<h2 class="text-center mb-4">Connexion</h2>
+
+<form method="post" action="{{ path('app_login') }}">
+    {% if error %}
+    <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+    {% endif %}
+
+    <div class="mb-3">
+        <label for="inputEmail" class="form-label">Email</label>
+        <input type="email" value="{{ last_username }}" name="email" id="inputEmail" class="form-control"
+            autocomplete="email" required autofocus>
+    </div>
+
+    <div class="mb-3">
+        <label for="inputPassword" class="form-label">Mot de passe</label>
+        <input type="password" name="password" id="inputPassword" class="form-control" autocomplete="current-password"
+            required>
+    </div>
+
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+    <div class="d-grid gap-2 mb-3">
+        <button class="btn btn-primary" type="submit">
+            <i class="fas fa-sign-in-alt"></i> Se connecter
+        </button>
+    </div>
+</form>
+
+
+{% endblock %}

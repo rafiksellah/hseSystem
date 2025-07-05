@@ -1,0 +1,196 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Rapport HSE - HSE System{% endblock %}
+
+{% block page_title %}Créer un nouveau rapport HSE{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus-circle"></i> Nouveau Rapport HSE
+                </h5>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+
+                <!-- Section 1: Informations de base -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-user"></i> Informations de l'agent
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.codeAgt, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.codeAgt) }}
+                                {{ form_errors(form.codeAgt) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Le nom sera automatiquement rempli
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.date, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.date) }}
+                                {{ form_errors(form.date) }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.heure, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.heure) }}
+                                {{ form_errors(form.heure) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Localisation -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-map-marker-alt"></i> Localisation
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.zone, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.zone) }}
+                                {{ form_errors(form.zone) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.emplacement, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.emplacement) }}
+                                {{ form_errors(form.emplacement) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Description de l'anomalie -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-exclamation-triangle"></i> Description de l'anomalie
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                {{ form_label(form.equipementProduitConcerne, null, {'label_attr': {'class':
+                                'form-label'}}) }}
+                                {{ form_widget(form.equipementProduitConcerne) }}
+                                {{ form_errors(form.equipementProduitConcerne) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.descriptionAnomalie, null, {'label_attr': {'class': 'form-label'}})
+                                }}
+                                {{ form_widget(form.descriptionAnomalie) }}
+                                {{ form_errors(form.descriptionAnomalie) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.causeProbable, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.causeProbable) }}
+                                {{ form_errors(form.causeProbable) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.photoConstatFile, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.photoConstatFile) }}
+                                {{ form_errors(form.photoConstatFile) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Formats acceptés: JPEG, PNG, GIF (max 5MB)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Action de clôture -->
+                <div class="action-section">
+                    <h6 class="text-success mb-3">
+                        <i class="fas fa-check-circle"></i> Action de clôture (optionnel)
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.actionCloturee, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.actionCloturee) }}
+                                {{ form_errors(form.actionCloturee) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="action-fields" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.dateCloture, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.dateCloture) }}
+                                    {{ form_errors(form.dateCloture) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.heureAction, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.heureAction) }}
+                                    {{ form_errors(form.heureAction) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.photoActionFile, null, {'label_attr': {'class': 'form-label'}})
+                                    }}
+                                    {{ form_widget(form.photoActionFile) }}
+                                    {{ form_errors(form.photoActionFile) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ path('app_admin_rapports') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour à la liste
+                    </a>
+                    {{ form_widget(form.submit) }}
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const actionClotureeSelect = document.getElementById('rapport_hse_actionCloturee');
+        const actionFields = document.getElementById('action-fields');
+
+        if (actionClotureeSelect && actionFields) {
+            function toggleActionFields() {
+                if (actionClotureeSelect.value === 'oui') {
+                    actionFields.style.display = 'block';
+                } else {
+                    actionFields.style.display = 'none';
+                }
+            }
+
+            actionClotureeSelect.addEventListener('change', toggleActionFields);
+            toggleActionFields(); // Initialiser
+        }
+    });
+</script>
+{% endblock %}

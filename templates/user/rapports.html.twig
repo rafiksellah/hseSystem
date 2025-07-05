@@ -1,0 +1,259 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Rapports - HSE System{% endblock %}
+
+{% block page_title %}Mes Rapports HSE{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Formulaire de recherche -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-search"></i> Rechercher dans mes rapports
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ path('app_user_rapports') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label for="zone" class="form-label">Zone</label>
+                    <input type="text" class="form-control" id="zone" name="zone" value="{{ search_params.zone }}"
+                        placeholder="Rechercher par zone">
+                </div>
+                <div class="col-md-3">
+                    <label for="dateDebut" class="form-label">Date début</label>
+                    <input type="date" class="form-control" id="dateDebut" name="dateDebut"
+                        value="{{ search_params.dateDebut }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="dateFin" class="form-label">Date fin</label>
+                    <input type="date" class="form-control" id="dateFin" name="dateFin"
+                        value="{{ search_params.dateFin }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="statut" class="form-label">Statut</label>
+                    <select class="form-control" id="statut" name="statut">
+                        <option value="">Tous les statuts</option>
+                        <option value="En cours" {{ search_params.statut=='En cours' ? 'selected' : '' }}>En cours
+                        </option>
+                        <option value="Clôturé" {{ search_params.statut=='Clôturé' ? 'selected' : '' }}>Clôturé</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Rechercher
+                    </button>
+                    <a href="{{ path('app_user_rapports') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Liste des rapports -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list"></i> Mes Rapports HSE
+            </h6>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-info me-2">
+                    Total: {{ rapports|length }} rapport(s)
+                </span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if rapports %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Heure</th>
+                            <th>Zone</th>
+                            <th>Emplacement</th>
+                            <th>Statut</th>
+                            <th>Date création</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rapport in rapports %}
+                        <tr>
+                            <td>{{ rapport.date|date('d/m/Y') }}</td>
+                            <td>{{ rapport.heure|date('H:i') }}</td>
+                            <td>
+                                {% if rapport.zone %}
+                                <span class="badge bg-secondary">{{ rapport.zone }}</span>
+                                {% else %}
+                                <span class="text-muted">Non spécifiée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if rapport.emplacement %}
+                                {{ rapport.emplacement|length > 30 ? rapport.emplacement|slice(0, 30) ~ '...' :
+                                rapport.emplacement }}
+                                {% else %}
+                                <span class="text-muted">Non spécifié</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if rapport.statut == 'En cours' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock"></i> {{ rapport.statut }}
+                                </span>
+                                {% elseif rapport.statut == 'Clôturé' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle"></i> {{ rapport.statut }}
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ rapport.statut }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ rapport.dateCreation|date('d/m/Y à H:i') }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ path('app_user_rapport_detail', {id: rapport.id}) }}"
+                                        class="btn btn-sm btn-info" title="Voir les détails">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Navigation des rapports">
+                <ul class="pagination justify-content-center">
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{ path('app_user_rapports', search_params|merge({page: current_page - 1})) }}">
+                            <i class="fas fa-chevron-left"></i> Précédent
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page in range(max(1, current_page - 2), min(total_pages, current_page + 2)) %}
+                    <li class="page-item {{ page == current_page ? 'active' : '' }}">
+                        <a class="page-link" href="{{ path('app_user_rapports', search_params|merge({page: page})) }}">
+                            {{ page }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if current_page < total_pages %} <li class="page-item">
+                        <a class="page-link"
+                            href="{{ path('app_user_rapports', search_params|merge({page: current_page + 1})) }}">
+                            Suivant <i class="fas fa-chevron-right"></i>
+                        </a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-gray-300 mb-3"></i>
+                <h5 class="text-muted">Aucun rapport trouvé</h5>
+                <p class="text-muted">
+                    {% if search_params.zone or search_params.dateDebut or search_params.dateFin or search_params.statut
+                    %}
+                    Aucun rapport ne correspond à vos critères de recherche.
+                    {% else %}
+                    Vous n'avez pas encore créé de rapport HSE.
+                    {% endif %}
+                </p>
+                {% if search_params.zone or search_params.dateDebut or search_params.dateFin or search_params.statut %}
+                <a href="{{ path('app_user_rapports') }}" class="btn btn-primary">
+                    <i class="fas fa-times"></i> Réinitialiser la recherche
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie"></i> Répartition par statut
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% set total_rapports = rapports|length %}
+                    {% set rapports_en_cours = rapports|filter(r => r.statut == 'En cours')|length %}
+                    {% set rapports_clotures = rapports|filter(r => r.statut == 'Clôturé')|length %}
+
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-right">
+                                <h4 class="text-warning">{{ rapports_en_cours }}</h4>
+                                <small class="text-muted">En cours</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ rapports_clotures }}</h4>
+                            <small class="text-muted">Clôturés</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-info-circle"></i> Accès rapide
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <a href="{{ path('app_user_statistiques') }}" class="btn btn-outline-info btn-block mb-2">
+                        <i class="fas fa-chart-bar"></i> Voir toutes mes statistiques
+                    </a>
+                    <a href="{{ path('app_user_dashboard') }}" class="btn btn-outline-primary btn-block">
+                        <i class="fas fa-tachometer-alt"></i> Retour au dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .border-right {
+        border-right: 1px solid #dee2e6;
+    }
+
+    .btn-group .btn {
+        margin-right: 2px;
+    }
+
+    .pagination {
+        margin-top: 20px;
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
