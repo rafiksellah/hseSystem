@@ -15,9 +15,14 @@
         </div>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>Mes rapports HSE</h3>
-            <a href="{{ path('app_user_rapport_nouveau') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nouveau rapport
-            </a>
+            <div class="btn-group">
+                <a href="{{ path('app_user_rapport_nouveau') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nouveau rapport
+                </a>
+                <a href="{{ path('app_user_rapports_export') }}" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> Exporter Excel
+                </a>
+            </div>
         </div>
         <div class="card-body">
             <form method="GET" action="{{ path('app_user_rapports') }}" class="row g-3">
@@ -67,6 +72,9 @@
                 <span class="badge bg-info me-2">
                     Total: {{ rapports|length }} rapport(s)
                 </span>
+                <a href="{{ path('app_user_rapports_export') }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </a>
             </div>
         </div>
         <div class="card-body">
@@ -231,8 +239,11 @@
                     <a href="{{ path('app_user_statistiques') }}" class="btn btn-outline-info btn-block mb-2">
                         <i class="fas fa-chart-bar"></i> Voir toutes mes statistiques
                     </a>
-                    <a href="{{ path('app_user_dashboard') }}" class="btn btn-outline-primary btn-block">
+                    <a href="{{ path('app_user_dashboard') }}" class="btn btn-outline-primary btn-block mb-2">
                         <i class="fas fa-tachometer-alt"></i> Retour au dashboard
+                    </a>
+                    <a href="{{ path('app_user_rapports_export') }}" class="btn btn-outline-success btn-block">
+                        <i class="fas fa-file-excel"></i> Exporter tous mes rapports
                     </a>
                 </div>
             </div>
@@ -260,6 +271,16 @@
     .card-header {
         background-color: #f8f9fa;
         border-bottom: 1px solid #dee2e6;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
     }
 </style>
 {% endblock %}

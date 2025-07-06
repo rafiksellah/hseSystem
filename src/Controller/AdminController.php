@@ -7,6 +7,7 @@ use App\Form\UserType;
 use App\Entity\RapportHSE;
 use App\Form\RapportHSEType;
 use App\Repository\UserRepository;
+use App\Service\ExcelExportService;
 use App\Repository\RapportHSERepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -431,5 +432,16 @@ class AdminController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_users');
+    }
+
+    #[Route('/admin/rapports/export', name: 'app_admin_rapports_export')]
+    public function exportRapports(
+        RapportHSERepository $rapportRepository,
+        ExcelExportService $excelExportService
+    ): Response {
+        // Récupérer tous les rapports pour l'admin
+        $rapports = $rapportRepository->findAll();
+
+        return $excelExportService->exportRapportsHSE($rapports, 'Tous les Rapports HSE');
     }
 }

@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Entity\RapportHSE;
 use App\Form\UserProfileType;
 use App\Form\UserRapportHSEType;
+use App\Service\ExcelExportService;
 use App\Repository\RapportHSERepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -336,5 +337,17 @@ class UserController extends AbstractController
             'form' => $form,
             'user' => $user,
         ]);
+    }
+
+    #[Route('/user/rapports/export', name: 'app_user_rapports_export')]
+    public function exportMesRapports(
+        RapportHSERepository $rapportRepository,
+        ExcelExportService $excelExportService
+    ): Response {
+        // Récupérer seulement les rapports de l'utilisateur connecté
+        $user = $this->getUser();
+        $rapports = $rapportRepository->findBy(['user' => $user]);
+
+        return $excelExportService->exportRapportsHSE($rapports, 'Mes Rapports HSE');
     }
 }
