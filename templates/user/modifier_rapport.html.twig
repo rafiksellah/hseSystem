@@ -1,0 +1,337 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier mon Rapport HSE - HSE System{% endblock %}
+
+{% block page_title %}Modifier mon rapport HSE #{{ rapport.id }}{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit"></i> Modifier mon Rapport HSE #{{ rapport.id }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+
+                <!-- Section 1: Informations automatiques -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-user-check"></i> Mes informations
+                    </h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Ces informations sont automatiquement remplies avec votre
+                        profil.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.codeAgt, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.codeAgt) }}
+                                {{ form_errors(form.codeAgt) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.nom, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nom) }}
+                                {{ form_errors(form.nom) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.date, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.date) }}
+                                {{ form_errors(form.date) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.heure, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.heure) }}
+                                {{ form_errors(form.heure) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Localisation -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-map-marker-alt"></i> Localisation
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.zone, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.zone) }}
+                                {{ form_errors(form.zone) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.emplacement, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.emplacement) }}
+                                {{ form_errors(form.emplacement) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Description de l'anomalie -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-exclamation-triangle"></i> Description de l'anomalie
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                {{ form_label(form.equipementProduitConcerne, null, {'label_attr': {'class':
+                                'form-label'}}) }}
+                                {{ form_widget(form.equipementProduitConcerne) }}
+                                {{ form_errors(form.equipementProduitConcerne) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.descriptionAnomalie, null, {'label_attr': {'class': 'form-label'}})
+                                }}
+                                {{ form_widget(form.descriptionAnomalie) }}
+                                {{ form_errors(form.descriptionAnomalie) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.causeProbable, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.causeProbable) }}
+                                {{ form_errors(form.causeProbable) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.photoConstatFile, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.photoConstatFile) }}
+                                {{ form_errors(form.photoConstatFile) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Formats acceptés: JPEG, PNG, GIF (max 5MB)
+                                </div>
+                                {% if rapport.photoConstat %}
+                                <div class="mt-2">
+                                    <small class="text-muted">Photo actuelle:</small>
+                                    <div class="mt-1">
+                                        <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo constat"
+                                            class="img-thumbnail"
+                                            style="max-width: 200px; max-height: 150px; cursor: pointer;"
+                                            data-bs-toggle="modal" data-bs-target="#modalPhotoConstat">
+                                    </div>
+                                    <small class="text-muted">Sélectionnez une nouvelle photo pour la remplacer</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Action de clôture -->
+                <div class="action-section">
+                    <h6 class="text-success mb-3">
+                        <i class="fas fa-check-circle"></i> Action de clôture
+                    </h6>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Attention :</strong> Si vous marquez ce rapport comme clôturé, vous ne pourrez plus le
+                        modifier par la suite.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form_label(form.actionCloturee, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.actionCloturee) }}
+                                {{ form_errors(form.actionCloturee) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="action-fields" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.dateCloture, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.dateCloture) }}
+                                    {{ form_errors(form.dateCloture) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.heureAction, null, {'label_attr': {'class': 'form-label'}}) }}
+                                    {{ form_widget(form.heureAction) }}
+                                    {{ form_errors(form.heureAction) }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form_label(form.photoActionFile, null, {'label_attr': {'class': 'form-label'}})
+                                    }}
+                                    {{ form_widget(form.photoActionFile) }}
+                                    {{ form_errors(form.photoActionFile) }}
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle"></i> Photo de l'action corrective réalisée
+                                    </div>
+                                    {% if rapport.photoActionCloturee %}
+                                    <div class="mt-2">
+                                        <small class="text-muted">Photo actuelle:</small>
+                                        <div class="mt-1">
+                                            <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}"
+                                                alt="Photo action" class="img-thumbnail"
+                                                style="max-width: 200px; max-height: 150px; cursor: pointer;"
+                                                data-bs-toggle="modal" data-bs-target="#modalPhotoAction">
+                                        </div>
+                                        <small class="text-muted">Sélectionnez une nouvelle photo pour la
+                                            remplacer</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ path('app_user_rapport_detail', {id: rapport.id}) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour au détail
+                    </a>
+                    <div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer les modifications
+                        </button>
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour photo du constat actuelle -->
+{% if rapport.photoConstat %}
+<div class="modal fade" id="modalPhotoConstat" tabindex="-1" aria-labelledby="modalPhotoConstatLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPhotoConstatLabel">Photo du constat actuelle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo du constat" class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal pour photo d'action actuelle -->
+{% if rapport.photoActionCloturee %}
+<div class="modal fade" id="modalPhotoAction" tabindex="-1" aria-labelledby="modalPhotoActionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPhotoActionLabel">Photo d'action actuelle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}" alt="Photo d'action" class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const actionClotureeSelect = document.getElementById('user_rapport_hse_actionCloturee');
+        const actionFields = document.getElementById('action-fields');
+
+        if (actionClotureeSelect && actionFields) {
+            function toggleActionFields() {
+                if (actionClotureeSelect.value === 'oui') {
+                    actionFields.style.display = 'block';
+                } else {
+                    actionFields.style.display = 'none';
+                }
+            }
+
+            actionClotureeSelect.addEventListener('change', toggleActionFields);
+            toggleActionFields(); // Initialiser au chargement
+        }
+
+        // Confirmation avant clôture
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (actionClotureeSelect && actionClotureeSelect.value === 'oui') {
+                    if (!confirm('Êtes-vous sûr de vouloir clôturer ce rapport ? Une fois clôturé, vous ne pourrez plus le modifier.')) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .form-section {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+
+    .form-section h6 {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+
+    .action-section {
+        border: 1px solid #d4edda;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #f8fff9;
+    }
+
+    .action-section h6 {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #28a745;
+    }
+
+    .img-thumbnail {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+
+    .img-thumbnail:hover {
+        transform: scale(1.05);
+    }
+
+    .alert-warning {
+        border-left: 4px solid #ffc107;
+    }
+</style>
+{% endblock %}

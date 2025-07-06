@@ -136,6 +136,99 @@ class UserController extends AbstractController
         ]);
     }
 
+    #[Route('/rapport/{id}/modifier', name: 'app_user_rapport_modifier', requirements: ['id' => '\d+'])]
+    public function modifierRapport(
+        RapportHSE $rapport,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SluggerInterface $slugger
+    ): Response {
+        // Vérifier que le rapport appartient à l'utilisateur connecté
+        if ($rapport->getUser() !== $this->getUser()) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à ce rapport.');
+        }
+
+        // Vérifier que le rapport peut être modifié (pas encore clôturé)
+        if ($rapport->getStatut() === 'Clôturé') {
+            $this->addFlash('error', 'Ce rapport est déjà clôturé et ne peut plus être modifié.');
+            return $this->redirectToRoute('app_user_rapport_detail', ['id' => $rapport->getId()]);
+        }
+
+        $form = $this->createForm(UserRapportHSEType::class, $rapport);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            // Gérer l'upload de la photo du constat
+            $photoConstatFile = $form->get('photoConstatFile')->getData();
+            if ($photoConstatFile) {
+                // Supprimer l'ancienne photo si elle existe
+                if ($rapport->getPhotoConstat()) {
+                    $oldFile = $this->getParameter('uploads_directory') . '/' . $rapport->getPhotoConstat();
+                    if (file_exists($oldFile)) {
+                        unlink($oldFile);
+                    }
+                }
+
+                $originalFilename = pathinfo($photoConstatFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoConstatFile->guessExtension();
+
+                try {
+                    $photoConstatFile->move(
+                        $this->getParameter('uploads_directory'),
+                        $newFilename
+                    );
+                    $rapport->setPhotoConstat($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo du constat');
+                }
+            }
+
+            // Gérer l'upload de la photo d'action
+            $photoActionFile = $form->get('photoActionFile')->getData();
+            if ($photoActionFile) {
+                // Supprimer l'ancienne photo si elle existe
+                if ($rapport->getPhotoActionCloturee()) {
+                    $oldFile = $this->getParameter('uploads_directory') . '/' . $rapport->getPhotoActionCloturee();
+                    if (file_exists($oldFile)) {
+                        unlink($oldFile);
+                    }
+                }
+
+                $originalFilename = pathinfo($photoActionFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoActionFile->guessExtension();
+
+                try {
+                    $photoActionFile->move(
+                        $this->getParameter('uploads_directory'),
+                        $newFilename
+                    );
+                    $rapport->setPhotoActionCloturee($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo d\'action');
+                }
+            }
+
+            // Définir le statut en fonction de l'action clôturée
+            if ($rapport->getActionCloturee() === 'oui') {
+                $rapport->setStatut('Clôturé');
+            } else {
+                $rapport->setStatut('En cours');
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Votre rapport HSE a été modifié avec succès !');
+            return $this->redirectToRoute('app_user_rapport_detail', ['id' => $rapport->getId()]);
+        }
+
+        return $this->render('user/modifier_rapport.html.twig', [
+            'form' => $form,
+            'rapport' => $rapport,
+        ]);
+    }
+
     #[Route('/statistiques', name: 'app_user_statistiques')]
     public function statistiques(RapportHSERepository $rapportHSERepository): Response
     {

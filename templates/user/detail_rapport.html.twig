@@ -1,0 +1,268 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Rapport #{{ rapport.id }} - HSE System{% endblock %}
+
+{% block page_title %}Détail de mon Rapport HSE #{{ rapport.id }}{% endblock %}
+
+{% block body %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }} fs-6">
+                    <i class="fas {{ rapport.statut == 'Clôturé' ? 'fa-check-circle' : 'fa-clock' }}"></i>
+                    {{ rapport.statut }}
+                </span>
+            </div>
+            <div>
+                <a href="{{ path('app_user_rapports') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-arrow-left"></i> Retour à mes rapports
+                </a>
+                {% if rapport.statut == 'En cours' %}
+                <a href="{{ path('app_user_rapport_modifier', {id: rapport.id}) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Modifier
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Informations principales -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Informations de mon rapport
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-5">Date :</dt>
+                            <dd class="col-sm-7">{{ rapport.date|date('d/m/Y') }}</dd>
+
+                            <dt class="col-sm-5">Heure :</dt>
+                            <dd class="col-sm-7">{{ rapport.heure|date('H:i') }}</dd>
+
+                            <dt class="col-sm-5">Zone :</dt>
+                            <dd class="col-sm-7">
+                                {% if rapport.zone %}
+                                <span class="badge bg-info">{{ rapport.zone }}</span>
+                                {% else %}
+                                <span class="text-muted">Non spécifiée</span>
+                                {% endif %}
+                            </dd>
+
+                            <dt class="col-sm-5">Emplacement :</dt>
+                            <dd class="col-sm-7">{{ rapport.emplacement ?? 'Non spécifié' }}</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row">
+                            <dt class="col-sm-6">Mon nom :</dt>
+                            <dd class="col-sm-6">{{ rapport.nom }}</dd>
+
+                            <dt class="col-sm-6">Mon code AGT :</dt>
+                            <dd class="col-sm-6">{{ rapport.codeAgt }}</dd>
+
+                            <dt class="col-sm-6">Équipement :</dt>
+                            <dd class="col-sm-6">{{ rapport.equipementProduitConcerne ?? 'Non spécifié' }}</dd>
+
+                            <dt class="col-sm-6">Créé le :</dt>
+                            <dd class="col-sm-6">{{ rapport.dateCreation|date('d/m/Y H:i') }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description de l'anomalie -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> Anomalie signalée
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Description :</h6>
+                        {% if rapport.descriptionAnomalie %}
+                        <div class="bg-light p-3 rounded">
+                            {{ rapport.descriptionAnomalie|nl2br }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">Aucune description fournie</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if rapport.causeProbable %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Cause probable :</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ rapport.causeProbable }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Informations sur la clôture -->
+        {% if rapport.actionCloturee == 'oui' %}
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-check-circle"></i> Action que j'ai clôturée
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if rapport.dateCloture %}
+                    <div class="col-md-6">
+                        <strong>Date de clôture :</strong><br>
+                        {{ rapport.dateCloture|date('d/m/Y') }}
+                    </div>
+                    {% endif %}
+                    {% if rapport.heureAction %}
+                    <div class="col-md-6">
+                        <strong>Heure de l'action :</strong><br>
+                        {{ rapport.heureAction|date('H:i') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Ce rapport est en cours de traitement. Vous pourrez le modifier tant qu'il n'est pas clôturé.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Photos -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-camera"></i> Mes photos
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Photo du constat -->
+                {% if rapport.photoConstat %}
+                <div class="mb-4">
+                    <h6 class="mb-3">Photo du constat :</h6>
+                    <div class="text-center">
+                        <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo du constat"
+                            class="img-fluid rounded shadow" style="max-height: 200px; cursor: pointer;"
+                            data-bs-toggle="modal" data-bs-target="#modalPhotoConstat">
+                        <div class="mt-2">
+                            <small class="text-muted">Cliquez pour agrandir</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Photo d'action -->
+                {% if rapport.photoActionCloturee %}
+                <div class="mb-3">
+                    <h6 class="mb-3">Photo d'action clôturée :</h6>
+                    <div class="text-center">
+                        <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}" alt="Photo d'action clôturée"
+                            class="img-fluid rounded shadow" style="max-height: 200px; cursor: pointer;"
+                            data-bs-toggle="modal" data-bs-target="#modalPhotoAction">
+                        <div class="mt-2">
+                            <small class="text-muted">Cliquez pour agrandir</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if not rapport.photoConstat and not rapport.photoActionCloturee %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-camera fa-3x mb-3"></i>
+                    <p>Aucune photo ajoutée</p>
+                    {% if rapport.statut == 'En cours' %}
+                    <small>Vous pouvez ajouter des photos en modifiant le rapport</small>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools"></i> Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('app_user_rapports') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Voir tous mes rapports
+                    </a>
+                    <a href="{{ path('app_user_rapport_nouveau') }}" class="btn btn-outline-success">
+                        <i class="fas fa-plus"></i> Créer un nouveau rapport
+                    </a>
+                    {% if rapport.statut == 'En cours' %}
+                    <a href="{{ path('app_user_rapport_modifier', {id: rapport.id}) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Modifier ce rapport
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour photo du constat -->
+{% if rapport.photoConstat %}
+<div class="modal fade" id="modalPhotoConstat" tabindex="-1" aria-labelledby="modalPhotoConstatLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPhotoConstatLabel">Ma photo du constat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo du constat" class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal pour photo d'action -->
+{% if rapport.photoActionCloturee %}
+<div class="modal fade" id="modalPhotoAction" tabindex="-1" aria-labelledby="modalPhotoActionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPhotoActionLabel">Ma photo d'action clôturée</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}" alt="Photo d'action clôturée"
+                    class="img-fluid">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
