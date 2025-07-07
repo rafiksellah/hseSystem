@@ -18,6 +18,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[Route('/admin')]
@@ -87,17 +88,19 @@ class AdminController extends AbstractController
         UserPasswordHasherInterface $userPasswordHasher
     ): Response {
         $user = new User();
-        $form = $this->createForm(UserType::class, $user);
+        $form = $this->createForm(UserType::class, $user, ['is_edit' => false]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             // Encoder le mot de passe
+            $plainPassword = $form->get('plainPassword')->getData();
             $user->setPassword(
-                $userPasswordHasher->hashPassword(
-                    $user,
-                    $form->get('plainPassword')->getData()
-                )
+                $userPasswordHasher->hashPassword($user, $plainPassword)
             );
+
+            // Définir la date et l'heure de création
+            $user->setDateCreation(new \DateTime());
+            $user->setHeureCreation(new \DateTime());
 
             $entityManager->persist($user);
             $entityManager->flush();
@@ -140,6 +143,30 @@ class AdminController extends AbstractController
             'form' => $form,
             'user' => $user,
         ]);
+    }
+
+    #[Route('/user/{id}/supprimer', name: 'app_admin_user_supprimer', requirements: ['id' => '\d+'])]
+    public function supprimerUser(
+        User $user,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            // Vérifier s'il y a des rapports associés
+            if ($user->getRapportsHSE()->count() > 0) {
+                $this->addFlash('error', 'Impossible de supprimer cet utilisateur car il a des rapports HSE associés.');
+                return $this->redirectToRoute('app_admin_users');
+            }
+
+            $entityManager->remove($user);
+            $entityManager->flush();
+            $this->addFlash('success', 'L\'utilisateur a été supprimé avec succès !');
+        } catch (ForeignKeyConstraintViolationException $e) {
+            $this->addFlash('error', 'Impossible de supprimer cet utilisateur car il a des données associées.');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Une erreur s\'est produite lors de la suppression : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_admin_users');
     }
 
     #[Route('/rapport/nouveau', name: 'app_admin_rapport_nouveau')]
@@ -416,22 +443,6 @@ class AdminController extends AbstractController
 
         $this->addFlash('success', 'Le rapport HSE a été supprimé avec succès !');
         return $this->redirectToRoute('app_admin_rapports');
-    }
-
-    #[Route('/user/{id}/supprimer', name: 'app_admin_user_supprimer', requirements: ['id' => '\d+'])]
-    public function supprimerUser(
-        User $user,
-        EntityManagerInterface $entityManager
-    ): Response {
-        try {
-            $entityManager->remove($user);
-            $entityManager->flush();
-            $this->addFlash('success', 'L\'utilisateur a été supprimé avec succès !');
-        } catch (\Exception $e) {
-            $this->addFlash('error', 'Impossible de supprimer cet utilisateur car il a des rapports associés.');
-        }
-
-        return $this->redirectToRoute('app_admin_users');
     }
 
     #[Route('/admin/rapports/export', name: 'app_admin_rapports_export')]

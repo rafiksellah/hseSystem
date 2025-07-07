@@ -46,8 +46,11 @@ class UserType extends AbstractType
                     'class' => 'form-control',
                     'placeholder' => 'Entrez le code agent'
                 ]
-            ])
-            ->add('plainPassword', RepeatedType::class, [
+            ]);
+
+        // Ajouter le champ mot de passe seulement si ce n'est pas une édition
+        if (!$options['is_edit']) {
+            $builder->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'mapped' => false,
                 'attr' => ['autocomplete' => 'new-password'],
@@ -75,20 +78,51 @@ class UserType extends AbstractType
                         'placeholder' => 'Confirmez le mot de passe'
                     ]
                 ],
-            ])
-            ->add('submit', SubmitType::class, [
-                'label' => 'Créer l\'utilisateur',
-                'attr' => [
-                    'class' => 'btn btn-primary w-100'
-                ]
-            ])
-        ;
+            ]);
+        } else {
+            // Pour l'édition, mot de passe optionnel
+            $builder->add('plainPassword', RepeatedType::class, [
+                'type' => PasswordType::class,
+                'mapped' => false,
+                'required' => false,
+                'attr' => ['autocomplete' => 'new-password'],
+                'constraints' => [
+                    new Length([
+                        'min' => 6,
+                        'minMessage' => 'Le mot de passe doit contenir au moins {{ limit }} caractères',
+                        'max' => 4096,
+                    ]),
+                ],
+                'first_options' => [
+                    'label' => 'Nouveau mot de passe (optionnel)',
+                    'attr' => [
+                        'class' => 'form-control',
+                        'placeholder' => 'Laissez vide pour conserver l\'ancien'
+                    ]
+                ],
+                'second_options' => [
+                    'label' => 'Confirmer le nouveau mot de passe',
+                    'attr' => [
+                        'class' => 'form-control',
+                        'placeholder' => 'Confirmez le nouveau mot de passe'
+                    ]
+                ],
+            ]);
+        }
+
+        $builder->add('submit', SubmitType::class, [
+            'label' => $options['is_edit'] ? 'Modifier l\'utilisateur' : 'Créer l\'utilisateur',
+            'attr' => [
+                'class' => 'btn btn-primary w-100'
+            ]
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => User::class,
+            'is_edit' => false, // Définir l'option personnalisée
         ]);
     }
 }
