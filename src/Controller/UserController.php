@@ -159,6 +159,7 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            dd('Le site est en maintenance, veuillez réessayer plus tard.');
             // Gérer l'upload de la photo du constat
             $photoConstatFile = $form->get('photoConstatFile')->getData();
             if ($photoConstatFile) {
@@ -283,6 +284,7 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            dd('Le site est en maintenance, veuillez réessayer plus tard.');
             // Gérer l'upload de la photo du constat
             $photoConstatFile = $form->get('photoConstatFile')->getData();
             if ($photoConstatFile) {

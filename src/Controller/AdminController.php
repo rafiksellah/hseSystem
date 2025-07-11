@@ -92,6 +92,7 @@ class AdminController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            dd('Le site est en maintenance, veuillez réessayer plus tard.');
             // Encoder le mot de passe
             $plainPassword = $form->get('plainPassword')->getData();
             $user->setPassword(
@@ -185,6 +186,7 @@ class AdminController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            dd('Le site est en maintenance, veuillez réessayer plus tard.');
             // Récupérer l'utilisateur sélectionné
             $user = $form->get('user')->getData();
             if (!$user) {
