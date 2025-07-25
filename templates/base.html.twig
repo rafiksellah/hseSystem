@@ -95,17 +95,43 @@
             padding: 0.25rem 0.5rem;
             font-size: 0.75rem;
             border-radius: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+        }
+
+        .role-super-admin {
+            background-color: rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+            font-weight: bold;
         }
 
         .role-admin {
-            background-color: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
+            background-color: rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+            font-weight: bold;
         }
 
         .role-user {
-            background-color: rgba(40, 167, 69, 0.2);
+            background-color: rgba(40, 167, 69, 0.3);
             color: #28a745;
+        }
+
+        .zone-badge {
+            display: inline-block;
+            padding: 0.2rem 0.4rem;
+            font-size: 0.7rem;
+            border-radius: 10px;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .zone-simtis {
+            background-color: rgba(0, 123, 255, 0.2);
+            color: #007bff;
+        }
+
+        .zone-simtis-tissage {
+            background-color: rgba(102, 16, 242, 0.2);
+            color: #6610f2;
         }
 
         .border-left-primary {
@@ -131,6 +157,19 @@
         .text-gray-800 {
             color: #5a5c69 !important;
         }
+
+        .user-info-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .access-restrictions {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
     </style>
     {% endblock %}
 </head>
@@ -146,27 +185,182 @@
                         <h4 class="text-white">
                             <i class="fas fa-hard-hat"></i> HSE System
                         </h4>
-                        <small class="text-white-50">{{ app.user.nom ~ ' ' ~ app.user.prenom }}</small>
-                        <div class="mt-2">
-                            {% if 'ROLE_ADMIN' in app.user.roles %}
-                            <span class="role-badge role-admin">
-                                <i class="fas fa-crown"></i> Administrateur
-                            </span>
-                            {% else %}
-                            <span class="role-badge role-user">
-                                <i class="fas fa-user"></i> Utilisateur
-                            </span>
+
+                        <!-- Carte d'information utilisateur -->
+                        <div class="user-info-card">
+                            <div class="text-white">
+                                <strong>{{ app.user.nom ~ ' ' ~ app.user.prenom }}</strong>
+                            </div>
+                            <small class="text-white-50">{{ app.user.codeAgent }}</small>
+
+                            <!-- Badges de rôle -->
+                            <div class="mt-2">
+                                {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                <div class="role-badge role-super-admin">
+                                    <i class="fas fa-crown"></i> SUPER ADMIN
+                                </div>
+                                {% elseif 'ROLE_ADMIN' in app.user.roles %}
+                                <div class="role-badge role-admin">
+                                    <i class="fas fa-user-shield"></i> ADMIN
+                                </div>
+                                {% else %}
+                                <div class="role-badge role-user">
+                                    <i class="fas fa-user"></i> UTILISATEUR
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Badge de zone -->
+                            {% if app.user.zone %}
+                            <div
+                                class="zone-badge {{ app.user.zone == 'SIMTIS' ? 'zone-simtis' : 'zone-simtis-tissage' }}">
+                                <i class="fas fa-building"></i> {{ app.user.zone }}
+                            </div>
+                            {% endif %}
+
+                            <!-- Restrictions d'accès pour les admins -->
+                            {% if 'ROLE_ADMIN' in app.user.roles and 'ROLE_SUPER_ADMIN' not in app.user.roles %}
+                            <div class="access-restrictions text-white-50">
+                                <i class="fas fa-info-circle"></i> Accès limité à la zone {{ app.user.zone }}
+                            </div>
                             {% endif %}
                         </div>
                     </div>
 
                     <ul class="nav flex-column">
-                        {% if 'ROLE_ADMIN' in app.user.roles %}
+                        {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                        <!-- Section Super Admin -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_super_admin_dashboard' ? 'active' : '' }}"
+                                href="{{ path('app_super_admin_dashboard') }}">
+                                <i class="fas fa-crown"></i> Dashboard Super Admin
+                            </a>
+                        </li>
+
+                        <!-- Séparateur -->
+                        <li class="nav-item">
+                            <hr class="sidebar-divider">
+                            <div class="sidebar-heading">
+                                <small class="text-white-50">GESTION GLOBALE</small>
+                            </div>
+                        </li>
+
+                        <!-- Utilisateurs globaux -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_super_admin_user_nouveau' ? 'active' : '' }}"
+                                href="{{ path('app_super_admin_user_nouveau') }}">
+                                <i class="fas fa-user-plus"></i> Créer Utilisateur
+                                <small class="ms-1">(Tous rôles)</small>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_super_admin_users' ? 'active' : '' }}"
+                                href="{{ path('app_super_admin_users') }}">
+                                <i class="fas fa-users-cog"></i> Gérer Utilisateurs
+                                <small class="ms-1">(Toutes zones)</small>
+                            </a>
+                        </li>
+
+                        <!-- Rapports globaux -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_super_admin_rapports' ? 'active' : '' }}"
+                                href="{{ path('app_super_admin_rapports') }}">
+                                <i class="fas fa-clipboard-list"></i> Tous les Rapports
+                                <small class="ms-1">(Global)</small>
+                            </a>
+                        </li>
+
+                        <!-- Statistiques globales -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_super_admin_statistiques' ? 'active' : '' }}"
+                                href="{{ path('app_super_admin_statistiques') }}">
+                                <i class="fas fa-chart-pie"></i> Statistiques Globales
+                            </a>
+                        </li>
+
+                        <!-- Séparateur -->
+                        <li class="nav-item">
+                            <hr class="sidebar-divider">
+                            <div class="sidebar-heading">
+                                <small class="text-white-50">OUTILS SUPER ADMIN</small>
+                            </div>
+                        </li>
+
+                        <!-- Export global -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ app.request.get('_route') starts with 'app_super_admin_export' ? 'active' : '' }}"
+                                href="#" id="superAdminExportDropdown" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fas fa-download"></i> Exports Globaux
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="superAdminExportDropdown">
+                                <li><a class="dropdown-item" href="{{ path('app_admin_export_excel') }}">
+                                        <i class="fas fa-file-excel text-success"></i> Export Excel Global
+                                    </a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_admin_export_pdf') }}">
+                                        <i class="fas fa-file-pdf text-danger"></i> Export PDF Global
+                                    </a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="{{ path('app_admin_users_export_excel') }}">
+                                        <i class="fas fa-users"></i> Export Utilisateurs Excel
+                                    </a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_admin_users_export_pdf') }}">
+                                        <i class="fas fa-users"></i> Export Utilisateurs PDF
+                                    </a></li>
+                            </ul>
+                        </li>
+
+                        <!-- Logs système (optionnel) -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_super_admin_logs' ? 'active' : '' }}"
+                                href="{{ path('app_super_admin_logs') }}">
+                                <i class="fas fa-file-alt"></i> Logs Système
+                            </a>
+                        </li>
+
+                        <!-- Paramètres (optionnel) -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_super_admin_parametres' ? 'active' : '' }}"
+                                href="{{ path('app_super_admin_parametres') }}">
+                                <i class="fas fa-cogs"></i> Paramètres
+                            </a>
+                        </li>
+
+                        <!-- Accès rapide aux autres dashboards -->
+                        <li class="nav-item">
+                            <hr class="sidebar-divider">
+                            <div class="sidebar-heading">
+                                <small class="text-white-50">ACCÈS RAPIDE</small>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_admin_dashboard') }}">
+                                <i class="fas fa-user-shield text-warning"></i> Vue Admin
+                                <small class="ms-1">({{ app.user.zone }})</small>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_user_dashboard') }}">
+                                <i class="fas fa-user text-success"></i> Vue Utilisateur
+                            </a>
+                        </li>
+
+                        {% elseif 'ROLE_ADMIN' in app.user.roles %}
                         <!-- Section Admin -->
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_admin_dashboard' ? 'active' : '' }}"
                                 href="{{ path('app_admin_dashboard') }}">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard Admin
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                                {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                <small class="ms-1">(Global)</small>
+                                {% else %}
+                                <small class="ms-1">({{ app.user.zone }})</small>
+                                {% endif %}
                             </a>
                         </li>
 
@@ -180,7 +374,7 @@
 
                         <!-- Rapports HSE -->
                         <li class="nav-item">
-                            <a class="nav-link {{ app.request.get('_route') == 'app_admin_get_user_by_code' ? 'active' : '' }}"
+                            <a class="nav-link {{ app.request.get('_route') == 'app_admin_rapport_nouveau' ? 'active' : '' }}"
                                 href="{{ path('app_admin_rapport_nouveau') }}">
                                 <i class="fas fa-plus-circle"></i> Nouveau Rapport
                             </a>
@@ -188,8 +382,38 @@
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_admin_rapports' ? 'active' : '' }}"
                                 href="{{ path('app_admin_rapports') }}">
-                                <i class="fas fa-list"></i> Tous les Rapports
+                                <i class="fas fa-list"></i>
+                                {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                Tous les Rapports
+                                {% else %}
+                                Rapports {{ app.user.zone }}
+                                {% endif %}
                             </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'app_admin_statistiques' ? 'active' : '' }}"
+                                href="{{ path('app_admin_statistiques') }}">
+                                <i class="fas fa-chart-bar"></i> Statistiques
+                                {% if 'ROLE_SUPER_ADMIN' not in app.user.roles %}
+                                <small class="ms-1">({{ app.user.zone }})</small>
+                                {% endif %}
+                            </a>
+                        </li>
+                        <!-- Export (visible pour tous les admins) -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ app.request.get('_route') starts with 'app_admin_export' ? 'active' : '' }}"
+                                href="#" id="exportDropdown" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fas fa-download"></i> Exports
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="exportDropdown">
+                                <li><a class="dropdown-item" href="{{ path('app_admin_export_excel') }}">
+                                        <i class="fas fa-file-excel text-success"></i> Export Excel
+                                    </a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_admin_export_pdf') }}">
+                                        <i class="fas fa-file-pdf text-danger"></i> Export PDF
+                                    </a></li>
+                            </ul>
                         </li>
 
                         <!-- Séparateur -->
@@ -201,21 +425,30 @@
                         </li>
 
                         <!-- Utilisateurs -->
+                        {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_admin_user_nouveau' ? 'active' : '' }}"
                                 href="{{ path('app_admin_user_nouveau') }}">
                                 <i class="fas fa-user-plus"></i> Nouvel Utilisateur
+                                <small class="ms-1">(Super Admin)</small>
                             </a>
                         </li>
+                        {% endif %}
+
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_admin_users' ? 'active' : '' }}"
                                 href="{{ path('app_admin_users') }}">
-                                <i class="fas fa-users"></i> Tous les Utilisateurs
+                                <i class="fas fa-users"></i>
+                                {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                Tous les Utilisateurs
+                                {% else %}
+                                Utilisateurs {{ app.user.zone }}
+                                {% endif %}
                             </a>
                         </li>
 
                         {% else %}
-                        <!-- Section User -->
+                        <!-- Section User normal -->
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_user_dashboard' ? 'active' : '' }}"
                                 href="{{ path('app_user_dashboard') }}">
@@ -230,20 +463,21 @@
                                 <small class="text-white-50">MES RAPPORTS</small>
                             </div>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_user_rapport_nouveau' ? 'active' : '' }}"
                                 href="{{ path('app_user_rapport_nouveau') }}">
-                                <i class="fas fa-plus-circle"></i>
-                                Nouveau rapport
+                                <i class="fas fa-plus-circle"></i> Nouveau rapport
                             </a>
                         </li>
-                        <!-- Rapports de l'utilisateur -->
+
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_user_rapports' ? 'active' : '' }}"
                                 href="{{ path('app_user_rapports') }}">
                                 <i class="fas fa-list"></i> Mes Rapports
                             </a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_user_statistiques' ? 'active' : '' }}"
                                 href="{{ path('app_user_statistiques') }}">
@@ -290,21 +524,49 @@
                     class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">{% block page_title %}Dashboard{% endblock %}</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
+                        <!-- Informations utilisateur -->
                         <div class="btn-group me-2">
-                            <span class="badge bg-success">
+                            <span class="badge bg-success me-1">
                                 <i class="fas fa-id-badge"></i> {{ app.user.codeAgent }}
                             </span>
+                            {% if app.user.zone %}
+                            <span class="badge {{ app.user.zone == 'SIMTIS' ? 'bg-primary' : 'bg-info' }}">
+                                <i class="fas fa-building"></i> {{ app.user.zone }}
+                            </span>
+                            {% endif %}
                         </div>
+
+                        <!-- Menu utilisateur -->
                         <div class="btn-group">
                             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle"
                                 data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user"></i> {{ app.user.nom }}
+                                {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                <i class="fas fa-crown text-danger"></i>
+                                {% elseif 'ROLE_ADMIN' in app.user.roles %}
+                                <i class="fas fa-user-shield text-warning"></i>
+                                {% else %}
+                                <i class="fas fa-user text-success"></i>
+                                {% endif %}
+                                {{ app.user.nom }}
                             </button>
                             <ul class="dropdown-menu">
-                                {% if 'ROLE_ADMIN' in app.user.roles %}
                                 <li>
-                                    <h6 class="dropdown-header">Administration</h6>
+                                    <h6 class="dropdown-header">
+                                        {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                        <i class="fas fa-crown text-danger"></i> Super Administrateur
+                                        {% elseif 'ROLE_ADMIN' in app.user.roles %}
+                                        <i class="fas fa-user-shield text-warning"></i> Administrateur {{ app.user.zone
+                                        }}
+                                        {% else %}
+                                        <i class="fas fa-user text-success"></i> Utilisateur
+                                        {% endif %}
+                                    </h6>
                                 </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                {% if 'ROLE_ADMIN' in app.user.roles %}
                                 <li><a class="dropdown-item" href="{{ path('app_admin_dashboard') }}">
                                         <i class="fas fa-tachometer-alt"></i> Dashboard Admin
                                     </a></li>
@@ -312,6 +574,7 @@
                                     <hr class="dropdown-divider">
                                 </li>
                                 {% endif %}
+
                                 <li><a class="dropdown-item" href="{{ path('app_user_profil') }}">
                                         <i class="fas fa-user-edit"></i> Mon Profil
                                     </a></li>
@@ -325,6 +588,18 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Affichage des restrictions d'accès pour les admins de zone -->
+                {% if 'ROLE_ADMIN' in app.user.roles and 'ROLE_SUPER_ADMIN' not in app.user.roles %}
+                <div class="alert alert-info d-flex align-items-center mb-3" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <div>
+                        <strong>Accès restreint :</strong> Vous gérez uniquement la zone <strong>{{ app.user.zone
+                            }}</strong>.
+                        Seuls les utilisateurs et rapports de cette zone vous sont accessibles.
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- Flash messages -->
                 {% for type, messages in app.flashes %}
@@ -426,6 +701,9 @@
                     }
                 });
             });
+
+            // Affichage des informations de zone
+            console.log('Zone utilisateur:', '{{ app.user.zone ?? "Non définie" }}');
         });
     </script>
     {% endblock %}

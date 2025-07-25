@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .header .date {
+            color: #666;
+            font-size: 10px;
+            margin-top: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        td {
+            font-size: 10px;
+        }
+
+        .zone-simtis {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+        }
+
+        .zone-tissage {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+        }
+
+        .role-badge {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+        }
+
+        .role-super {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+
+        .stats {
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>{{ title }}</h1>
+        <div class="date">
+            Généré le {{ export_date|date('d/m/Y à H:i') }} par {{ current_user.fullName }}
+        </div>
+    </div>
+
+    <div class="stats">
+        <strong>Nombre total d'utilisateurs :</strong> {{ users|length }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">ID</th>
+                <th style="width: 25%;">Nom & Prénom</th>
+                <th style="width: 30%;">Email</th>
+                <th style="width: 15%;">Code Agent</th>
+                <th style="width: 15%;">Zone</th>
+                <th style="width: 10%;">Date création</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>
+                    <strong>{{ user.nom }}</strong> {{ user.prenom }}
+                    {% if 'ROLE_SUPER_ADMIN' in user.roles %}
+                    <span class="role-badge role-super">Super Admin</span>
+                    {% elseif 'ROLE_ADMIN' in user.roles %}
+                    <span class="role-badge">Admin</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.codeAgent }}</td>
+                <td>
+                    <span class="{% if user.zone == 'SIMTIS' %}zone-simtis{% else %}zone-tissage{% endif %}">
+                        {{ user.zone }}
+                    </span>
+                </td>
+                <td>{{ user.dateCreation|date('d/m/Y') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Document généré automatiquement - {{ export_date|date('d/m/Y H:i:s') }}</p>
+        <p>Système de gestion HSE - Zones SIMTIS</p>
+    </div>
+</body>
+
+</html>

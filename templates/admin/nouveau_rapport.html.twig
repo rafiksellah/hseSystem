@@ -30,6 +30,22 @@
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i> Sélectionnez l'agent pour remplir automatiquement
                                     les informations
+                                    {% if 'ROLE_SUPER_ADMIN' not in app.user.roles %}
+                                    <br><small class="text-muted">
+                                        <i class="fas fa-shield-alt"></i> Vous ne voyez que les utilisateurs de votre
+                                        zone : {{ app.user.zone }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Zone de l'agent</label>
+                                <input type="text" class="form-control" id="userZone" readonly
+                                    placeholder="Sera rempli automatiquement">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Zone automatique basée sur l'agent sélectionné
                                 </div>
                             </div>
                         </div>
@@ -84,6 +100,10 @@
                                 {{ form_label(form.zone, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.zone) }}
                                 {{ form_errors(form.zone) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Les zones disponibles dépendent de l'agent
+                                    sélectionné
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -208,13 +228,17 @@
         const nomInput = document.getElementById('rapport_hse_nom');
         const dateInput = document.getElementById('rapport_hse_date');
         const heureInput = document.getElementById('rapport_hse_heure');
+        const userZoneInput = document.getElementById('userZone');
+        const zoneSelect = document.getElementById('rapport_hse_zone');
 
         console.log('Éléments trouvés:', {
             userSelect: userSelect,
             codeAgtInput: codeAgtInput,
             nomInput: nomInput,
             dateInput: dateInput,
-            heureInput: heureInput
+            heureInput: heureInput,
+            userZoneInput: userZoneInput,
+            zoneSelect: zoneSelect
         });
 
         // Fonction pour gérer les champs d'action
@@ -249,7 +273,7 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         },
                         body: JSON.stringify({
-                            userId: selectedValue // Utiliser userId si choice_value = 'id'
+                            userId: selectedValue
                         })
                     })
                         .then(response => {
@@ -266,6 +290,31 @@
                                 codeAgtInput.value = data.codeAgent || '';
                                 nomInput.value = data.nomComplet || '';
 
+                                // Afficher la zone de l'utilisateur
+                                if (userZoneInput) {
+                                    userZoneInput.value = data.zone || '';
+                                    userZoneInput.style.backgroundColor = '#e7f3ff';
+                                    userZoneInput.style.borderColor = '#0066cc';
+                                }
+
+                                // Mettre à jour les options de zones
+                                if (zoneSelect && data.zones) {
+                                    // Vider d'abord le select
+                                    zoneSelect.innerHTML = '<option value="">Sélectionnez une zone</option>';
+
+                                    // Ajouter les nouvelles options
+                                    Object.entries(data.zones).forEach(([key, value]) => {
+                                        const option = document.createElement('option');
+                                        option.value = key;
+                                        option.textContent = value;
+                                        zoneSelect.appendChild(option);
+                                    });
+
+                                    // Style pour indiquer que les zones ont été mises à jour
+                                    zoneSelect.style.backgroundColor = '#e7f3ff';
+                                    zoneSelect.style.borderColor = '#0066cc';
+                                }
+
                                 // Remplir les champs date et heure avec les données utilisateur
                                 if (data.dateCreation && dateInput) {
                                     dateInput.value = data.dateCreation;
@@ -280,7 +329,7 @@
                                 setSuccessStyles();
 
                                 // Afficher un message de succès
-                                showMessage('Données utilisateur chargées avec succès!', 'success');
+                                showMessage('Données utilisateur chargées avec succès! Zone: ' + data.zone, 'success');
                             } else {
                                 console.error('Erreur:', data.message);
                                 // Réinitialiser les champs en cas d'erreur
@@ -308,10 +357,11 @@
 
         // Fonctions utilitaires
         function resetFieldStyles() {
-            [codeAgtInput, nomInput, dateInput, heureInput].forEach(field => {
+            [codeAgtInput, nomInput, dateInput, heureInput, userZoneInput, zoneSelect].forEach(field => {
                 if (field) {
                     field.style.backgroundColor = '';
                     field.style.color = '';
+                    field.style.borderColor = '';
                 }
             });
         }
@@ -321,15 +371,17 @@
                 if (field) {
                     field.style.backgroundColor = '#d4edda';
                     field.style.color = '#155724';
+                    field.style.borderColor = '#28a745';
                 }
             });
         }
 
         function setErrorStyles() {
-            [codeAgtInput, nomInput, dateInput, heureInput].forEach(field => {
+            [codeAgtInput, nomInput, dateInput, heureInput, userZoneInput, zoneSelect].forEach(field => {
                 if (field) {
                     field.style.backgroundColor = '#f8d7da';
                     field.style.color = '#721c24';
+                    field.style.borderColor = '#dc3545';
                 }
             });
         }
@@ -337,6 +389,15 @@
         function clearFields() {
             codeAgtInput.value = '';
             nomInput.value = '';
+
+            if (userZoneInput) {
+                userZoneInput.value = '';
+            }
+
+            if (zoneSelect) {
+                zoneSelect.innerHTML = '<option value="">Sélectionnez d\'abord un agent</option>';
+            }
+
             // Remettre la date et l'heure actuelles
             if (dateInput) {
                 const today = new Date();
@@ -377,4 +438,46 @@
         }
     });
 </script>
+
+<style>
+    .form-section {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #f8f9fa;
+    }
+
+    .form-section h6 {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+
+    .action-section {
+        border: 1px solid #d4edda;
+        border-radius: 8px;
+        padding: 20px;
+        background-color: #f8fff9;
+    }
+
+    .action-section h6 {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #28a745;
+    }
+
+    #userZone {
+        background-color: #f8f9fa;
+        font-weight: 500;
+    }
+
+    .zone-indicator {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+</style>
 {% endblock %}

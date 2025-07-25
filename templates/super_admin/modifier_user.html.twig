@@ -1,0 +1,262 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Utilisateur - Super Admin{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-edit text-warning"></i> Modifier l'Utilisateur
+<small class="text-muted">{{ user.fullName }} ({{ user.codeAgent }})</small>
+{% endblock %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Informations actuelles -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-info-circle"></i> Informations Actuelles
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Nom complet :</strong> {{ user.fullName }}</p>
+                        <p><strong>Email :</strong> {{ user.email }}</p>
+                        <p><strong>Code Agent :</strong>
+                            <span class="badge bg-secondary">{{ user.codeAgent }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Zone :</strong>
+                            <span class="badge {{ user.zone == 'SIMTIS' ? 'bg-info' : 'bg-purple' }}">
+                                {{ user.zone }}
+                            </span>
+                        </p>
+                        <p><strong>Rôle actuel :</strong>
+                            {% if 'ROLE_SUPER_ADMIN' in user.roles %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-crown"></i> Super Administrateur
+                            </span>
+                            {% elseif 'ROLE_ADMIN' in user.roles %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-user-shield"></i> Administrateur
+                            </span>
+                            {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-user"></i> Utilisateur
+                            </span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Créé le :</strong> {{ user.dateCreation|date('d/m/Y à H:i') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de modification -->
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-edit"></i> Formulaire de Modification
+                </h6>
+                <a href="{{ path('app_super_admin_users') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+            </div>
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+
+                <div class="row">
+                    <!-- Informations personnelles -->
+                    <div class="col-md-6">
+                        <div class="form-section mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-user"></i> Informations Personnelles
+                            </h6>
+
+                            <div class="mb-3">
+                                {{ form_label(form.nom, 'Nom', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.nom) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.prenom, 'Prénom', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.prenom, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.prenom) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.email, 'Email', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.email) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations professionnelles -->
+                    <div class="col-md-6">
+                        <div class="form-section mb-4">
+                            <h6 class="text-primary mb-3">
+                                <i class="fas fa-building"></i> Informations Professionnelles
+                            </h6>
+
+                            <div class="mb-3">
+                                {{ form_label(form.codeAgent, 'Code Agent', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.codeAgent, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.codeAgent) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.zone, 'Zone', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.zone, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.zone) }}
+                            </div>
+
+                            {% if form.roles is defined %}
+                            <div class="mb-3">
+                                {{ form_label(form.roles, 'Rôles', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.roles, {'attr': {'class': 'form-select', 'multiple': true}}) }}
+                                {{ form_errors(form.roles) }}
+                                <div class="form-text">
+                                    <i class="fas fa-shield-alt"></i> Maintenez Ctrl (Cmd sur Mac) pour sélectionner
+                                    plusieurs rôles
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modification du mot de passe -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-lock"></i> Modification du Mot de Passe
+                        <small class="text-muted">(Optionnel)</small>
+                    </h6>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.plainPassword.first, 'Nouveau mot de passe', {'label_attr': {'class':
+                                'form-label'}}) }}
+                                {{ form_widget(form.plainPassword.first, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.plainPassword.first) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.plainPassword.second, 'Confirmer le nouveau mot de passe',
+                                {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.plainPassword.second, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.plainPassword.second) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note :</strong> Laissez vide pour conserver le mot de passe actuel.
+                        Si vous souhaitez le modifier, il doit contenir au moins 6 caractères.
+                    </div>
+                </div>
+
+                <!-- Avertissements -->
+                {% if user.id == app.user.id %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Attention :</strong> Vous modifiez votre propre compte.
+                    Soyez prudent avec les changements de rôles et de zone.
+                </div>
+                {% endif %}
+
+                {% if 'ROLE_SUPER_ADMIN' in user.roles and user.id != app.user.id %}
+                <div class="alert alert-danger">
+                    <i class="fas fa-crown"></i>
+                    <strong>Super Administrateur :</strong> Cet utilisateur a les privilèges Super Admin.
+                    Toute modification peut affecter la gestion du système.
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="action-section">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('app_super_admin_users') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Annuler
+                        </a>
+                        {{ form_widget(form.save, {'attr': {'class': 'btn btn-warning'}}) }}
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        <!-- Statistiques utilisateur -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-chart-bar"></i> Statistiques de l'Utilisateur
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <h4 class="text-primary">{{ user.rapportsHSE|length }}</h4>
+                        <small class="text-muted">Rapports HSE créés</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h4 class="text-success">{{ user.zone }}</h4>
+                        <small class="text-muted">Zone assignée</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <h4 class="text-info">
+                            {{ (date().diff(user.dateCreation).days) }}
+                        </h4>
+                        <small class="text-muted">Jours depuis création</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-purple {
+        background-color: #6610f2 !important;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Validation du formulaire
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+
+        // Validation en temps réel des mots de passe
+        const password1 = document.querySelector('#user_plainPassword_first');
+        const password2 = document.querySelector('#user_plainPassword_second');
+
+        if (password1 && password2) {
+            function validatePasswords() {
+                if (password1.value && password2.value && password1.value !== password2.value) {
+                    password2.setCustomValidity('Les mots de passe ne correspondent pas');
+                } else {
+                    password2.setCustomValidity('');
+                }
+            }
+
+            password1.addEventListener('input', validatePasswords);
+            password2.addEventListener('input', validatePasswords);
+        }
+    });
+</script>
+{% endblock %}

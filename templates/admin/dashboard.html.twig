@@ -5,255 +5,478 @@
 {% block page_title %}Administration - Dashboard{% endblock %}
 
 {% block body %}
-<!-- Statistiques -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h5 class="card-title">Total Utilisateurs</h5>
-                        <h2 class="mb-0">{{ total_users }}</h2>
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .dashboard-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .zone-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+    }
+
+    .zone-simtis {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+
+    .zone-tissage {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        color: white;
+    }
+
+    .zone-super {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        color: white;
+    }
+
+    .stat-card {
+        border-radius: 15px;
+        border: none;
+        overflow: hidden;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .action-btn {
+        border-radius: 10px;
+        border: 2px solid transparent;
+        transition: all 0.3s;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        border-color: currentColor;
+    }
+
+    .recent-reports {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .zone-filter {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- En-tête avec informations de zone -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                        Dashboard Administration
+                    </h1>
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Badge de zone utilisateur -->
+                        {% if app.user.zone == 'SIMTIS' %}
+                        <span class="zone-badge zone-simtis">
+                            <i class="fas fa-industry me-1"></i>Zone SIMTIS
+                        </span>
+                        {% elseif app.user.zone == 'SIMTIS TISSAGE' %}
+                        <span class="zone-badge zone-tissage">
+                            <i class="fas fa-cogs me-1"></i>Zone SIMTIS TISSAGE
+                        </span>
+                        {% endif %}
+
+                        <!-- Badge de rôle -->
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                        <span class="zone-badge zone-super">
+                            <i class="fas fa-crown me-1"></i>Super Administrateur
+                        </span>
+                        {% else %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-user-shield me-1"></i>Administrateur
+                        </span>
+                        {% endif %}
                     </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-users fa-2x"></i>
+                </div>
+                <div class="text-end">
+                    <div class="text-muted small">{{ "now"|date('d/m/Y H:i') }}</div>
+                    <div class="fw-bold">{{ app.user.nom }} {{ app.user.prenom }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques principales -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card bg-primary text-white dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title opacity-75 mb-1">Total Rapports</h5>
+                            <h2 class="mb-0 fw-bold">{{ total_rapports }}</h2>
+                            <small class="opacity-75">
+                                {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                Toutes zones confondues
+                                {% else %}
+                                Zone {{ user_zone }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-20">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card bg-warning text-white dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title opacity-75 mb-1">En Cours</h5>
+                            <h2 class="mb-0 fw-bold">{{ rapports_ouverts }}</h2>
+                            <small class="opacity-75">Rapports ouverts</small>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-20">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card bg-success text-white dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title opacity-75 mb-1">Clôturés</h5>
+                            <h2 class="mb-0 fw-bold">{{ rapports_clotures }}</h2>
+                            <small class="opacity-75">Rapports terminés</small>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-20">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card stat-card bg-info text-white dashboard-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title opacity-75 mb-1">Taux de Clôture</h5>
+                            <h2 class="mb-0 fw-bold">
+                                {% if total_rapports > 0 %}
+                                {{ ((rapports_clotures / total_rapports) * 100)|round }}%
+                                {% else %}
+                                0%
+                                {% endif %}
+                            </h2>
+                            <small class="opacity-75">Performance globale</small>
+                        </div>
+                        <div class="stat-icon bg-white bg-opacity-20">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h5 class="card-title">Total Rapports</h5>
-                        <h2 class="mb-0">{{ total_rapports }}</h2>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-file-alt fa-2x"></i>
+    <!-- Actions rapides -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-lightning-bolt text-warning me-2"></i>
+                        Actions Rapides
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Nouveau Rapport -->
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-success action-btn w-100">
+                                <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                <span class="fw-bold">Nouveau Rapport HSE</span>
+                            </a>
+                        </div>
+
+                        <!-- Voir tous les rapports -->
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-primary action-btn w-100">
+                                <i class="fas fa-list fa-2x mb-2"></i>
+                                <span class="fw-bold">Tous les Rapports</span>
+                            </a>
+                        </div>
+
+                        <!-- Gestion des utilisateurs (selon permissions) -->
+                        {% if is_granted('ROLE_ADMIN') %}
+                        <div class="col-lg-3 col-md-6">
+                            <a href="{{ path('app_admin_users') }}" class="btn btn-outline-info action-btn w-100">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <span class="fw-bold">
+                                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                    Tous les Utilisateurs
+                                    {% else %}
+                                    Utilisateurs {{ user_zone }}
+                                    {% endif %}
+                                </span>
+                            </a>
+                        </div>
+                        {% endif %}
+
+                        <!-- Export des données -->
+                        {% if is_granted('ROLE_ADMIN') %}
+                        <div class="col-lg-3 col-md-6">
+                            <div class="dropdown w-100">
+                                <button class="btn btn-outline-success action-btn w-100" type="button"
+                                    data-bs-toggle="dropdown">
+                                    <i class="fas fa-download fa-2x mb-2"></i>
+                                    <span class="fw-bold">Exporter Données</span>
+                                </button>
+                                <ul class="dropdown-menu w-100">
+                                    <li><a class="dropdown-item" href="{{ path('app_admin_export_excel') }}">
+                                            <i class="fas fa-file-excel text-success me-2"></i>Export Excel
+                                        </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_admin_export_pdf') }}">
+                                            <i class="fas fa-file-pdf text-danger me-2"></i>Export PDF
+                                        </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h5 class="card-title">En cours</h5>
-                        <h2 class="mb-0">{{ rapports_en_cours }}</h2>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-clock fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h5 class="card-title">Clôturés</h5>
-                        <h2 class="mb-0">{{ rapports_clotures }}</h2>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-check-circle fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Actions d'administration -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-cog"></i> Actions d'administration
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ path('app_admin_user_nouveau') }}" class="btn btn-primary btn-lg w-100">
-                            <i class="fas fa-user-plus"></i> Nouvel Utilisateur
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ path('app_admin_users') }}" class="btn btn-outline-primary btn-lg w-100">
-                            <i class="fas fa-users"></i> Gérer les Utilisateurs
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-success btn-lg w-100">
-                            <i class="fas fa-plus-circle"></i> Nouveau Rapport HSE
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-success btn-lg w-100">
-                            <i class="fas fa-list"></i> Tous les Rapports
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Derniers rapports -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-history"></i> Derniers rapports créés
-                </h5>
-                <a href="{{ path('app_admin_rapports') }}" class="btn btn-sm btn-outline-primary">
-                    Voir tout
-                </a>
-            </div>
-            <div class="card-body">
-                {% if derniers_rapports is empty %}
-                <div class="text-center py-4">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">Aucun rapport créé pour le moment.</p>
-                    <a href="{{ path('app_admin_get_user_by_code') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Créer le premier rapport
+    <!-- Rapports récents et informations zone -->
+    <div class="row g-4">
+        <!-- Rapports récents -->
+        <div class="col-lg-8">
+            <div class="card dashboard-card">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history text-info me-2"></i>
+                        Rapports Récents
+                        {% if not is_granted('ROLE_SUPER_ADMIN') %}
+                        - {{ user_zone }}
+                        {% endif %}
+                    </h5>
+                    <a href="{{ path('app_admin_rapports') }}" class="btn btn-sm btn-outline-primary">
+                        Voir tous <i class="fas fa-arrow-right ms-1"></i>
                     </a>
                 </div>
-                {% else %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Agent</th>
-                                <th>Date</th>
-                                <th>Heure</th>
-                                <th>Zone</th>
-                                <th>Description</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for rapport in derniers_rapports %}
-                            <tr>
-                                <td>
-                                    <strong>{{ rapport.codeAgt }}</strong><br>
-                                    <small class="text-muted">{{ rapport.nom }}</small>
-                                </td>
-                                <td>{{ rapport.date|date('d/m/Y') }}</td>
-                                <td>{{ rapport.heure|date('H:i') }}</td>
-                                <td>
-                                    {% if rapport.zone %}
-                                    <span class="badge bg-secondary">{{ rapport.zone }}</span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if rapport.descriptionAnomalie %}
-                                    <span class="text-truncate d-inline-block" style="max-width: 200px;"
-                                        title="{{ rapport.descriptionAnomalie }}">
-                                        {{ rapport.descriptionAnomalie }}
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if rapport.statut == 'En cours' %}
-                                    <span class="badge bg-warning">{{ rapport.statut }}</span>
-                                    {% else %}
-                                    <span class="badge bg-success">{{ rapport.statut }}</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ path('app_admin_rapport_detail', {'id': rapport.id}) }}"
-                                            class="btn btn-outline-primary" title="Voir détails">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ path('app_admin_rapport_modifier', {'id': rapport.id}) }}"
-                                            class="btn btn-outline-warning" title="Modifier">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Statistiques supplémentaires -->
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-pie"></i> Répartition par statut
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <div class="d-flex flex-column">
-                            <span class="fs-1 text-warning">{{ rapports_en_cours }}</span>
-                            <span class="text-muted">En cours</span>
+                <div class="card-body p-0">
+                    {% if rapports_recents is empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">Aucun rapport récent</h6>
+                        <p class="text-muted small">
+                            {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            Aucun rapport n'a été créé récemment dans le système.
+                            {% else %}
+                            Aucun rapport récent pour la zone {{ user_zone }}.
+                            {% endif %}
+                        </p>
+                        <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Créer un rapport
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="recent-reports">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0">Agent</th>
+                                        <th class="border-0">Zone Travail</th>
+                                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                        <th class="border-0">Zone Utilisateur</th>
+                                        {% endif %}
+                                        <th class="border-0">Date</th>
+                                        <th class="border-0">Statut</th>
+                                        <th class="border-0">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rapport in rapports_recents %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                                                    style="width: 35px; height: 35px; font-size: 0.8rem;">
+                                                    {{ rapport.codeAgt|slice(0, 2)|upper }}
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold small">{{ rapport.codeAgt }}</div>
+                                                    <div class="text-muted small">{{ rapport.nom }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if rapport.zone %}
+                                            <span class="badge bg-secondary small">{{ rapport.zone }}</span>
+                                            {% else %}
+                                            <span class="text-muted small">Non spécifiée</span>
+                                            {% endif %}
+                                        </td>
+                                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                        <td>
+                                            <span
+                                                class="badge {{ rapport.zoneUtilisateur == 'SIMTIS' ? 'bg-info' : 'bg-success' }} small">
+                                                {{ rapport.zoneUtilisateur }}
+                                            </span>
+                                        </td>
+                                        {% endif %}
+                                        <td class="small">{{ rapport.date|date('d/m/Y') }}</td>
+                                        <td>
+                                            {% if rapport.statut == 'En cours' %}
+                                            <span class="badge bg-warning small">
+                                                <i class="fas fa-clock me-1"></i>{{ rapport.statut }}
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-success small">
+                                                <i class="fas fa-check me-1"></i>{{ rapport.statut }}
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ path('app_admin_rapport_detail', {'id': rapport.id}) }}"
+                                                    class="btn btn-outline-primary btn-sm" title="Voir détails">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{{ path('app_admin_rapport_modifier', {'id': rapport.id}) }}"
+                                                    class="btn btn-outline-warning btn-sm" title="Modifier">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="col-6">
-                        <div class="d-flex flex-column">
-                            <span class="fs-1 text-success">{{ rapports_clotures }}</span>
-                            <span class="text-muted">Clôturés</span>
-                        </div>
-                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle"></i> Informations système
-                </h5>
+        <!-- Informations et statistiques -->
+        <div class="col-lg-4">
+            <!-- Informations de session -->
+            <div class="card dashboard-card mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Informations Session
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span class="text-muted">
+                                <i class="fas fa-user me-2"></i>Utilisateur
+                            </span>
+                            <span class="fw-bold">{{ app.user.nom }} {{ app.user.prenom }}</span>
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span class="text-muted">
+                                <i class="fas fa-map-marker-alt me-2"></i>Zone
+                            </span>
+                            <span class="badge {{ user_zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
+                                {{ user_zone }}
+                            </span>
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span class="text-muted">
+                                <i class="fas fa-shield-alt me-2"></i>Rôle
+                            </span>
+                            <span class="fw-bold">
+                                {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                Super Admin
+                                {% else %}
+                                Administrateur
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="d-flex justify-content-between align-items-center py-2">
+                            <span class="text-muted">
+                                <i class="fas fa-calendar me-2"></i>Aujourd'hui
+                            </span>
+                            <span class="fw-bold">{{ "now"|date('d/m/Y') }}</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div class="card-body">
-                <ul class="list-unstyled mb-0">
-                    <li class="mb-2">
-                        <i class="fas fa-calendar text-primary me-2"></i>
-                        <strong>Date du jour:</strong> {{ "now"|date('d/m/Y') }}
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-clock text-primary me-2"></i>
-                        <strong>Heure actuelle:</strong> {{ "now"|date('H:i') }}
-                    </li>
-                    <li class="mb-2">
-                        <i class="fas fa-user text-primary me-2"></i>
-                        <strong>Connecté en tant que:</strong> {{ app.user.nom }} {{ app.user.prenom }}
-                    </li>
-                    <li>
-                        <i class="fas fa-shield-alt text-primary me-2"></i>
-                        <strong>Rôle:</strong> Administrateur
-                    </li>
-                </ul>
+
+            <!-- Répartition par statut -->
+            <div class="card dashboard-card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie text-success me-2"></i>
+                        Répartition des Rapports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="bg-warning bg-opacity-10 rounded p-3">
+                                <div class="display-6 text-warning fw-bold">{{ rapports_ouverts }}</div>
+                                <div class="small text-muted">En cours</div>
+                                {% if total_rapports > 0 %}
+                                <div class="small text-warning">{{ ((rapports_ouverts / total_rapports) * 100)|round
+                                    }}%</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="bg-success bg-opacity-10 rounded p-3">
+                                <div class="display-6 text-success fw-bold">{{ rapports_clotures }}</div>
+                                <div class="small text-muted">Clôturés</div>
+                                {% if total_rapports > 0 %}
+                                <div class="small text-success">{{ ((rapports_clotures / total_rapports) *
+                                    100)|round }}%</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -11,6 +11,9 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-user-edit"></i> Modification de l'utilisateur : {{ user.nom }} {{ user.prenom }}
+                    <span class="badge {% if user.zone == 'SIMTIS' %}bg-info{% else %}bg-success{% endif %} ms-2">
+                        {{ user.zone }}
+                    </span>
                 </h5>
             </div>
             <div class="card-body">
@@ -54,35 +57,42 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            {{ form_label(form.plainPassword, 'Nouveau mot de passe', {'label_attr': {'class':
-                            'form-label'}}) }}
-                            {{ form_widget(form.plainPassword, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(form.plainPassword) }}
-                            <div class="form-text text-muted">
-                                <i class="fas fa-info-circle"></i> Laissez vide pour conserver le mot de passe actuel
+                            {{ form_label(form.zone, 'Zone', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.zone, {'attr': {'class': 'form-select'}}) }}
+                            {{ form_errors(form.zone) }}
+                            {% if form.zone.vars.help %}
+                            <div class="form-text text-warning">
+                                <i class="fas fa-info-circle"></i> {{ form.zone.vars.help }}
                             </div>
+                            {% endif %}
                         </div>
                     </div>
+                    {% if form.roles is defined %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_label(form.roles, 'Rôles', {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.roles, {'attr': {'class': 'form-select', 'multiple': 'multiple'}}) }}
+                            {{ form_errors(form.roles) }}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
 
-                <!-- Informations supplémentaires -->
                 <div class="row">
-                    <div class="col-12">
-                        <div class="alert alert-info">
-                            <h6><i class="fas fa-info-circle"></i> Informations supplémentaires</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <small><strong>Date de création :</strong> {{ user.dateCreation|date('d/m/Y')
-                                        }}</small><br>
-                                    <small><strong>Heure de création :</strong> {{ user.heureCreation|date('H:i')
-                                        }}</small>
-                                </div>
-                                <div class="col-md-6">
-                                    <small><strong>Nombre de rapports HSE :</strong> {{ user.rapportsHSE|length
-                                        }}</small><br>
-                                    <small><strong>Email actuel :</strong> {{ user.email }}</small>
-                                </div>
-                            </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_label(form.plainPassword.first, 'Nouveau mot de passe (optionnel)', {'label_attr':
+                            {'class': 'form-label'}}) }}
+                            {{ form_widget(form.plainPassword.first) }}
+                            {{ form_errors(form.plainPassword.first) }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_label(form.plainPassword.second, 'Confirmer le nouveau mot de passe', {'label_attr':
+                            {'class': 'form-label'}}) }}
+                            {{ form_widget(form.plainPassword.second) }}
+                            {{ form_errors(form.plainPassword.second) }}
                         </div>
                     </div>
                 </div>
@@ -91,22 +101,7 @@
                     <a href="{{ path('app_admin_users') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Retour à la liste
                     </a>
-                    <div>
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-save"></i> Enregistrer les modifications
-                        </button>
-                        {% if user.rapportsHSE|length == 0 %}
-                        <a href="{{ path('app_admin_user_supprimer', {'id': user.id}) }}" class="btn btn-danger"
-                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
-                            <i class="fas fa-trash"></i> Supprimer
-                        </a>
-                        {% else %}
-                        <button type="button" class="btn btn-danger" disabled
-                            title="Impossible de supprimer : cet utilisateur a des rapports HSE associés">
-                            <i class="fas fa-trash"></i> Supprimer
-                        </button>
-                        {% endif %}
-                    </div>
+                    {{ form_widget(form.save) }}
                 </div>
 
                 {{ form_end(form) }}

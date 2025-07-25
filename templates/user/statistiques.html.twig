@@ -6,7 +6,36 @@
 
 {% block body %}
 <div class="container-fluid">
-    <!-- Statistiques principales -->
+    <!-- En-tête avec informations utilisateur -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">Mes statistiques HSE</h4>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-building"></i> Zone:
+                                <span class="badge {{ user_zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
+                                    {{ user_zone }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="btn-group">
+                            <a href="{{ path('app_user_rapport_nouveau') }}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Nouveau rapport
+                            </a>
+                            <a href="{{ path('app_user_rapports') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-list"></i> Mes rapports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques principales -->
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
@@ -19,7 +48,7 @@
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -68,18 +97,12 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Taux de Clôture
+                                Ce Mois
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {% if stats.total > 0 %}
-                                {{ ((stats.clotures / stats.total) * 100)|round(1) }}%
-                                {% else %}
-                                0%
-                                {% endif %}
-                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.ce_mois }}</div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                            <i class="fas fa-calendar-month fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
@@ -87,85 +110,31 @@
         </div>
     </div>
 
-    <!-- Statistiques période -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-calendar-alt"></i> Statistiques par Période
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-6">
-                            <div class="border-right">
-                                <h4 class="text-info">{{ stats.ce_mois }}</h4>
-                                <small class="text-muted">Ce mois</small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <h4 class="text-primary">{{ stats.cette_annee }}</h4>
-                            <small class="text-muted">Cette année</small>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="text-center">
-                        <p class="text-muted mb-0">
-                            <i class="fas fa-chart-line"></i>
-                            Moyenne mensuelle: {{ (stats.cette_annee / 12)|round(1) }} rapports
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-map-marker-alt"></i> Top 5 Zones
-                    </h6>
-                </div>
-                <div class="card-body">
-                    {% if rapports_par_zone %}
-                    <div class="list-group list-group-flush">
-                        {% for zone, count in rapports_par_zone|slice(0, 5) %}
-                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0">
-                            <span class="fw-bold">{{ zone }}</span>
-                            <span class="badge bg-primary rounded-pill">{{ count }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="text-center py-3">
-                        <i class="fas fa-map-marker-alt fa-2x text-gray-300"></i>
-                        <p class="text-muted mt-2">Aucune zone renseignée</p>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Graphiques -->
     <div class="row">
-        <!-- Évolution mensuelle -->
-        <div class="col-lg-8">
+        <!-- Graphique évolution mensuelle -->
+        <div class="col-xl-8 col-lg-7">
             <div class="card shadow mb-4">
-                <div class="card-header py-3">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                     <h6 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-chart-line"></i> Évolution Mensuelle (12 derniers mois)
                     </h6>
                 </div>
                 <div class="card-body">
-                    <canvas id="evolutionChart" width="400" height="200"></canvas>
+                    {% if evolution_mensuelle %}
+                    <canvas id="chartEvolution" width="100" height="40"></canvas>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucune donnée disponible</h5>
+                        <p class="text-muted">Créez votre premier rapport pour voir les statistiques.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
         <!-- Répartition par zone -->
-        <div class="col-lg-4">
+        <div class="col-xl-4 col-lg-5">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
@@ -174,11 +143,20 @@
                 </div>
                 <div class="card-body">
                     {% if rapports_par_zone %}
-                    <canvas id="zoneChart" width="400" height="400"></canvas>
+                    <canvas id="chartZones" width="100" height="100"></canvas>
+                    <div class="mt-4">
+                        {% for zone, nombre in rapports_par_zone %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small font-weight-bold">{{ zone }}</span>
+                            <span class="badge bg-primary">{{ nombre }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% else %}
                     <div class="text-center py-4">
-                        <i class="fas fa-chart-pie fa-3x text-gray-300"></i>
-                        <p class="text-muted mt-3">Aucune donnée disponible</p>
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">Aucune donnée disponible</h6>
+                        <p class="small text-muted">Créez des rapports pour voir la répartition par zone.</p>
                     </div>
                     {% endif %}
                 </div>
@@ -186,86 +164,59 @@
         </div>
     </div>
 
-    <!-- Tableau détaillé des zones -->
-    {% if rapports_par_zone %}
+    <!-- Statistiques détaillées -->
     <div class="row">
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-table"></i> Détail par Zone
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Zone</th>
-                                    <th>Nombre de rapports</th>
-                                    <th>Pourcentage</th>
-                                    <th>Progression</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for zone, count in rapports_par_zone %}
-                                <tr>
-                                    <td><strong>{{ zone }}</strong></td>
-                                    <td>{{ count }}</td>
-                                    <td>
-                                        {% set percentage = (count / stats.total * 100)|round(1) %}
-                                        {{ percentage }}%
-                                    </td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar bg-primary" role="progressbar"
-                                                style="width: {{ percentage }}%" aria-valuenow="{{ percentage }}"
-                                                aria-valuemin="0" aria-valuemax="100">
-                                                {{ percentage }}%
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Actions rapides -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-rocket"></i> Actions Rapides
+                        <i class="fas fa-info-circle"></i> Informations Détaillées
                     </h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-3">
-                            <a href="{{ path('app_user_rapports') }}" class="btn btn-primary btn-block">
-                                <i class="fas fa-list"></i> Voir mes rapports
-                            </a>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">
+                                <i class="fas fa-building"></i> Votre Zone de Travail
+                            </h6>
+                            <p class="mb-3">
+                                Vous travaillez dans la zone <strong>{{ user_zone }}</strong> et pouvez créer des
+                                rapports
+                                pour les emplacements de cette division.
+                            </p>
+
+                            <h6 class="text-primary">
+                                <i class="fas fa-calendar-alt"></i> Performance Mensuelle
+                            </h6>
+                            <p class="mb-0">
+                                Ce mois-ci : <strong>{{ stats.ce_mois }}</strong> rapport(s)<br>
+                                Cette année : <strong>{{ stats.cette_annee }}</strong> rapport(s)
+                            </p>
                         </div>
-                        <div class="col-md-3">
-                            <a href="{{ path('app_user_dashboard') }}" class="btn btn-outline-primary btn-block">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{{ path('app_user_profil') }}" class="btn btn-outline-secondary btn-block">
-                                <i class="fas fa-user-cog"></i> Mon profil
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <button onclick="window.print()" class="btn btn-outline-info btn-block">
-                                <i class="fas fa-print"></i> Imprimer
-                            </button>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">
+                                <i class="fas fa-chart-bar"></i> Taux de Clôture
+                            </h6>
+                            {% set taux_cloture = stats.total > 0 ? (stats.clotures / stats.total * 100)|round(1) : 0 %}
+                            <div class="progress mb-3">
+                                <div class="progress-bar bg-success" role="progressbar"
+                                    style="width: {{ taux_cloture }}%" aria-valuenow="{{ taux_cloture }}"
+                                    aria-valuemin="0" aria-valuemax="100">
+                                    {{ taux_cloture }}%
+                                </div>
+                            </div>
+
+                            <h6 class="text-primary">
+                                <i class="fas fa-cogs"></i> Actions Rapides
+                            </h6>
+                            <div class="btn-group-vertical w-100">
+                                <a href="{{ path('app_user_rapport_nouveau') }}" class="btn btn-sm btn-primary mb-1">
+                                    <i class="fas fa-plus"></i> Nouveau Rapport
+                                </a>
+                                <a href="{{ path('app_user_rapports') }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-list"></i> Voir Mes Rapports
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -275,69 +226,66 @@
 </div>
 
 <style>
-    .border-right {
-        border-right: 1px solid #dee2e6;
+    .border-left-primary {
+        border-left: 0.25rem solid #4e73df !important;
     }
 
-    .list-group-item {
-        background-color: transparent;
+    .border-left-success {
+        border-left: 0.25rem solid #1cc88a !important;
+    }
+
+    .border-left-info {
+        border-left: 0.25rem solid #36b9cc !important;
+    }
+
+    .border-left-warning {
+        border-left: 0.25rem solid #f6c23e !important;
+    }
+
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+
+    .card {
+        border-radius: 10px;
     }
 
     .progress {
-        background-color: #e9ecef;
-    }
-
-    .card-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    @media print {
-
-        .sidebar,
-        .btn,
-        .card-header .btn {
-            display: none !important;
-        }
-
-        .main-content {
-            margin-left: 0 !important;
-            width: 100% !important;
-        }
+        height: 20px;
+        border-radius: 10px;
     }
 </style>
+{% endblock %}
 
-<!-- Chart.js -->
+{% block javascripts %}
+{{ parent() }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Graphique d'évolution mensuelle
-        const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
-        const evolutionChart = new Chart(evolutionCtx, {
-            type: 'line',
-            data: {
-                labels: [
-                    {% for mois, count in evolution_mensuelle %}
-                '{{ mois|date('M Y') }}',
-            {% endfor %}
-            ],
+        // Graphique évolution mensuelle
+        {% if evolution_mensuelle %}
+        const ctxEvolution = document.getElementById('chartEvolution');
+        if (ctxEvolution) {
+            new Chart(ctxEvolution, {
+                type: 'line',
+                data: {
+                    labels: [{% for item in evolution_mensuelle %}'{{ item.mois }}'{% if not loop.last %}, {% endif %} {% endfor %}],
         datasets: [{
             label: 'Nombre de rapports',
-            data: [
-                {% for mois, count in evolution_mensuelle %}
-        {{ count }},
-        {% endfor %}
-    ],
-        borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        tension: 0.1,
-        fill: true
-            }]
-        },
-        options: {
+            data: [{% for item in evolution_mensuelle %}{{ item.nombre }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    borderColor: '#4e73df',
+        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+            tension: 0.3,
+                fill: true
+                }]
+            },
+    options: {
         responsive: true,
-        plugins: {
+            plugins: {
             legend: {
                 display: false
             }
@@ -345,54 +293,42 @@
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: {
+                    ticks: {
                     stepSize: 1
                 }
             }
         }
     }
-    });
+        });
+    }
+    {% endif %}
 
     // Graphique répartition par zone
     {% if rapports_par_zone %}
-    const zoneCtx = document.getElementById('zoneChart').getContext('2d');
-    const zoneChart = new Chart(zoneCtx, {
-        type: 'doughnut',
-        data: {
-            labels: [
-                {% for zone, count in rapports_par_zone| slice(0, 10) %}
-                '{{ zone }}',
-        {% endfor %}
-            ],
+    const ctxZones = document.getElementById('chartZones');
+    if (ctxZones) {
+        new Chart(ctxZones, {
+            type: 'doughnut',
+            data: {
+                labels: [{% for zone, nombre in rapports_par_zone %}'{{ zone }}'{% if not loop.last %}, {% endif %} {% endfor %}],
     datasets: [{
-        data: [
-            {% for zone, count in rapports_par_zone| slice(0, 10) %}
-    {{ count }},
-    {% endfor %}
-    ],
-        backgroundColor: [
-            '#FF6384',
-            '#36A2EB',
-            '#FFCE56',
-            '#4BC0C0',
-            '#9966FF',
-            '#FF9F40',
-            '#FF6384',
-            '#C9CBCF',
-            '#4BC0C0',
-            '#FF6384'
-        ]
-            }]
-        },
+        data: [{% for zone, nombre in rapports_par_zone %}{{ nombre }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+        '#6f42c1', '#20c9a6', '#fd7e14', '#e83e8c', '#6c757d'
+    ]
+                }]
+            },
     options: {
         responsive: true,
             plugins: {
             legend: {
-                position: 'bottom'
+                display: false
             }
         }
     }
-    });
+        });
+    }
     {% endif %}
 });
 </script>

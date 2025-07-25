@@ -25,12 +25,13 @@ class UserController extends AbstractController
     #[Route('/', name: 'app_user_dashboard')]
     public function dashboard(RapportHSERepository $rapportHSERepository): Response
     {
+        /** @var User $user */
         $user = $this->getUser();
 
         // Statistiques de l'utilisateur
         $totalRapports = $rapportHSERepository->count(['user' => $user]);
-        $rapportsEnCours = $rapportHSERepository->count(['user' => $user, 'statut' => 'En cours']);
-        $rapportsClotures = $rapportHSERepository->count(['user' => $user, 'statut' => 'Clôturé']);
+        $rapportsEnCours = $rapportHSERepository->count(['user' => $user, 'statut' => RapportHSE::STATUT_EN_COURS]);
+        $rapportsClotures = $rapportHSERepository->count(['user' => $user, 'statut' => RapportHSE::STATUT_CLOTURE]);
 
         // Derniers rapports de l'utilisateur
         $derniers_rapports = $rapportHSERepository->findBy(
@@ -59,9 +60,7 @@ class UserController extends AbstractController
         UserPasswordHasherInterface $userPasswordHasher
     ): Response {
 
-        /** 
-         * @var User $user
-         */
+        /** @var User $user */
         $user = $this->getUser();
         if (!$user) {
             throw $this->createAccessDeniedException('Vous devez être connecté pour accéder à cette page.');
@@ -94,19 +93,27 @@ class UserController extends AbstractController
     #[Route('/rapports', name: 'app_user_rapports')]
     public function mesRapports(RapportHSERepository $rapportHSERepository, Request $request): Response
     {
+        /** @var User $user */
         $user = $this->getUser();
+
+        // Vérifier que l'utilisateur est bien connecté
+        if (!$user) {
+            throw $this->createAccessDeniedException('Vous devez être connecté pour accéder à cette page.');
+        }
+
         $page = $request->query->getInt('page', 1);
         $limit = 10;
 
-        // Paramètres de recherche pour l'utilisateur connecté
+        // Paramètres de recherche pour l'utilisateur connecté UNIQUEMENT
         $searchParams = [
-            'user' => $user,
+            'user' => $user, // Ceci garantit qu'on ne récupère que les rapports de cet utilisateur
             'zone' => $request->query->get('zone', ''),
             'dateDebut' => $request->query->get('dateDebut', ''),
             'dateFin' => $request->query->get('dateFin', ''),
             'statut' => $request->query->get('statut', ''),
         ];
 
+        // Récupérer UNIQUEMENT les rapports de l'utilisateur connecté
         $rapports = $rapportHSERepository->searchRapportsForUser(
             $searchParams,
             $limit,
@@ -116,19 +123,36 @@ class UserController extends AbstractController
         $totalRapports = $rapportHSERepository->countSearchRapportsForUser($searchParams);
         $totalPages = ceil($totalRapports / $limit);
 
+        // Obtenir les zones disponibles pour le filtre selon la zone de l'utilisateur
+        $zonesDisponibles = RapportHSE::getZonesForUserZone($user->getZone());
+
+        // Debug : vérifier que tous les rapports appartiennent bien à l'utilisateur connecté
+        foreach ($rapports as $rapport) {
+            if ($rapport->getUser()->getId() !== $user->getId()) {
+                throw new \Exception('Erreur de sécurité : un rapport d\'un autre utilisateur a été trouvé !');
+            }
+        }
+
         return $this->render('user/rapports.html.twig', [
             'rapports' => $rapports,
             'current_page' => $page,
             'total_pages' => $totalPages,
             'search_params' => $searchParams,
+            'zones_disponibles' => $zonesDisponibles,
+            'user_zone' => $user->getZone(),
+            'user' => $user,
+            'debug_user_id' => $user->getId(), // Pour debug dans le template
         ]);
     }
 
     #[Route('/rapport/{id}', name: 'app_user_rapport_detail', requirements: ['id' => '\d+'])]
     public function detailRapport(RapportHSE $rapport): Response
     {
+        /** @var User $user */
+        $user = $this->getUser();
+
         // Vérifier que le rapport appartient à l'utilisateur connecté
-        if ($rapport->getUser() !== $this->getUser()) {
+        if ($rapport->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous n\'avez pas accès à ce rapport.');
         }
 
@@ -144,13 +168,16 @@ class UserController extends AbstractController
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger
     ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
         // Vérifier que le rapport appartient à l'utilisateur connecté
-        if ($rapport->getUser() !== $this->getUser()) {
+        if ($rapport->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous n\'avez pas accès à ce rapport.');
         }
 
         // Vérifier que le rapport peut être modifié (pas encore clôturé)
-        if ($rapport->getStatut() === 'Clôturé') {
+        if ($rapport->getStatut() === RapportHSE::STATUT_CLOTURE) {
             $this->addFlash('error', 'Ce rapport est déjà clôturé et ne peut plus être modifié.');
             return $this->redirectToRoute('app_user_rapport_detail', ['id' => $rapport->getId()]);
         }
@@ -159,7 +186,6 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            dd('Le site est en maintenance, veuillez réessayer plus tard.');
             // Gérer l'upload de la photo du constat
             $photoConstatFile = $form->get('photoConstatFile')->getData();
             if ($photoConstatFile) {
@@ -214,9 +240,9 @@ class UserController extends AbstractController
 
             // Définir le statut en fonction de l'action clôturée
             if ($rapport->getActionCloturee() === 'oui') {
-                $rapport->setStatut('Clôturé');
+                $rapport->setStatut(RapportHSE::STATUT_CLOTURE);
             } else {
-                $rapport->setStatut('En cours');
+                $rapport->setStatut(RapportHSE::STATUT_EN_COURS);
             }
 
             $entityManager->flush();
@@ -234,27 +260,33 @@ class UserController extends AbstractController
     #[Route('/statistiques', name: 'app_user_statistiques')]
     public function statistiques(RapportHSERepository $rapportHSERepository): Response
     {
+        /** @var User $user */
         $user = $this->getUser();
 
         // Statistiques détaillées
         $stats = [
             'total' => $rapportHSERepository->count(['user' => $user]),
-            'en_cours' => $rapportHSERepository->count(['user' => $user, 'statut' => 'En cours']),
-            'clotures' => $rapportHSERepository->count(['user' => $user, 'statut' => 'Clôturé']),
+            'en_cours' => $rapportHSERepository->count(['user' => $user, 'statut' => RapportHSE::STATUT_EN_COURS]),
+            'clotures' => $rapportHSERepository->count(['user' => $user, 'statut' => RapportHSE::STATUT_CLOTURE]),
             'ce_mois' => $rapportHSERepository->getRapportsCeMoisPourUtilisateur($user),
             'cette_annee' => $rapportHSERepository->getRapportsCetteAnneePourUtilisateur($user),
         ];
 
-        // Rapports par zone
+        // Rapports par zone de travail (selon la zone de l'utilisateur)
         $rapportsParZone = $rapportHSERepository->getRapportsParZonePourUtilisateur($user);
 
         // Évolution mensuelle (12 derniers mois)
         $evolutionMensuelle = $rapportHSERepository->getRapportsParMoisPourUtilisateur($user, 12);
 
+        // Obtenir les zones disponibles pour l'utilisateur
+        $zonesDisponibles = RapportHSE::getZonesForUserZone($user->getZone());
+
         return $this->render('user/statistiques.html.twig', [
             'stats' => $stats,
             'rapports_par_zone' => $rapportsParZone,
             'evolution_mensuelle' => $evolutionMensuelle,
+            'zones_disponibles' => $zonesDisponibles,
+            'user_zone' => $user->getZone(),
         ]);
     }
 
@@ -279,12 +311,12 @@ class UserController extends AbstractController
         $rapport->setNom($user->getNom() . ' ' . $user->getPrenom());
         $rapport->setDate(new \DateTime());
         $rapport->setHeure(new \DateTime());
+        // La zone utilisateur sera automatiquement définie par le setter setUser() dans RapportHSE
 
         $form = $this->createForm(UserRapportHSEType::class, $rapport);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            dd('Le site est en maintenance, veuillez réessayer plus tard.');
             // Gérer l'upload de la photo du constat
             $photoConstatFile = $form->get('photoConstatFile')->getData();
             if ($photoConstatFile) {
@@ -323,9 +355,9 @@ class UserController extends AbstractController
 
             // Définir le statut en fonction de l'action clôturée
             if ($rapport->getActionCloturee() === 'oui') {
-                $rapport->setStatut('Clôturé');
+                $rapport->setStatut(RapportHSE::STATUT_CLOTURE);
             } else {
-                $rapport->setStatut('En cours');
+                $rapport->setStatut(RapportHSE::STATUT_EN_COURS);
             }
 
             $entityManager->persist($rapport);
@@ -335,21 +367,55 @@ class UserController extends AbstractController
             return $this->redirectToRoute('app_user_rapports');
         }
 
+        // Obtenir les zones disponibles pour l'aide dans le template
+        $zonesDisponibles = RapportHSE::getZonesForUserZone($user->getZone());
+
         return $this->render('user/nouveau_rapport.html.twig', [
             'form' => $form,
             'user' => $user,
+            'zones_disponibles' => $zonesDisponibles,
+            'user_zone' => $user->getZone(),
         ]);
     }
 
-    #[Route('/user/rapports/export', name: 'app_user_rapports_export')]
+    #[Route('/rapports/export', name: 'app_user_rapports_export')]
     public function exportMesRapports(
         RapportHSERepository $rapportRepository,
         ExcelExportService $excelExportService
     ): Response {
-        // Récupérer seulement les rapports de l'utilisateur connecté
+        /** @var User $user */
         $user = $this->getUser();
+
+        // Récupérer seulement les rapports de l'utilisateur connecté
         $rapports = $rapportRepository->findBy(['user' => $user]);
 
-        return $excelExportService->exportRapportsHSE($rapports, 'Mes Rapports HSE');
+        $filename = sprintf(
+            'Mes_Rapports_HSE_%s_%s',
+            $user->getZone(),
+            date('Y-m-d')
+        );
+
+        return $excelExportService->exportRapportsHSE($rapports, $filename);
+    }
+
+    /**
+     * Route pour obtenir les zones disponibles via AJAX (si nécessaire)
+     */
+    #[Route('/zones-disponibles', name: 'app_user_zones_disponibles', methods: ['GET'])]
+    public function getZonesDisponibles(): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->json(['error' => 'Utilisateur non connecté'], 401);
+        }
+
+        $zones = RapportHSE::getZonesForUserZone($user->getZone());
+
+        return $this->json([
+            'zones' => $zones,
+            'user_zone' => $user->getZone()
+        ]);
     }
 }

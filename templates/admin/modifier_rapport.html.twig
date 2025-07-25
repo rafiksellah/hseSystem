@@ -7,6 +7,33 @@
 {% block body %}
 <div class="row justify-content-center">
     <div class="col-md-10">
+        <!-- Affichage des informations de permission -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-0">
+                            <i class="fas fa-shield-alt text-info"></i> Permissions d'accès
+                        </h6>
+                        <small class="text-muted">
+                            {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                            <span class="badge bg-danger">SUPER ADMIN</span> - Accès complet à tous les rapports
+                            {% elseif 'ROLE_ADMIN' in app.user.roles %}
+                            <span class="badge bg-warning">ADMIN {{ app.user.zone }}</span> - Accès aux rapports de
+                            votre zone uniquement
+                            {% else %}
+                            <span class="badge bg-success">UTILISATEUR</span> - Accès à vos propres rapports
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-info">Zone du rapport: {{ rapport.zoneUtilisateur ?? 'Non définie'
+                            }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
@@ -16,30 +43,71 @@
             <div class="card-body">
                 {{ form_start(form) }}
 
-                <!-- Section 1: Informations de base -->
+                <!-- Section 1: Sélection de l'agent -->
                 <div class="form-section mb-4">
                     <h6 class="text-primary mb-3">
                         <i class="fas fa-user"></i> Informations de l'agent
                     </h6>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.user, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.user) }}
+                                {{ form_errors(form.user) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Changer l'agent mettra à jour automatiquement les
+                                    informations
+                                    {% if 'ROLE_SUPER_ADMIN' not in app.user.roles %}
+                                    <br><small class="text-muted">
+                                        <i class="fas fa-shield-alt"></i> Vous ne voyez que les utilisateurs de votre
+                                        zone : {{ app.user.zone }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Zone de l'agent</label>
+                                <input type="text" class="form-control" id="userZone" readonly
+                                    value="{{ rapport.user ? rapport.user.zone : '' }}"
+                                    placeholder="Zone de l'agent sélectionné">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Zone automatique basée sur l'agent sélectionné
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Informations automatiques -->
+                <div class="form-section mb-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-info-circle"></i> Informations automatiques
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 {{ form_label(form.codeAgt, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.codeAgt) }}
                                 {{ form_errors(form.codeAgt) }}
-                                <div class="form-text">
-                                    <i class="fas fa-info-circle"></i> Le nom sera automatiquement rempli
-                                </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form_label(form.nom, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nom) }}
+                                {{ form_errors(form.nom) }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 {{ form_label(form.date, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.date) }}
                                 {{ form_errors(form.date) }}
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="mb-3">
                                 {{ form_label(form.heure, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.heure) }}
@@ -49,7 +117,7 @@
                     </div>
                 </div>
 
-                <!-- Section 2: Localisation -->
+                <!-- Section 3: Localisation -->
                 <div class="form-section mb-4">
                     <h6 class="text-primary mb-3">
                         <i class="fas fa-map-marker-alt"></i> Localisation
@@ -60,6 +128,15 @@
                                 {{ form_label(form.zone, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.zone) }}
                                 {{ form_errors(form.zone) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Les zones disponibles dépendent de l'agent
+                                    sélectionné
+                                    {% if rapport.user %}
+                                    <br><small class="text-info">
+                                        <i class="fas fa-user"></i> Agent actuel: {{ rapport.user.zone }}
+                                    </small>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -72,7 +149,7 @@
                     </div>
                 </div>
 
-                <!-- Section 3: Description de l'anomalie -->
+                <!-- Section 4: Description de l'anomalie -->
                 <div class="form-section mb-4">
                     <h6 class="text-primary mb-3">
                         <i class="fas fa-exclamation-triangle"></i> Description de l'anomalie
@@ -125,7 +202,7 @@
                     </div>
                 </div>
 
-                <!-- Section 4: Action de clôture -->
+                <!-- Section 5: Action de clôture -->
                 <div class="action-section">
                     <h6 class="text-success mb-3">
                         <i class="fas fa-check-circle"></i> Action de clôture
@@ -193,7 +270,13 @@
     document.addEventListener('DOMContentLoaded', function () {
         const actionClotureeSelect = document.getElementById('rapport_hse_actionCloturee');
         const actionFields = document.getElementById('action-fields');
+        const userSelect = document.getElementById('rapport_hse_user');
+        const codeAgtInput = document.getElementById('rapport_hse_codeAgt');
+        const nomInput = document.getElementById('rapport_hse_nom');
+        const userZoneInput = document.getElementById('userZone');
+        const zoneSelect = document.getElementById('rapport_hse_zone');
 
+        // Fonction pour gérer les champs d'action
         if (actionClotureeSelect && actionFields) {
             function toggleActionFields() {
                 if (actionClotureeSelect.value === 'oui') {
@@ -205,6 +288,151 @@
 
             actionClotureeSelect.addEventListener('change', toggleActionFields);
             toggleActionFields(); // Initialiser au chargement
+        }
+
+        // Fonction pour remplir automatiquement les champs quand on change d'utilisateur
+        if (userSelect && codeAgtInput && nomInput) {
+            userSelect.addEventListener('change', function () {
+                const selectedValue = this.value;
+                console.log('Nouvel utilisateur sélectionné:', selectedValue);
+
+                if (selectedValue) {
+                    // Réinitialiser les styles
+                    resetFieldStyles();
+
+                    // Utiliser une requête AJAX pour récupérer les données utilisateur
+                    fetch('{{ path("app_admin_get_user_data") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            userId: selectedValue
+                        })
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Erreur réseau: ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Données reçues:', data);
+
+                            if (data.success) {
+                                // Remplir les champs
+                                codeAgtInput.value = data.codeAgent || '';
+                                nomInput.value = data.nomComplet || '';
+
+                                // Afficher la zone de l'utilisateur
+                                if (userZoneInput) {
+                                    userZoneInput.value = data.zone || '';
+                                    userZoneInput.style.backgroundColor = '#e7f3ff';
+                                    userZoneInput.style.borderColor = '#0066cc';
+                                }
+
+                                // Mettre à jour les options de zones
+                                if (zoneSelect && data.zones) {
+                                    // Sauvegarder la valeur actuelle
+                                    const currentZoneValue = zoneSelect.value;
+
+                                    // Vider d'abord le select
+                                    zoneSelect.innerHTML = '<option value="">Sélectionnez une zone</option>';
+
+                                    // Ajouter les nouvelles options
+                                    Object.entries(data.zones).forEach(([key, value]) => {
+                                        const option = document.createElement('option');
+                                        option.value = key;
+                                        option.textContent = value;
+                                        zoneSelect.appendChild(option);
+                                    });
+
+                                    // Restaurer la valeur si elle existe toujours
+                                    if (currentZoneValue && data.zones[currentZoneValue]) {
+                                        zoneSelect.value = currentZoneValue;
+                                    }
+
+                                    // Style pour indiquer que les zones ont été mises à jour
+                                    zoneSelect.style.backgroundColor = '#e7f3ff';
+                                    zoneSelect.style.borderColor = '#0066cc';
+                                }
+
+                                // Styles pour indiquer que les champs sont remplis
+                                setSuccessStyles();
+
+                                // Afficher un message de succès
+                                showMessage('Données utilisateur mises à jour! Zone: ' + data.zone, 'success');
+                            } else {
+                                console.error('Erreur:', data.message);
+                                setErrorStyles();
+                                showMessage('Erreur: ' + data.message, 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erreur AJAX:', error);
+                            setErrorStyles();
+                            showMessage('Erreur de connexion lors du chargement des données', 'error');
+                        });
+                }
+            });
+        }
+
+        // Fonctions utilitaires
+        function resetFieldStyles() {
+            [codeAgtInput, nomInput, userZoneInput, zoneSelect].forEach(field => {
+                if (field) {
+                    field.style.backgroundColor = '';
+                    field.style.color = '';
+                    field.style.borderColor = '';
+                }
+            });
+        }
+
+        function setSuccessStyles() {
+            [codeAgtInput, nomInput].forEach(field => {
+                if (field) {
+                    field.style.backgroundColor = '#d4edda';
+                    field.style.color = '#155724';
+                    field.style.borderColor = '#28a745';
+                }
+            });
+        }
+
+        function setErrorStyles() {
+            [codeAgtInput, nomInput, userZoneInput, zoneSelect].forEach(field => {
+                if (field) {
+                    field.style.backgroundColor = '#f8d7da';
+                    field.style.color = '#721c24';
+                    field.style.borderColor = '#dc3545';
+                }
+            });
+        }
+
+        // Fonction pour afficher des messages
+        function showMessage(message, type) {
+            // Supprimer les anciens messages
+            const oldMessages = document.querySelectorAll('.temp-message');
+            oldMessages.forEach(msg => msg.remove());
+
+            // Créer un nouveau message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show temp-message`;
+            alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+            // Insérer le message au début du card-body
+            const cardBody = document.querySelector('.card-body');
+            cardBody.insertBefore(alertDiv, cardBody.firstChild);
+
+            // Supprimer automatiquement après 5 secondes
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
         }
     });
 </script>
@@ -240,6 +468,26 @@
         border: 2px solid #dee2e6;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    #userZone {
+        background-color: #f8f9fa;
+        font-weight: 500;
+    }
+
+    .zone-indicator {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+
+    .permission-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
     }
 </style>
 {% endblock %}

@@ -1,0 +1,499 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques {{ zone_title }} - Admin{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-chart-bar text-{{ zone_color }}"></i> Statistiques Zone {{ zone_title }}
+<small class="text-muted">Analyse des performances de votre zone</small>
+{% endblock %}
+
+{% block body %}
+<!-- Alerte de restriction -->
+<div class="alert alert-info d-flex align-items-center mb-4" role="alert">
+    <i class="fas fa-info-circle me-2"></i>
+    <div>
+        <strong>Zone {{ zone_title }} :</strong> Ces statistiques concernent uniquement votre zone de responsabilité.
+        Vous gérez {{ stats.utilisateurs.total }} utilisateurs et {{ stats.rapports.total }} rapports HSE.
+    </div>
+</div>
+
+<!-- Vue d'ensemble -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Rapports HSE
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ stats.rapports.total }}
+                        </div>
+                        <small class="text-muted">Zone {{ zone_title }}</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Rapports Clôturés
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ stats.rapports.clotures }}
+                        </div>
+                        {% set taux_cloture = stats.rapports.total > 0 ? ((stats.rapports.clotures /
+                        stats.rapports.total) * 100)|round(1) : 0 %}
+                        <small class="text-success">{{ taux_cloture }}% de réussite</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Rapports En Cours
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ stats.rapports.en_cours }}
+                        </div>
+                        <small class="text-warning">À traiter</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Utilisateurs Actifs
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {{ stats.utilisateurs.actifs }}
+                        </div>
+                        <small class="text-muted">/ {{ stats.utilisateurs.total }} total</small>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Évolution des rapports -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-line"></i> Évolution des Rapports HSE (12 derniers mois)
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if stats.rapports_par_mois is empty %}
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-chart-line fa-3x mb-3"></i>
+                    <p>Données d'évolution en cours de collecte...</p>
+                    <small>Les graphiques s'afficheront une fois les données disponibles</small>
+                </div>
+                {% else %}
+                <div class="chart-container" style="position: relative; height: 300px;">
+                    <canvas id="evolutionRapportsChart"></canvas>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Répartition par statut -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-donut"></i> Répartition par Statut
+                </h6>
+            </div>
+            <div class="card-body d-flex flex-column">
+                {% if stats.rapports.total > 0 %}
+                <div class="chart-container mb-3" style="position: relative; height: 200px;">
+                    <canvas id="statutChart"></canvas>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-chart-donut fa-3x mb-3"></i>
+                    <p>Aucun rapport disponible</p>
+                </div>
+                {% endif %}
+
+                <div class="mt-auto">
+                    {% for statut, count in stats.rapports_par_statut %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge {{ statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }}">
+                            {{ statut }}
+                        </span>
+                        <span class="font-weight-bold">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+
+                    {% if stats.rapports.total > 0 %}
+                    <div class="mt-3 pt-3 border-top">
+                        <div class="text-center">
+                            <h5
+                                class="text-{{ taux_cloture >= 80 ? 'success' : (taux_cloture >= 60 ? 'warning' : 'danger') }} mb-1">
+                                {{ taux_cloture }}%
+                            </h5>
+                            <small class="text-muted">Taux de clôture</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top zones de travail et utilisateurs actifs -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-map-marker-alt"></i> Top Zones de Travail les Plus Actives
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if stats.top_zones_travail is not empty %}
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Zone de Travail</th>
+                                <th>Rapports</th>
+                                <th>Activité</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for zone_data in stats.top_zones_travail %}
+                            <tr>
+                                <td>
+                                    {% if loop.index <= 3 %} <span
+                                        class="badge {{ loop.index == 1 ? 'bg-warning' : (loop.index == 2 ? 'bg-secondary' : 'bg-dark') }}">
+                                        #{{ loop.index }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">#{{ loop.index }}</span>
+                                        {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ zone_data.zone }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ zone_data.total }}</span>
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary"
+                                            style="width: {{ (zone_data.total / stats.top_zones_travail[0].total * 100)|round }}%">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-map-marker-alt fa-3x mb-3"></i>
+                    <p>Aucune donnée de zone de travail disponible</p>
+                    <small>Les données apparaîtront après création de rapports HSE</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-trophy"></i> Top Utilisateurs les Plus Actifs
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if stats.top_utilisateurs is not empty %}
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Utilisateur</th>
+                                <th>Rapports</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user_data in stats.top_utilisateurs %}
+                            <tr>
+                                <td>
+                                    {% if loop.index <= 3 %} <span
+                                        class="badge {{ loop.index == 1 ? 'bg-warning' : (loop.index == 2 ? 'bg-secondary' : 'bg-dark') }}">
+                                        #{{ loop.index }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-muted">#{{ loop.index }}</span>
+                                        {% endif %}
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ user_data.prenom }} {{ user_data.nom }}</strong>
+                                        <br><small class="text-muted">{{ user_data.codeAgent }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ user_data.total_rapports }}</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-users fa-3x mb-3"></i>
+                    <p>Aucun utilisateur actif trouvé</p>
+                    <small>Les utilisateurs apparaîtront après création de rapports HSE</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gestion Utilisateurs -->
+<div class="row">
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-users-cog"></i> Gestion Utilisateurs - Zone {{ zone_title }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <h4 class="text-primary">{{ stats.utilisateurs.total }}</h4>
+                                <small class="text-muted">Total Utilisateurs</small>
+                            </div>
+                            <div class="col-3">
+                                <h4 class="text-success">{{ stats.utilisateurs.actifs }}</h4>
+                                <small class="text-muted">Actifs</small>
+                            </div>
+                            <div class="col-3">
+                                <h4 class="text-{{ zone_color }}">{{ stats.rapports.total }}</h4>
+                                <small class="text-muted">Rapports Créés</small>
+                            </div>
+                            <div class="col-3">
+                                <h4 class="text-warning">{{ stats.rapports.en_cours }}</h4>
+                                <small class="text-muted">En Attente</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h6 class="text-info mb-3">Utilisateurs Récents</h6>
+                        {% if stats.utilisateurs.recent is not empty %}
+                        {% for user in stats.utilisateurs.recent %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>{{ user.fullName }}</strong>
+                                <br><small class="text-muted">{{ user.codeAgent }}</small>
+                            </div>
+                            <small class="text-muted">{{ user.dateCreation|date('d/m/Y') }}</small>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <p class="text-muted text-center">Aucun utilisateur récent</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="card shadow">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-bolt"></i> Actions Rapides - Zone {{ zone_title }}
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 mb-2">
+                <a href="{{ path('app_admin_rapports') }}" class="btn btn-primary w-100">
+                    <i class="fas fa-clipboard-list"></i> Voir mes rapports
+                </a>
+            </div>
+            <div class="col-md-3 mb-2">
+                <a href="{{ path('app_admin_users') }}" class="btn btn-info w-100">
+                    <i class="fas fa-users"></i> Gérer utilisateurs
+                </a>
+            </div>
+            <div class="col-md-3 mb-2">
+                <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-success w-100">
+                    <i class="fas fa-plus"></i> Nouveau rapport
+                </a>
+            </div>
+            <div class="col-md-3 mb-2">
+                <a href="{{ path('app_admin_export_excel') }}" class="btn btn-warning w-100">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-purple {
+        background-color: #6610f2 !important;
+    }
+
+    .text-purple {
+        color: #6610f2 !important;
+    }
+
+    .chart-container {
+        position: relative;
+    }
+
+    .chart-container canvas {
+        max-height: 100% !important;
+        max-width: 100% !important;
+    }
+</style>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        };
+
+        // Couleur selon la zone
+        const zoneColor = '{{ zone_color }}' === 'info' ? '#17a2b8' : '#6610f2';
+
+        // Graphique évolution rapports (seulement si des données existent)
+        {% if stats.rapports_par_mois is not empty %}
+        const evolutionRapportsCtx = document.getElementById('evolutionRapportsChart').getContext('2d');
+        new Chart(evolutionRapportsCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for mois, count in stats.rapports_par_mois %}'{{ mois }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Rapports créés - {{ zone_title }}',
+            data: [{% for mois, count in stats.rapports_par_mois %}{{ count }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    borderColor: zoneColor,
+        backgroundColor: zoneColor + '20',
+            tension: 0.4,
+                fill: true,
+                    pointBackgroundColor: zoneColor,
+                        pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+            }]
+        },
+    options: {
+            ...commonOptions,
+            scales: {
+            y: {
+                beginAtZero: true,
+                    grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        }
+    }
+    });
+    {% endif %}
+
+    // Graphique répartition par statut (seulement s'il y a des rapports)
+    {% if stats.rapports.total > 0 %}
+    const statutCtx = document.getElementById('statutChart').getContext('2d');
+    new Chart(statutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for statut, count in stats.rapports_par_statut %}'{{ statut }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for statut, count in stats.rapports_par_statut %}{{ count }}{% if not loop.last %}, {% endif %} {% endfor %}],
+    backgroundColor: ['#28a745', '#ffc107'],
+        borderWidth: 2,
+            cutout: '60%'
+            }]
+        },
+    options: {
+        responsive: true,
+            maintainAspectRatio: false,
+                plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                        return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                    }
+                }
+            }
+        }
+    }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

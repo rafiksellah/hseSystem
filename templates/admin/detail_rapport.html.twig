@@ -5,22 +5,123 @@
 {% block page_title %}Détail du Rapport HSE #{{ rapport.id }}{% endblock %}
 
 {% block body %}
+<style>
+    .border-start {
+        border-left-width: 4px !important;
+    }
+
+    .permission-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+    }
+
+    .action-card {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .action-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .photo-hover {
+        transition: all 0.3s ease;
+    }
+
+    .photo-hover:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .zone-badge {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+    }
+
+    .zone-simtis {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+
+    .zone-tissage {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+        color: white;
+    }
+</style>
+
+<!-- Section permissions et statut -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <span class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }} fs-6">
+            <div class="d-flex align-items-center">
+                <span class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }} fs-6 me-3">
                     <i class="fas {{ rapport.statut == 'Clôturé' ? 'fa-check-circle' : 'fa-clock' }}"></i>
                     {{ rapport.statut }}
+                </span>
+                <span class="badge bg-info fs-6">
+                    <i class="fas fa-building"></i> Zone: {{ rapport.zoneUtilisateur ?? 'Non définie' }}
                 </span>
             </div>
             <div>
                 <a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-secondary me-2">
                     <i class="fas fa-arrow-left"></i> Retour à la liste
                 </a>
-                <a href="{{ path('app_admin_rapport_modifier', {id: rapport.id}) }}" class="btn btn-primary">
+                {% if rapport.canBeModifiedByUser(app.user) %}
+                <a href="{{ path('app_admin_rapport_modifier', {id: rapport.id}) }}" class="btn btn-primary me-2">
                     <i class="fas fa-edit"></i> Modifier
                 </a>
+                {% endif %}
+                {% if is_granted('ROLE_SUPER_ADMIN') %}
+                <a href="{{ path('app_admin_rapport_supprimer', {id: rapport.id}) }}" class="btn btn-danger"
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce rapport ?')">
+                    <i class="fas fa-trash"></i> Supprimer
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Affichage des permissions d'accès -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="mb-1">
+                            <i class="fas fa-shield-alt text-info"></i> Informations d'accès
+                        </h6>
+                        <small class="text-muted">
+                            {% if is_granted('ROLE_SUPER_ADMIN') %}
+                            <span class="badge bg-danger me-2">SUPER ADMIN</span>
+                            Accès complet - Vous pouvez voir et modifier tous les rapports
+                            {% elseif is_granted('ROLE_ADMIN') %}
+                            <span class="badge bg-warning me-2">ADMIN {{ app.user.zone }}</span>
+                            Accès zone - Vous pouvez voir les rapports de votre zone ({{ app.user.zone }})
+                            {% else %}
+                            <span class="badge bg-success me-2">UTILISATEUR</span>
+                            Accès personnel - Vous pouvez voir vos propres rapports
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="d-flex flex-column align-items-end">
+                            <span class="badge bg-secondary mb-1">
+                                <i class="fas fa-user"></i> Créé par: {{ rapport.user ? rapport.user.nom ~ ' ' ~
+                                rapport.user.prenom : 'Utilisateur supprimé' }}
+                            </span>
+                            {% if rapport.user %}
+                            <span class="badge bg-info">
+                                <i class="fas fa-building"></i> Zone agent: {{ rapport.user.zone }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -45,10 +146,10 @@
                             <dt class="col-sm-5">Heure :</dt>
                             <dd class="col-sm-7">{{ rapport.heure|date('H:i') }}</dd>
 
-                            <dt class="col-sm-5">Zone :</dt>
+                            <dt class="col-sm-5">Zone travail :</dt>
                             <dd class="col-sm-7">
                                 {% if rapport.zone %}
-                                <span class="badge bg-info">{{ rapport.zone }}</span>
+                                <span class="badge bg-primary">{{ rapport.zone }}</span>
                                 {% else %}
                                 <span class="text-muted">Non spécifiée</span>
                                 {% endif %}
@@ -64,7 +165,25 @@
                             <dd class="col-sm-6">{{ rapport.nom }}</dd>
 
                             <dt class="col-sm-6">Code AGT :</dt>
-                            <dd class="col-sm-6">{{ rapport.codeAgt }}</dd>
+                            <dd class="col-sm-6">
+                                <span class="badge bg-secondary">{{ rapport.codeAgt }}</span>
+                            </dd>
+
+                            <dt class="col-sm-6">Zone agent :</dt>
+                            <dd class="col-sm-6">
+                                {% if rapport.zoneUtilisateur %}
+                                <span
+                                    class="zone-badge {{ rapport.zoneUtilisateur == 'SIMTIS' ? 'zone-simtis' : 'zone-tissage' }}">
+                                    {% if rapport.zoneUtilisateur == 'SIMTIS' %}
+                                    <i class="fas fa-industry me-1"></i>{{ rapport.zoneUtilisateur }}
+                                    {% else %}
+                                    <i class="fas fa-cogs me-1"></i>{{ rapport.zoneUtilisateur }}
+                                    {% endif %}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">Non définie</span>
+                                {% endif %}
+                            </dd>
 
                             <dt class="col-sm-6">Équipement :</dt>
                             <dd class="col-sm-6">{{ rapport.equipementProduitConcerne ?? 'Non spécifié' }}</dd>
@@ -89,11 +208,11 @@
                     <div class="col-12">
                         <h6>Description :</h6>
                         {% if rapport.descriptionAnomalie %}
-                        <div class="bg-light p-3 rounded">
+                        <div class="bg-light p-3 rounded border-start border-warning border-4">
                             {{ rapport.descriptionAnomalie|nl2br }}
                         </div>
                         {% else %}
-                        <p class="text-muted">Aucune description fournie</p>
+                        <p class="text-muted fst-italic">Aucune description fournie</p>
                         {% endif %}
                     </div>
                 </div>
@@ -102,7 +221,7 @@
                 <div class="row">
                     <div class="col-12">
                         <h6>Cause probable :</h6>
-                        <div class="bg-light p-3 rounded">
+                        <div class="bg-light p-3 rounded border-start border-info border-4">
                             {{ rapport.causeProbable }}
                         </div>
                     </div>
@@ -113,7 +232,7 @@
 
         <!-- Informations sur la clôture -->
         {% if rapport.actionCloturee == 'oui' %}
-        <div class="card mb-4">
+        <div class="card mb-4 border-success">
             <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-check-circle"></i> Action clôturée
@@ -123,25 +242,38 @@
                 <div class="row">
                     {% if rapport.dateCloture %}
                     <div class="col-md-6">
-                        <strong>Date de clôture :</strong><br>
-                        {{ rapport.dateCloture|date('d/m/Y') }}
+                        <strong><i class="fas fa-calendar-check text-success"></i> Date de clôture :</strong><br>
+                        <span class="badge bg-success">{{ rapport.dateCloture|date('d/m/Y') }}</span>
                     </div>
                     {% endif %}
                     {% if rapport.heureAction %}
                     <div class="col-md-6">
-                        <strong>Heure de l'action :</strong><br>
-                        {{ rapport.heureAction|date('H:i') }}
+                        <strong><i class="fas fa-clock text-success"></i> Heure de l'action :</strong><br>
+                        <span class="badge bg-success">{{ rapport.heureAction|date('H:i') }}</span>
                     </div>
                     {% endif %}
                 </div>
             </div>
         </div>
+        {% else %}
+        <div class="card mb-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-hourglass-half"></i> Action en attente
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-0">
+                    <i class="fas fa-info-circle"></i> Ce rapport n'a pas encore d'action de clôture définie.
+                </p>
+            </div>
+        </div>
         {% endif %}
     </div>
 
-    <!-- Photos -->
+    <!-- Photos et actions -->
     <div class="col-md-4">
-        <div class="card">
+        <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-camera"></i> Photos
@@ -151,11 +283,18 @@
                 <!-- Photo du constat -->
                 {% if rapport.photoConstat %}
                 <div class="mb-4">
-                    <h6 class="mb-3">Photo du constat :</h6>
+                    <h6 class="mb-3">
+                        <i class="fas fa-camera text-danger"></i> Photo du constat :
+                    </h6>
                     <div class="text-center">
                         <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo du constat"
-                            class="img-fluid rounded shadow" style="max-height: 200px; cursor: pointer;"
-                            data-bs-toggle="modal" data-bs-target="#modalPhotoConstat">
+                            class="img-fluid rounded shadow border photo-hover"
+                            style="max-height: 200px; cursor: pointer;" data-bs-toggle="modal"
+                            data-bs-target="#modalPhotoConstat">
+                        <br>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-mouse-pointer"></i> Cliquez pour agrandir
+                        </small>
                     </div>
                 </div>
                 {% endif %}
@@ -163,21 +302,77 @@
                 <!-- Photo d'action -->
                 {% if rapport.photoActionCloturee %}
                 <div class="mb-3">
-                    <h6 class="mb-3">Photo d'action clôturée :</h6>
+                    <h6 class="mb-3">
+                        <i class="fas fa-camera text-success"></i> Photo d'action clôturée :
+                    </h6>
                     <div class="text-center">
                         <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}" alt="Photo d'action clôturée"
-                            class="img-fluid rounded shadow" style="max-height: 200px; cursor: pointer;"
-                            data-bs-toggle="modal" data-bs-target="#modalPhotoAction">
+                            class="img-fluid rounded shadow border photo-hover"
+                            style="max-height: 200px; cursor: pointer;" data-bs-toggle="modal"
+                            data-bs-target="#modalPhotoAction">
+                        <br>
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-mouse-pointer"></i> Cliquez pour agrandir
+                        </small>
                     </div>
                 </div>
                 {% endif %}
 
                 {% if not rapport.photoConstat and not rapport.photoActionCloturee %}
                 <div class="text-center text-muted py-4">
-                    <i class="fas fa-camera fa-3x mb-3"></i>
+                    <i class="fas fa-camera fa-3x mb-3 opacity-50"></i>
                     <p>Aucune photo disponible</p>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="card action-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools"></i> Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if rapport.canBeModifiedByUser(app.user) %}
+                    <a href="{{ path('app_admin_rapport_modifier', {id: rapport.id}) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Modifier le rapport
+                    </a>
+                    {% endif %}
+
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button"
+                            data-bs-toggle="dropdown">
+                            <i class="fas fa-download"></i> Exporter ce rapport
+                        </button>
+                        <ul class="dropdown-menu w-100">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="{{ path('app_admin_export_rapport_excel', {id: rapport.id}) }}">
+                                    <i class="fas fa-file-excel text-success me-2"></i>Exporter en Excel
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="{{ path('app_admin_export_rapport_pdf', {id: rapport.id}) }}">
+                                    <i class="fas fa-file-pdf text-danger me-2"></i>Exporter en PDF
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                    <hr>
+                    <a href="{{ path('app_admin_rapport_supprimer', {id: rapport.id}) }}" class="btn btn-danger"
+                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement ce rapport ?')">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -190,11 +385,19 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalPhotoConstatLabel">Photo du constat</h5>
+                <h5 class="modal-title" id="modalPhotoConstatLabel">
+                    <i class="fas fa-camera text-danger"></i> Photo du constat
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo du constat" class="img-fluid">
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> Photo prise le {{ rapport.date|date('d/m/Y') }} à {{
+                        rapport.heure|date('H:i') }}
+                    </small>
+                </div>
             </div>
         </div>
     </div>
@@ -207,15 +410,30 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalPhotoActionLabel">Photo d'action clôturée</h5>
+                <h5 class="modal-title" id="modalPhotoActionLabel">
+                    <i class="fas fa-camera text-success"></i> Photo d'action clôturée
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
                 <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}" alt="Photo d'action clôturée"
                     class="img-fluid">
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        {% if rapport.dateCloture %}
+                        Action clôturée le {{ rapport.dateCloture|date('d/m/Y') }}
+                        {% if rapport.heureAction %}
+                        à {{ rapport.heureAction|date('H:i') }}
+                        {% endif %}
+                        {% endif %}
+                    </small>
+                </div>
             </div>
         </div>
     </div>
 </div>
 {% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

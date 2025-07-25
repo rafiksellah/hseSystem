@@ -18,6 +18,14 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[UniqueEntity(fields: ['codeAgent'], message: 'Ce code agent est déjà utilisé')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    public const ZONE_SIMTIS = 'SIMTIS';
+    public const ZONE_SIMTIS_TISSAGE = 'SIMTIS TISSAGE';
+
+    public const ZONES_DISPONIBLES = [
+        self::ZONE_SIMTIS => 'SIMTIS',
+        self::ZONE_SIMTIS_TISSAGE => 'SIMTIS TISSAGE'
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -54,6 +62,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     private ?\DateTimeInterface $heureCreation = null;
+
+    #[ORM\Column(length: 50, nullable: false)]
+    #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(
+        choices: ['SIMTIS', 'SIMTIS TISSAGE'],
+        message: 'Veuillez choisir une zone valide (SIMTIS ou SIMTIS TISSAGE)'
+    )]
+    private ?string $zone = null;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: RapportHSE::class, orphanRemoval: true)]
     private Collection $rapportsHSE;
@@ -171,6 +187,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getZone(): ?string
+    {
+        return $this->zone;
+    }
+
+    public function setZone(string $zone): static
+    {
+        // Validation supplémentaire au niveau de l'entité
+        if (!in_array($zone, ['SIMTIS', 'SIMTIS TISSAGE'])) {
+            throw new \InvalidArgumentException('Zone invalide. Les zones autorisées sont : SIMTIS, SIMTIS TISSAGE');
+        }
+
+        $this->zone = $zone;
+        return $this;
+    }
+
     /**
      * @return Collection<int, RapportHSE>
      */
@@ -201,5 +233,65 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getFullName(): string
     {
         return $this->prenom . ' ' . $this->nom;
+    }
+
+    /**
+     * Retourne le badge HTML pour afficher la zone
+     */
+    public function getZoneBadge(): string
+    {
+        $class = $this->zone === 'SIMTIS' ? 'bg-info' : 'bg-success';
+        return sprintf('<span class="badge %s">%s</span>', $class, $this->zone);
+    }
+
+    /**
+     * Vérifie si l'utilisateur est un super admin
+     */
+    public function isSuperAdmin(): bool
+    {
+        return in_array('ROLE_SUPER_ADMIN', $this->getRoles());
+    }
+
+    /**
+     * Vérifie si l'utilisateur est un admin (mais pas super admin)
+     */
+    public function isAdmin(): bool
+    {
+        return in_array('ROLE_ADMIN', $this->getRoles()) && !$this->isSuperAdmin();
+    }
+
+    /**
+     * Vérifie si l'utilisateur peut gérer un autre utilisateur
+     */
+    public function canManageUser(User $targetUser): bool
+    {
+        // Super admin peut gérer tout le monde
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Admin peut gérer les utilisateurs de sa zone
+        if ($this->isAdmin()) {
+            return $this->getZone() === $targetUser->getZone();
+        }
+
+        // Utilisateur normal ne peut rien gérer
+        return false;
+    }
+
+    /**
+     * Obtient les zones que cet utilisateur peut gérer
+     */
+    public function getManagedZones(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return self::ZONES_DISPONIBLES;
+        }
+
+        if ($this->isAdmin()) {
+            return [$this->getZone() => $this->getZone()];
+        }
+
+        return [];
     }
 }

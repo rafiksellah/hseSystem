@@ -1,0 +1,367 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tous les Rapports HSE - Super Admin{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-clipboard-list text-primary"></i> Tous les Rapports HSE
+<small class="text-muted">Vue d'ensemble globale des rapports</small>
+{% endblock %}
+
+{% block body %}
+<!-- Filtres de recherche étendus -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter"></i> Filtres Avancés
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <!-- Première ligne -->
+            <div class="col-md-2">
+                <label class="form-label">Code AGT</label>
+                <input type="text" class="form-control" name="codeAgt" value="{{ search_params.codeAgt }}"
+                    placeholder="Code agent">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Nom</label>
+                <input type="text" class="form-control" name="nom" value="{{ search_params.nom }}"
+                    placeholder="Nom de l'employé">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Zone Travail</label>
+                <select class="form-select" name="zone">
+                    <option value="">Toutes</option>
+                    {% for zone_key, zone_label in zones_disponibles %}
+                    <option value="{{ zone_key }}" {{ search_params.zone==zone_key ? 'selected' : '' }}>
+                        {{ zone_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Zone Utilisateur</label>
+                <select class="form-select" name="zoneUtilisateur">
+                    <option value="">Toutes</option>
+                    {% for zone_key, zone_label in zones_utilisateurs %}
+                    <option value="{{ zone_key }}" {{ search_params.zoneUtilisateur==zone_key ? 'selected' : '' }}>
+                        {{ zone_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Statut</label>
+                <select class="form-select" name="statut">
+                    <option value="">Tous</option>
+                    <option value="En cours" {{ search_params.statut=='En cours' ? 'selected' : '' }}>En cours</option>
+                    <option value="Clôturé" {{ search_params.statut=='Clôturé' ? 'selected' : '' }}>Clôturé</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+
+            <!-- Deuxième ligne - Dates -->
+            <div class="col-md-2">
+                <label class="form-label">Date début</label>
+                <input type="date" class="form-control" name="dateDebut" value="{{ search_params.dateDebut }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Date fin</label>
+                <input type="date" class="form-control" name="dateFin" value="{{ search_params.dateFin }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Clôture début</label>
+                <input type="date" class="form-control" name="dateClotureDebut"
+                    value="{{ search_params.dateClotureDebut }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Clôture fin</label>
+                <input type="date" class="form-control" name="dateClotureFin"
+                    value="{{ search_params.dateClotureFin }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <a href="{{ path('app_super_admin_rapports') }}" class="btn btn-secondary w-100">
+                    <i class="fas fa-times"></i> Effacer
+                </a>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-success w-100">
+                    <i class="fas fa-plus"></i> Nouveau
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Statistiques rapides -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="h4 mb-0">{{ rapports|length }}</div>
+                        <div>Rapports trouvés</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clipboard-list fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="h4 mb-0">
+                            {{ rapports|filter(r => r.statut == 'En cours')|length }}
+                        </div>
+                        <div>En cours</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="h4 mb-0">
+                            {{ rapports|filter(r => r.statut == 'Clôturé')|length }}
+                        </div>
+                        <div>Clôturés</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="h4 mb-0">{{ total_pages }}</div>
+                        <div>Pages total</div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-book fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste des rapports -->
+<div class="card shadow">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-list"></i> Liste des Rapports HSE
+        </h6>
+
+        <!-- Exports -->
+        <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-outline-success dropdown-toggle" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                <i class="fas fa-download"></i> Exporter
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ path('app_admin_export_excel') }}">
+                        <i class="fas fa-file-excel text-success"></i> Excel Global
+                    </a></li>
+                <li><a class="dropdown-item" href="{{ path('app_admin_export_pdf') }}">
+                        <i class="fas fa-file-pdf text-danger"></i> PDF Global
+                    </a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if rapports is not empty %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Code AGT</th>
+                        <th>Nom</th>
+                        <th>Zone Utilisateur</th>
+                        <th>Zone Travail</th>
+                        <th>Date/Heure</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rapport in rapports %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-secondary">{{ rapport.codeAgt }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ rapport.nom }}</strong>
+                            {% if rapport.user %}
+                            <br><small class="text-muted">{{ rapport.user.fullName }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge {{ rapport.zoneUtilisateur == 'SIMTIS' ? 'bg-info' : 'bg-purple' }}">
+                                <i class="fas fa-user"></i> {{ rapport.zoneUtilisateur }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if rapport.zone %}
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-map-marker-alt"></i> {{ rapport.zone }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ rapport.date|date('d/m/Y') }}</div>
+                            <small class="text-muted">{{ rapport.heure|date('H:i') }}</small>
+                        </td>
+                        <td>
+                            {% if rapport.statut == 'Clôturé' %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle"></i> {{ rapport.statut }}
+                            </span>
+                            {% if rapport.dateCloture %}
+                            <br><small class="text-muted">{{ rapport.dateCloture|date('d/m/Y') }}</small>
+                            {% endif %}
+                            {% else %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-clock"></i> {{ rapport.statut }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ path('app_super_admin_user_details', {'id': rapport.id}) }}"
+                                    class="btn btn-outline-info btn-sm" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('app_admin_rapport_modifier', {'id': rapport.id}) }}"
+                                    class="btn btn-outline-warning btn-sm" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ path('app_admin_rapport_supprimer', {'id': rapport.id}) }}"
+                                    class="btn btn-outline-danger btn-sm"
+                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce rapport ?')"
+                                    title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <div class="card-footer">
+            <nav aria-label="Navigation des pages">
+                <ul class="pagination justify-content-center mb-0">
+                    <!-- Première page -->
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{ path('app_super_admin_rapports', search_params|merge({'page': 1})) }}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Page précédente -->
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link"
+                            href="{{ path('app_super_admin_rapports', search_params|merge({'page': current_page - 1})) }}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Pages -->
+                    {% set start_page = max(1, current_page - 2) %}
+                    {% set end_page = min(total_pages, current_page + 2) %}
+
+                    {% for page in start_page..end_page %}
+                    <li class="page-item {{ page == current_page ? 'active' : '' }}">
+                        <a class="page-link"
+                            href="{{ path('app_super_admin_rapports', search_params|merge({'page': page})) }}">
+                            {{ page }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    <!-- Page suivante -->
+                    {% if current_page < total_pages %} <li class="page-item">
+                        <a class="page-link"
+                            href="{{ path('app_super_admin_rapports', search_params|merge({'page': current_page + 1})) }}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                        </li>
+                        {% endif %}
+
+                        <!-- Dernière page -->
+                        {% if current_page < total_pages %} <li class="page-item">
+                            <a class="page-link"
+                                href="{{ path('app_super_admin_rapports', search_params|merge({'page': total_pages})) }}">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                            </li>
+                            {% endif %}
+                </ul>
+            </nav>
+
+            <div class="text-center mt-2">
+                <small class="text-muted">
+                    Page {{ current_page }} sur {{ total_pages }}
+                </small>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucun rapport trouvé</h5>
+            <p class="text-muted">
+                {% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut %}
+                Essayez de modifier vos critères de recherche.
+                {% else %}
+                Aucun rapport HSE n'a encore été créé.
+                {% endif %}
+            </p>
+            <a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Créer un rapport
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .bg-purple {
+        background-color: #6610f2 !important;
+    }
+</style>
+{% endblock %}

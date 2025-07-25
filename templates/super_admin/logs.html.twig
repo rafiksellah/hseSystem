@@ -1,0 +1,399 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Logs Système - Super Admin{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-file-alt text-danger"></i> Logs Système
+<small class="text-muted">Surveillance et monitoring du système</small>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <!-- Filtres -->
+    <div class="col-lg-3 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-filter"></i> Filtres
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="GET">
+                    <div class="mb-3">
+                        <label for="niveau" class="form-label">Niveau</label>
+                        <select class="form-select" id="niveau" name="niveau">
+                            <option value="">Tous les niveaux</option>
+                            <option value="ERROR">Erreurs</option>
+                            <option value="WARNING">Avertissements</option>
+                            <option value="INFO">Informations</option>
+                            <option value="DEBUG">Debug</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date_debut" class="form-label">Date début</label>
+                        <input type="date" class="form-control" id="date_debut" name="date_debut">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date_fin" class="form-label">Date fin</label>
+                        <input type="date" class="form-control" id="date_fin" name="date_fin">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="module" class="form-label">Module</label>
+                        <select class="form-select" id="module" name="module">
+                            <option value="">Tous les modules</option>
+                            <option value="security">Sécurité</option>
+                            <option value="database">Base de données</option>
+                            <option value="user">Utilisateurs</option>
+                            <option value="rapport">Rapports HSE</option>
+                            <option value="export">Exports</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Filtrer
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-tools"></i> Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-warning btn-sm" onclick="clearLogs()">
+                        <i class="fas fa-trash"></i> Vider les logs
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="exportLogs()">
+                        <i class="fas fa-download"></i> Exporter
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshLogs()">
+                        <i class="fas fa-sync"></i> Actualiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="col-lg-9">
+        <!-- Statistiques rapides -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-left-danger shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    Erreurs (24h)
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">12</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Avertissements
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">8</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-exclamation-circle fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Connexions
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">47</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-sign-in-alt fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Système OK
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-server fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs en temps réel -->
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list"></i> Logs Récents
+                </h6>
+                <div>
+                    <span class="badge bg-success" id="status-indicator">
+                        <i class="fas fa-circle"></i> En ligne
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="log-container" id="log-container"
+                    style="height: 500px; overflow-y: auto; background-color: #1e1e1e; color: #ffffff; font-family: 'Courier New', monospace; padding: 15px; border-radius: 5px;">
+                    <!-- Logs simulés -->
+                    <div class="log-entry" data-level="INFO">
+                        <span class="log-timestamp">[2024-01-15 14:30:22]</span>
+                        <span class="log-level level-info">[INFO]</span>
+                        <span class="log-module">[USER]</span>
+                        <span class="log-message">Connexion réussie pour l'utilisateur admin@simtis.com depuis
+                            192.168.1.100</span>
+                    </div>
+
+                    <div class="log-entry" data-level="INFO">
+                        <span class="log-timestamp">[2024-01-15 14:28:15]</span>
+                        <span class="log-level level-info">[INFO]</span>
+                        <span class="log-module">[RAPPORT]</span>
+                        <span class="log-message">Nouveau rapport HSE créé par AGT001 - Zone SIMTIS</span>
+                    </div>
+
+                    <div class="log-entry" data-level="WARNING">
+                        <span class="log-timestamp">[2024-01-15 14:25:10]</span>
+                        <span class="log-level level-warning">[WARNING]</span>
+                        <span class="log-module">[SECURITY]</span>
+                        <span class="log-message">Tentative de connexion échouée pour user@test.com (mot de passe
+                            incorrect)</span>
+                    </div>
+
+                    <div class="log-entry" data-level="ERROR">
+                        <span class="log-timestamp">[2024-01-15 14:20:05]</span>
+                        <span class="log-level level-error">[ERROR]</span>
+                        <span class="log-module">[DATABASE]</span>
+                        <span class="log-message">Erreur lors de la sauvegarde du rapport ID:1234 - Timeout de
+                            connexion</span>
+                    </div>
+
+                    <div class="log-entry" data-level="INFO">
+                        <span class="log-timestamp">[2024-01-15 14:18:30]</span>
+                        <span class="log-level level-info">[INFO]</span>
+                        <span class="log-module">[EXPORT]</span>
+                        <span class="log-message">Export Excel généré avec succès - 156 rapports exportés</span>
+                    </div>
+
+                    <div class="log-entry" data-level="DEBUG">
+                        <span class="log-timestamp">[2024-01-15 14:15:22]</span>
+                        <span class="log-level level-debug">[DEBUG]</span>
+                        <span class="log-module">[SYSTEM]</span>
+                        <span class="log-message">Nettoyage automatique des sessions expirées - 5 sessions
+                            supprimées</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations système -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-info-circle"></i> Informations Système
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Version PHP :</strong> {{ constant('PHP_VERSION') }}</p>
+                        <p><strong>Version Symfony :</strong> {{
+                            constant('Symfony\\Component\\HttpKernel\\Kernel::VERSION') }}</p>
+                        <p><strong>Environnement :</strong> <span class="badge bg-success">Production</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Dernier redémarrage :</strong> {{ "now"|date('d/m/Y H:i:s') }}</p>
+                        <p><strong>Utilisation mémoire :</strong> 128 MB / 512 MB</p>
+                        <p><strong>Espace disque :</strong> 2.1 GB / 10 GB</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .log-entry {
+        margin-bottom: 5px;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .log-timestamp {
+        color: #888;
+    }
+
+    .log-level {
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin: 0 5px;
+    }
+
+    .level-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .level-warning {
+        background-color: #ffc107;
+        color: black;
+    }
+
+    .level-error {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .level-debug {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .log-module {
+        color: #ffc107;
+        font-weight: bold;
+    }
+
+    .log-message {
+        color: #ffffff;
+    }
+
+    .border-left-danger {
+        border-left: 0.25rem solid #dc3545 !important;
+    }
+
+    .border-left-warning {
+        border-left: 0.25rem solid #ffc107 !important;
+    }
+
+    .border-left-info {
+        border-left: 0.25rem solid #17a2b8 !important;
+    }
+
+    .border-left-success {
+        border-left: 0.25rem solid #28a745 !important;
+    }
+
+    .text-gray-300 {
+        color: #dddfeb !important;
+    }
+
+    .text-gray-800 {
+        color: #5a5c69 !important;
+    }
+</style>
+
+<script>
+    function clearLogs() {
+        if (confirm('Êtes-vous sûr de vouloir vider tous les logs ? Cette action est irréversible.')) {
+            // Simuler le vidage
+            document.getElementById('log-container').innerHTML = '<div class="text-center text-muted py-4">Logs vidés</div>';
+
+            // Simuler un rechargement après 2 secondes
+            setTimeout(function () {
+                location.reload();
+            }, 2000);
+        }
+    }
+
+    function exportLogs() {
+        // Simuler l'export
+        const blob = new Blob(['Logs exportés le ' + new Date().toLocaleString()], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'logs_' + new Date().toISOString().split('T')[0] + '.txt';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    function refreshLogs() {
+        // Simuler l'actualisation
+        const indicator = document.getElementById('status-indicator');
+        indicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualisation...';
+        indicator.className = 'badge bg-warning';
+
+        setTimeout(function () {
+            indicator.innerHTML = '<i class="fas fa-circle"></i> En ligne';
+            indicator.className = 'badge bg-success';
+            location.reload();
+        }, 1500);
+    }
+
+    // Simulation de nouveaux logs en temps réel
+    setInterval(function () {
+        const container = document.getElementById('log-container');
+        if (container && container.children.length > 0) {
+            const now = new Date();
+            const timestamp = '[' + now.toISOString().slice(0, 19).replace('T', ' ') + ']';
+
+            const messages = [
+                '[INFO][USER] Utilisateur connecté',
+                '[INFO][RAPPORT] Nouveau rapport créé',
+                '[DEBUG][SYSTEM] Tâche automatique exécutée',
+            ];
+
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            const newLog = document.createElement('div');
+            newLog.className = 'log-entry';
+            newLog.setAttribute('data-level', 'INFO');
+            newLog.innerHTML = `
+            <span class="log-timestamp">${timestamp}</span>
+            <span class="log-level level-info">[INFO]</span>
+            <span class="log-module">[SYSTEM]</span>
+            <span class="log-message">${randomMessage}</span>
+        `;
+
+            container.insertBefore(newLog, container.firstChild);
+
+            // Limiter à 50 entrées
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+    }, 30000); // Nouveau log toutes les 30 secondes
+</script>
+{% endblock %}

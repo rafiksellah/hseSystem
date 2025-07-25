@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\RapportHSERepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -10,6 +12,67 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: RapportHSERepository::class)]
 class RapportHSE
 {
+    public const STATUT_EN_COURS = 'En cours';
+    public const STATUT_CLOTURE = 'Clôturé';
+    // Constantes pour les zones SIMTIS
+    public const ZONES_SIMTIS = [
+        'ADMINISTRATION' => 'Administration',
+        'BRODERIE' => 'Broderie',
+        'BUREAUX_ETUDES' => 'Bureaux d\'études',
+        'CALANDRAGE' => 'Calandrage',
+        'CHALES_FOULARDS_BC' => 'Châles et foulards BC',
+        'CHAUFFERIE' => 'Chaufferie',
+        'CONFECTION_DECATHLON' => 'Confection Decathlon',
+        'DECHETS_EXTENSION' => 'Déchets extension',
+        'DETORTIONNEUSES' => 'Détortionneuses',
+        'DIAMANTINE_CONFECTION_HABILLEMENT' => 'Diamantine confection habillement',
+        'EMBALLAGE_BC' => 'Emballage BC',
+        'FUEL' => 'Fuel',
+        'GRATTAGE' => 'Grattage',
+        'GRAVURE_BC' => 'Gravure BC',
+        'GROUPE_ELECTROGENE' => 'Groupe électrogène',
+        'IMPRESSION_NUMERIQUE' => 'Impression numérique',
+        'LIVRAISON' => 'Livraison',
+        'PREPARATION' => 'Préparation',
+        'RAM' => 'RAM',
+        'ROTATIVE' => 'Rotative',
+        'ROULAGE' => 'Roulage',
+        'SIMI' => 'SIMI',
+        'STATION_LAVAGE' => 'Station lavage',
+        'STOCK_DECATHLON' => 'Stock Decathlon',
+        'STOCK_PF' => 'Stock PF',
+        'STRASS_BC' => 'Strass BC',
+        'TEINTURE' => 'Teinture',
+        'PANNEAUX_SOLAIRES' => 'Panneaux solaires',
+    ];
+
+    // Constantes pour les zones SIMTIS TISSAGE
+    public const ZONES_SIMTIS_TISSAGE = [
+        'POSTE_ELECTRIQUE' => 'Poste électrique',
+        'CHAUDIERE' => 'Chaudière',
+        'COMPRESSEUR_TEFIL' => 'Compresseur tefil',
+        'RENTRAGE' => 'Rentrage',
+        'PREPARATION' => 'Préparation',
+        'ADMINISTRATION' => 'Administration',
+        'MAGASIN_TEFIL' => 'Magasin tefil',
+        'TISSAGE_RDC' => 'Tissage RDC',
+        'MACHINES_JACARD' => 'Les machines jacard',
+        'CONTROLE_QUALITE' => 'Contrôle qualité',
+        'MACHINE_CAG' => 'Machine cag',
+        'MACHINE_AIR' => 'Machine d\'air',
+        'OURDISSOIR' => 'Ourdissoir',
+        'CANTINE_HOMME_FEMME' => 'Cantine homme et femme',
+        'DECHETS_PRATO' => 'Déchets PRATO',
+        'PRODUIT_FINI' => 'Produit fini',
+        'STOCK_BEILLA' => 'Stock beilla',
+        'STOCK_PRATO' => 'Stock prato',
+        'MAGASIN_PRATO' => 'Magasin prato',
+        'STIFA_RDC' => 'Stifa RDC',
+        'MEZZANINE' => 'Mezzanine',
+        'COMPRESSEUR_PRATO' => 'Compresseur prato',
+        'PANNEAUX_SOLAIRES' => 'Panneaux solaires',
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -71,6 +134,9 @@ class RapportHSE
     #[ORM\Column(length: 50)]
     private ?string $statut = 'En cours';
 
+    #[ORM\Column(length: 50)]
+    private ?string $zoneUtilisateur = null;
+
     public function __construct()
     {
         $this->dateCreation = new \DateTime();
@@ -78,6 +144,87 @@ class RapportHSE
         $this->heure = new \DateTime();
     }
 
+    // Méthode pour obtenir les zones selon la zone de l'utilisateur
+    public static function getZonesForUserZone(string $userZone): array
+    {
+        return match ($userZone) {
+            'SIMTIS TISSAGE' => self::ZONES_SIMTIS_TISSAGE,
+            'SIMTIS' => self::ZONES_SIMTIS,
+            default => self::ZONES_SIMTIS,
+        };
+    }
+
+    // Méthode pour obtenir toutes les zones disponibles (pour super admin)
+    public static function getAllZones(): array
+    {
+        return array_merge(self::ZONES_SIMTIS, self::ZONES_SIMTIS_TISSAGE);
+    }
+
+    // Méthode pour vérifier si un utilisateur peut accéder à ce rapport
+    public function canBeAccessedByUser(User $user): bool
+    {
+        // Super admin peut tout voir
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            return true;
+        }
+
+        // L'utilisateur peut voir ses propres rapports
+        if ($this->user && $this->user->getId() === $user->getId()) {
+            return true;
+        }
+
+        // Admin peut voir les rapports de sa zone
+        if (in_array('ROLE_ADMIN', $user->getRoles())) {
+            return $this->zoneUtilisateur === $user->getZone();
+        }
+
+        return false;
+    }
+
+    // Méthode pour vérifier si un utilisateur peut modifier ce rapport
+    public function canBeModifiedByUser(User $user): bool
+    {
+        // Super admin peut tout modifier
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            return true;
+        }
+
+        // L'utilisateur peut modifier ses propres rapports
+        if ($this->user && $this->user->getId() === $user->getId()) {
+            return true;
+        }
+
+        // Admin peut modifier les rapports de sa zone
+        if (in_array('ROLE_ADMIN', $user->getRoles())) {
+            return $this->zoneUtilisateur === $user->getZone();
+        }
+
+        return false;
+    }
+
+    // Getter et setter pour zoneUtilisateur
+    public function getZoneUtilisateur(): ?string
+    {
+        return $this->zoneUtilisateur;
+    }
+
+    public function setZoneUtilisateur(string $zoneUtilisateur): static
+    {
+        $this->zoneUtilisateur = $zoneUtilisateur;
+        return $this;
+    }
+
+    // Auto-définir la zone utilisateur basée sur l'utilisateur associé
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+        if ($user) {
+            $this->zoneUtilisateur = $user->getZone();
+        }
+        return $this;
+    }
+
+    // Getters et setters existants...
     public function getId(): ?int
     {
         return $this->id;
@@ -240,12 +387,6 @@ class RapportHSE
     public function getUser(): ?User
     {
         return $this->user;
-    }
-
-    public function setUser(?User $user): static
-    {
-        $this->user = $user;
-        return $this;
     }
 
     public function getDateCreation(): ?\DateTimeInterface

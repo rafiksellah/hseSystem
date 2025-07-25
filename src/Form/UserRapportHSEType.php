@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\RapportHSE;
+use App\Entity\User;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
@@ -14,11 +15,22 @@ use Symfony\Component\Form\Extension\Core\Type\TimeType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class UserRapportHSEType extends AbstractType
 {
+    private TokenStorageInterface $tokenStorage;
+
+    public function __construct(TokenStorageInterface $tokenStorage)
+    {
+        $this->tokenStorage = $tokenStorage;
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $token = $this->tokenStorage->getToken();
+        $currentUser = $token ? $token->getUser() : null;
+
         $builder
             // Champs en lecture seule pour l'utilisateur connecté
             ->add('codeAgt', TextType::class, [
@@ -54,30 +66,28 @@ class UserRapportHSEType extends AbstractType
                     'readonly' => true,
                     'style' => 'background-color: #e9ecef;'
                 ]
-            ])
+            ]);
+
+        // Obtenir les zones disponibles selon la zone de l'utilisateur
+        $zonesDisponibles = $this->getZonesForUser($currentUser);
+
+        $builder
             ->add('zone', ChoiceType::class, [
-                'label' => 'Zone',
-                'choices' => [
-                    'Zone A' => 'Zone A',
-                    'Zone B' => 'Zone B',
-                    'Zone C' => 'Zone C',
-                    'Zone Production' => 'Zone Production',
-                    'Zone Stockage' => 'Zone Stockage',
-                    'Zone Administrative' => 'Zone Administrative',
-                    'Autres' => 'Autres'
-                ],
-                'placeholder' => 'Sélectionnez une zone',
-                'required' => false,
+                'label' => 'Zone de travail',
+                'choices' => $zonesDisponibles,
+                'placeholder' => 'Sélectionnez une zone de travail',
+                'required' => true,
                 'attr' => [
                     'class' => 'form-select'
-                ]
+                ],
+                'help' => 'Sélectionnez la zone où l\'anomalie a été observée'
             ])
             ->add('emplacement', TextType::class, [
-                'label' => 'Emplacement',
+                'label' => 'Emplacement précis',
                 'required' => false,
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Emplacement précis'
+                    'placeholder' => 'Emplacement précis dans la zone'
                 ]
             ])
             ->add('equipementProduitConcerne', TextType::class, [
@@ -94,7 +104,7 @@ class UserRapportHSEType extends AbstractType
                 'attr' => [
                     'class' => 'form-control',
                     'rows' => 4,
-                    'placeholder' => 'Décrivez l\'anomalie observée'
+                    'placeholder' => 'Décrivez l\'anomalie observée en détail'
                 ]
             ])
             ->add('causeProbable', TextType::class, [
@@ -179,6 +189,21 @@ class UserRapportHSEType extends AbstractType
                     'class' => 'btn btn-primary'
                 ]
             ]);
+    }
+
+    /**
+     * Obtient les zones disponibles selon l'utilisateur connecté et sa zone
+     */
+    private function getZonesForUser(?User $user): array
+    {
+        if (!$user) {
+            return [];
+        }
+
+        $userZone = $user->getZone();
+
+        // Retourner les zones de travail selon la zone de l'utilisateur
+        return RapportHSE::getZonesForUserZone($userZone);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

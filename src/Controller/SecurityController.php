@@ -18,6 +18,10 @@ class SecurityController extends AbstractController
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         if ($this->getUser()) {
+            // Redirection selon la hiérarchie des rôles (le plus haut en premier)
+            if ($this->isGranted('ROLE_SUPER_ADMIN')) {
+                return $this->redirectToRoute('app_super_admin_dashboard');
+            }
             if ($this->isGranted('ROLE_ADMIN')) {
                 return $this->redirectToRoute('app_admin_dashboard');
             }

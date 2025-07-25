@@ -1,0 +1,427 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Paramètres Système - Super Admin{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-cogs text-primary"></i> Paramètres Système
+<small class="text-muted">Configuration et administration du système</small>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <!-- Configuration générale -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-sliders-h"></i> Configuration Générale
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="generalSettingsForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom de l'application</label>
+                                <input type="text" class="form-control" value="Système HSE" readonly>
+                                <small class="text-muted">Nom affiché dans l'interface</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Version</label>
+                                <input type="text" class="form-control" value="1.0.0" readonly>
+                                <small class="text-muted">Version actuelle du système</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Environnement</label>
+                                <select class="form-select" disabled>
+                                    <option selected>Production</option>
+                                    <option>Développement</option>
+                                    <option>Test</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Langue par défaut</label>
+                                <select class="form-select">
+                                    <option value="fr" selected>Français</option>
+                                    <option value="en">English</option>
+                                    <option value="ar">العربية</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Fuseau horaire</label>
+                                <select class="form-select">
+                                    <option value="Africa/Algiers" selected>Africa/Algiers (UTC+1)</option>
+                                    <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
+                                    <option value="UTC">UTC (UTC+0)</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Format de date</label>
+                                <select class="form-select">
+                                    <option value="d/m/Y" selected>DD/MM/YYYY</option>
+                                    <option value="Y-m-d">YYYY-MM-DD</option>
+                                    <option value="m/d/Y">MM/DD/YYYY</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Paramètres de sécurité -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">
+                    <i class="fas fa-shield-alt"></i> Paramètres de Sécurité
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="securitySettingsForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Durée de session (minutes)</label>
+                                <input type="number" class="form-control" value="60" min="15" max="480">
+                                <small class="text-muted">Déconnexion automatique après inactivité</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tentatives de connexion max</label>
+                                <input type="number" class="form-control" value="5" min="3" max="10">
+                                <small class="text-muted">Blocage après échecs répétés</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="forceHttps" checked>
+                                    <label class="form-check-label" for="forceHttps">
+                                        Forcer HTTPS
+                                    </label>
+                                </div>
+                                <small class="text-muted">Rediriger automatiquement vers HTTPS</small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Longueur minimum mot de passe</label>
+                                <input type="number" class="form-control" value="6" min="4" max="20">
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="requireSpecialChars">
+                                    <label class="form-check-label" for="requireSpecialChars">
+                                        Caractères spéciaux obligatoires
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enableAuditLog" checked>
+                                    <label class="form-check-label" for="enableAuditLog">
+                                        Activer les logs d'audit
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Paramètres email -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-envelope"></i> Configuration Email
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="emailSettingsForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Serveur SMTP</label>
+                                <input type="text" class="form-control" placeholder="smtp.gmail.com">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Port SMTP</label>
+                                <input type="number" class="form-control" value="587">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email expéditeur</label>
+                                <input type="email" class="form-control" placeholder="noreply@company.com">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Utilisateur SMTP</label>
+                                <input type="text" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Mot de passe SMTP</label>
+                                <input type="password" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="enableTLS" checked>
+                                    <label class="form-check-label" for="enableTLS">
+                                        Utiliser TLS/SSL
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Test de configuration :</strong>
+                                <button type="button" class="btn btn-sm btn-outline-info ms-2"
+                                    onclick="testEmailConfig()">
+                                    <i class="fas fa-paper-plane"></i> Envoyer email de test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel d'information -->
+    <div class="col-lg-4">
+        <!-- Informations système -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-server"></i> Informations Système
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Serveur Web:</strong>
+                    <br><small class="text-muted">Apache/2.4.41 (Ubuntu)</small>
+                </div>
+
+                <div class="mb-3">
+                    <strong>PHP Version:</strong>
+                    <br><small class="text-muted">8.2.15</small>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Symfony Version:</strong>
+                    <br><small class="text-muted">7.0.x</small>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Base de données:</strong>
+                    <br><small class="text-muted">MySQL 8.0.35</small>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Espace disque:</strong>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: 65%"></div>
+                    </div>
+                    <small class="text-muted">6.5 GB / 10 GB utilisés</small>
+                </div>
+
+                <div class="mb-3">
+                    <strong>Mémoire PHP:</strong>
+                    <div class="progress mt-2" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: 45%"></div>
+                    </div>
+                    <small class="text-muted">90 MB / 200 MB utilisés</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions système -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-tools"></i> Actions Système
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="clearSystemCache()">
+                        <i class="fas fa-broom"></i> Vider Cache Système
+                    </button>
+
+                    <button class="btn btn-outline-info" onclick="optimizeDatabase()">
+                        <i class="fas fa-database"></i> Optimiser BDD
+                    </button>
+
+                    <button class="btn btn-outline-success" onclick="backupSystem()">
+                        <i class="fas fa-save"></i> Sauvegarde Système
+                    </button>
+
+                    <button class="btn btn-outline-warning" onclick="updateSystem()">
+                        <i class="fas fa-sync"></i> Vérifier MAJ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone critique -->
+        <div class="card shadow border-danger">
+            <div class="card-header py-3 bg-danger text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-exclamation-triangle"></i> Zone Critique
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong class="text-danger">Mode Maintenance</strong>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" id="maintenanceMode">
+                        <label class="form-check-label" for="maintenanceMode">
+                            Activer le mode maintenance
+                        </label>
+                    </div>
+                    <small class="text-muted">Désactive l'accès pour tous les utilisateurs sauf super admins</small>
+                </div>
+
+                <hr>
+
+                <div class="mb-3">
+                    <strong class="text-danger">Réinitialisation</strong>
+                    <br><small class="text-muted">Actions irréversibles</small>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-danger btn-sm" onclick="resetAllSessions()">
+                        <i class="fas fa-sign-out-alt"></i> Déconnecter tous
+                    </button>
+
+                    <button class="btn btn-outline-danger btn-sm" onclick="resetSystemSettings()">
+                        <i class="fas fa-undo"></i> Reset Paramètres
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Boutons de sauvegarde -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body text-center">
+                <button class="btn btn-success me-2" onclick="saveAllSettings()">
+                    <i class="fas fa-save"></i> Sauvegarder les Paramètres
+                </button>
+                <button class="btn btn-secondary me-2" onclick="location.reload()">
+                    <i class="fas fa-undo"></i> Annuler les Modifications
+                </button>
+                <a href="{{ path('app_super_admin_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Retour au Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    function saveAllSettings() {
+        if (confirm('Sauvegarder tous les paramètres ?')) {
+            // Simuler la sauvegarde
+            showNotification('Paramètres sauvegardés avec succès', 'success');
+        }
+    }
+
+    function testEmailConfig() {
+        showNotification('Email de test envoyé', 'info');
+    }
+
+    function clearSystemCache() {
+        if (confirm('Vider le cache système ?')) {
+            showNotification('Cache système vidé', 'success');
+        }
+    }
+
+    function optimizeDatabase() {
+        if (confirm('Optimiser la base de données ?')) {
+            showNotification('Optimisation terminée', 'success');
+        }
+    }
+
+    function backupSystem() {
+        if (confirm('Créer une sauvegarde complète ?')) {
+            showNotification('Sauvegarde démarrée en arrière-plan', 'info');
+        }
+    }
+
+    function updateSystem() {
+        showNotification('Vérification des mises à jour...', 'info');
+        setTimeout(() => {
+            showNotification('Système à jour', 'success');
+        }, 2000);
+    }
+
+    function resetAllSessions() {
+        if (confirm('⚠️ ATTENTION ⚠️\n\nCela va déconnecter TOUS les utilisateurs connectés.\nÊtes-vous sûr ?')) {
+            showNotification('Toutes les sessions ont été fermées', 'warning');
+        }
+    }
+
+    function resetSystemSettings() {
+        if (confirm('⚠️ DANGER ⚠️\n\nCela va remettre TOUS les paramètres à leurs valeurs par défaut.\n\nTapez RESET pour confirmer :') &&
+            prompt('Tapez RESET en majuscules pour confirmer :') === 'RESET') {
+            showNotification('Paramètres réinitialisés', 'warning');
+            setTimeout(() => location.reload(), 1500);
+        }
+    }
+
+    function showNotification(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+
+    // Mode maintenance toggle
+    document.getElementById('maintenanceMode').addEventListener('change', function () {
+        if (this.checked) {
+            if (confirm('Activer le mode maintenance ? Seuls les super admins pourront accéder au système.')) {
+                showNotification('Mode maintenance activé', 'warning');
+            } else {
+                this.checked = false;
+            }
+        } else {
+            showNotification('Mode maintenance désactivé', 'success');
+        }
+    });
+</script>
+{% endblock %}

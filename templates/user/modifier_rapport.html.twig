@@ -1,57 +1,95 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Modifier mon Rapport HSE - HSE System{% endblock %}
+{% block title %}Modifier Rapport HSE - HSE System{% endblock %}
 
-{% block page_title %}Modifier mon rapport HSE #{{ rapport.id }}{% endblock %}
+{% block page_title %}Modifier le rapport HSE{% endblock %}
 
 {% block body %}
 <div class="row justify-content-center">
     <div class="col-md-10">
+        <!-- En-tête du rapport -->
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit"></i> Modification du Rapport HSE #{{ rapport.id }}
+                    </h5>
+                    <div>
+                        <span class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }}">
+                            {{ rapport.statut }}
+                        </span>
+                        <span class="badge bg-light text-dark ms-2">
+                            {{ app.user.zone }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Créé le :</strong> {{ rapport.dateCreation|date('d/m/Y à H:i') }}</p>
+                        <p><strong>Agent :</strong> {{ rapport.nom }} ({{ rapport.codeAgt }})</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Date d'observation :</strong> {{ rapport.date|date('d/m/Y') }} à {{
+                            rapport.heure|date('H:i') }}</p>
+                        <p><strong>Zone utilisateur :</strong>
+                            <span class="badge {{ app.user.zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
+                                {{ app.user.zone }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if rapport.statut == 'Clôturé' %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Attention :</strong> Ce rapport est déjà clôturé et ne peut plus être modifié.
+        </div>
+        {% else %}
+
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-edit"></i> Modifier mon Rapport HSE #{{ rapport.id }}
-                </h5>
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-edit"></i> Formulaire de modification
+                </h6>
             </div>
             <div class="card-body">
                 {{ form_start(form) }}
 
-                <!-- Section 1: Informations automatiques -->
+                <!-- Section 1: Informations de l'utilisateur (en lecture seule) -->
                 <div class="form-section mb-4">
                     <h6 class="text-primary mb-3">
-                        <i class="fas fa-user-check"></i> Mes informations
+                        <i class="fas fa-user-check"></i> Informations de l'agent
                     </h6>
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Ces informations sont automatiquement remplies avec votre
-                        profil.
+                        <i class="fas fa-info-circle"></i> Ces informations ne peuvent pas être modifiées.
                     </div>
                     <div class="row">
                         <div class="col-md-3">
                             <div class="mb-3">
                                 {{ form_label(form.codeAgt, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.codeAgt) }}
-                                {{ form_errors(form.codeAgt) }}
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="mb-3">
                                 {{ form_label(form.nom, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.nom) }}
-                                {{ form_errors(form.nom) }}
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="mb-3">
                                 {{ form_label(form.date, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.date) }}
-                                {{ form_errors(form.date) }}
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="mb-3">
                                 {{ form_label(form.heure, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.heure) }}
-                                {{ form_errors(form.heure) }}
                             </div>
                         </div>
                     </div>
@@ -60,7 +98,7 @@
                 <!-- Section 2: Localisation -->
                 <div class="form-section mb-4">
                     <h6 class="text-primary mb-3">
-                        <i class="fas fa-map-marker-alt"></i> Localisation
+                        <i class="fas fa-map-marker-alt"></i> Localisation de l'anomalie
                     </h6>
                     <div class="row">
                         <div class="col-md-6">
@@ -68,6 +106,9 @@
                                 {{ form_label(form.zone, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.zone) }}
                                 {{ form_errors(form.zone) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i> Zone de travail où l'anomalie a été observée
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -123,14 +164,9 @@
                                 </div>
                                 {% if rapport.photoConstat %}
                                 <div class="mt-2">
-                                    <small class="text-muted">Photo actuelle:</small>
-                                    <div class="mt-1">
-                                        <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo constat"
-                                            class="img-thumbnail"
-                                            style="max-width: 200px; max-height: 150px; cursor: pointer;"
-                                            data-bs-toggle="modal" data-bs-target="#modalPhotoConstat">
-                                    </div>
-                                    <small class="text-muted">Sélectionnez une nouvelle photo pour la remplacer</small>
+                                    <small class="text-success">
+                                        <i class="fas fa-check-circle"></i> Photo actuelle : {{ rapport.photoConstat }}
+                                    </small>
                                 </div>
                                 {% endif %}
                             </div>
@@ -143,11 +179,6 @@
                     <h6 class="text-success mb-3">
                         <i class="fas fa-check-circle"></i> Action de clôture
                     </h6>
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <strong>Attention :</strong> Si vous marquez ce rapport comme clôturé, vous ne pourrez plus le
-                        modifier par la suite.
-                    </div>
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
@@ -159,6 +190,9 @@
                     </div>
 
                     <div id="action-fields" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i> Remplissez les informations de clôture ci-dessous.
+                        </div>
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
@@ -181,19 +215,14 @@
                                     {{ form_widget(form.photoActionFile) }}
                                     {{ form_errors(form.photoActionFile) }}
                                     <div class="form-text">
-                                        <i class="fas fa-info-circle"></i> Photo de l'action corrective réalisée
+                                        <i class="fas fa-camera"></i> Photo prouvant la résolution
                                     </div>
                                     {% if rapport.photoActionCloturee %}
                                     <div class="mt-2">
-                                        <small class="text-muted">Photo actuelle:</small>
-                                        <div class="mt-1">
-                                            <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}"
-                                                alt="Photo action" class="img-thumbnail"
-                                                style="max-width: 200px; max-height: 150px; cursor: pointer;"
-                                                data-bs-toggle="modal" data-bs-target="#modalPhotoAction">
-                                        </div>
-                                        <small class="text-muted">Sélectionnez une nouvelle photo pour la
-                                            remplacer</small>
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle"></i> Photo actuelle : {{
+                                            rapport.photoActionCloturee }}
+                                        </small>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -203,62 +232,55 @@
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">
-                    <a href="{{ path('app_user_rapport_detail', {id: rapport.id}) }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Retour au détail
-                    </a>
                     <div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Enregistrer les modifications
-                        </button>
+                        <a href="{{ path('app_user_rapport_detail', {'id': rapport.id}) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour au détail
+                        </a>
+                        <a href="{{ path('app_user_rapports') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list"></i> Mes rapports
+                        </a>
+                    </div>
+                    <div>
+                        {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary'}}) }}
                     </div>
                 </div>
 
                 {{ form_end(form) }}
             </div>
         </div>
-    </div>
-</div>
+        {% endif %}
 
-<!-- Modal pour photo du constat actuelle -->
-{% if rapport.photoConstat %}
-<div class="modal fade" id="modalPhotoConstat" tabindex="-1" aria-labelledby="modalPhotoConstatLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalPhotoConstatLabel">Photo du constat actuelle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Photos actuelles -->
+        {% if rapport.photoConstat or rapport.photoActionCloturee %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-images"></i> Photos du rapport
+                </h6>
             </div>
-            <div class="modal-body text-center">
-                <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo du constat" class="img-fluid">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            <div class="card-body">
+                <div class="row">
+                    {% if rapport.photoConstat %}
+                    <div class="col-md-6">
+                        <h6>Photo du constat</h6>
+                        <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" class="img-fluid rounded shadow-sm"
+                            alt="Photo du constat" style="max-height: 300px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+                    {% if rapport.photoActionCloturee %}
+                    <div class="col-md-6">
+                        <h6>Photo de l'action</h6>
+                        <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}"
+                            class="img-fluid rounded shadow-sm" alt="Photo de l'action"
+                            style="max-height: 300px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
-{% endif %}
-
-<!-- Modal pour photo d'action actuelle -->
-{% if rapport.photoActionCloturee %}
-<div class="modal fade" id="modalPhotoAction" tabindex="-1" aria-labelledby="modalPhotoActionLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalPhotoActionLabel">Photo d'action actuelle</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}" alt="Photo d'action" class="img-fluid">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -269,69 +291,66 @@
             function toggleActionFields() {
                 if (actionClotureeSelect.value === 'oui') {
                     actionFields.style.display = 'block';
+                    // Auto-remplir les champs si ils sont vides
+                    const dateClotureField = document.getElementById('user_rapport_hse_dateCloture');
+                    const heureActionField = document.getElementById('user_rapport_hse_heureAction');
+
+                    if (dateClotureField && !dateClotureField.value) {
+                        const today = new Date();
+                        dateClotureField.value = today.toISOString().split('T')[0];
+                    }
+                    if (heureActionField && !heureActionField.value) {
+                        const now = new Date();
+                        const timeString = now.toTimeString().slice(0, 5);
+                        heureActionField.value = timeString;
+                    }
                 } else {
                     actionFields.style.display = 'none';
                 }
             }
 
             actionClotureeSelect.addEventListener('change', toggleActionFields);
-            toggleActionFields(); // Initialiser au chargement
-        }
-
-        // Confirmation avant clôture
-        const form = document.querySelector('form');
-        if (form) {
-            form.addEventListener('submit', function (e) {
-                if (actionClotureeSelect && actionClotureeSelect.value === 'oui') {
-                    if (!confirm('Êtes-vous sûr de vouloir clôturer ce rapport ? Une fois clôturé, vous ne pourrez plus le modifier.')) {
-                        e.preventDefault();
-                    }
-                }
-            });
+            toggleActionFields(); // Initialiser
         }
     });
 </script>
 
 <style>
     .form-section {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 20px;
-        background-color: #f8f9fa;
-    }
-
-    .form-section h6 {
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #007bff;
+        border-left: 4px solid #007bff;
+        padding-left: 15px;
     }
 
     .action-section {
-        border: 1px solid #d4edda;
+        border-left: 4px solid #28a745;
+        padding-left: 15px;
+        background-color: #f8f9fa;
         border-radius: 8px;
         padding: 20px;
-        background-color: #f8fff9;
+        margin-top: 20px;
     }
 
-    .action-section h6 {
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #28a745;
+    .badge {
+        font-size: 0.875em;
     }
 
-    .img-thumbnail {
-        border: 2px solid #dee2e6;
+    .alert {
         border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s;
     }
 
-    .img-thumbnail:hover {
-        transform: scale(1.05);
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 10px;
     }
 
-    .alert-warning {
-        border-left: 4px solid #ffc107;
+    .form-text {
+        font-size: 0.875em;
+    }
+
+    input[readonly],
+    select[readonly],
+    textarea[readonly] {
+        background-color: #e9ecef !important;
     }
 </style>
 {% endblock %}

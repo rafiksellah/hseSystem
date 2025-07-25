@@ -50,7 +50,11 @@ class UserAuthenticator extends AbstractLoginFormAuthenticator
         // Récupérer l'utilisateur depuis le token
         $user = $token->getUser();
 
-        // Vérifier les rôles et rediriger en conséquence
+        // Vérifier les rôles et rediriger en conséquence (hiérarchie des rôles)
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            return new RedirectResponse($this->urlGenerator->generate('app_super_admin_dashboard'));
+        }
+
         if (in_array('ROLE_ADMIN', $user->getRoles())) {
             return new RedirectResponse($this->urlGenerator->generate('app_admin_dashboard'));
         }

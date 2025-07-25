@@ -26,11 +26,25 @@
                             <strong>Code Agent:</strong>
                             <span class="badge bg-primary">{{ user.codeAgent }}</span>
                         </p>
+
+                        <!-- Zone de travail -->
+                        <p class="text-muted mb-3">
+                            <strong>Zone de travail:</strong>
+                            <span class="badge {{ user.zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
+                                <i class="fas fa-building"></i> {{ user.zone }}
+                            </span>
+                        </p>
+
+                        <!-- Rôle -->
                         <p class="text-muted mb-3">
                             <strong>Rôle:</strong>
-                            {% if 'ROLE_ADMIN' in user.roles %}
+                            {% if 'ROLE_SUPER_ADMIN' in user.roles %}
                             <span class="badge bg-danger">
-                                <i class="fas fa-crown"></i> Administrateur
+                                <i class="fas fa-crown"></i> Super Administrateur
+                            </span>
+                            {% elseif 'ROLE_ADMIN' in user.roles %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-user-shield"></i> Administrateur {{ user.zone }}
                             </span>
                             {% else %}
                             <span class="badge bg-success">
@@ -38,6 +52,7 @@
                             </span>
                             {% endif %}
                         </p>
+
                         <div class="row">
                             <div class="col-6">
                                 <div class="border-right">
@@ -68,17 +83,34 @@
                             <div class="small text-muted">Rapports Total</div>
                         </div>
                     </div>
+
+                    <!-- Statut des rapports -->
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="h6 mb-0 text-warning">
+                                {{ user.rapportsHSE|filter(r => r.statut == 'En cours')|length }}
+                            </div>
+                            <div class="small text-muted">En cours</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="h6 mb-0 text-success">
+                                {{ user.rapportsHSE|filter(r => r.statut == 'Clôturé')|length }}
+                            </div>
+                            <div class="small text-muted">Clôturés</div>
+                        </div>
+                    </div>
+
                     <hr>
                     <div class="text-center">
                         {% if 'ROLE_ADMIN' in user.roles %}
-                        <a href="{{ path('app_admin_rapports') }}" class="btn btn-primary btn-sm">
+                        <a href="{{ path('app_admin_rapports') }}" class="btn btn-primary btn-sm mb-2">
                             <i class="fas fa-list"></i> Voir tous les rapports
                         </a>
-                        {% else %}
-                        <a href="{{ path('app_user_rapports') }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-list"></i> Voir mes rapports
-                        </a>
+                        <br>
                         {% endif %}
+                        <a href="{{ path('app_user_rapports') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-list"></i> Mes rapports
+                        </a>
                     </div>
                 </div>
             </div>
@@ -130,13 +162,28 @@
                         </div>
                     </div>
 
+                    <!-- Information sur la zone (non modifiable) -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Zone de travail :</strong> {{ user.zone }}
+                                <br>
+                                <small class="text-muted">
+                                    Votre zone de travail ne peut pas être modifiée.
+                                    Contactez un administrateur si nécessaire.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
                     <hr class="my-4">
 
                     <h6 class="text-primary mb-3">
                         <i class="fas fa-lock"></i> Changer le mot de passe
                     </h6>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
                         Laissez les champs vides si vous ne souhaitez pas changer votre mot de passe.
                     </div>
 
@@ -177,6 +224,68 @@
                     {{ form_end(form) }}
                 </div>
             </div>
+
+            <!-- Informations sur les droits -->
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-shield-alt"></i> Mes Droits et Permissions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">
+                                <i class="fas fa-user-check"></i> Permissions
+                            </h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Créer des rapports HSE</li>
+                                <li><i class="fas fa-check text-success"></i> Modifier mes rapports</li>
+                                <li><i class="fas fa-check text-success"></i> Voir mes statistiques</li>
+                                <li><i class="fas fa-check text-success"></i> Exporter mes données</li>
+                                {% if 'ROLE_ADMIN' in user.roles %}
+                                <li><i class="fas fa-check text-warning"></i> Gérer les utilisateurs {{ user.zone }}
+                                </li>
+                                <li><i class="fas fa-check text-warning"></i> Voir tous les rapports {{ user.zone }}
+                                </li>
+                                {% endif %}
+                                {% if 'ROLE_SUPER_ADMIN' in user.roles %}
+                                <li><i class="fas fa-check text-danger"></i> Accès global à tout le système</li>
+                                <li><i class="fas fa-check text-danger"></i> Gérer tous les utilisateurs</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary">
+                                <i class="fas fa-building"></i> Zone d'accès
+                            </h6>
+                            <p class="mb-3">
+                                Vous avez accès aux zones de travail suivantes :
+                            </p>
+                            {% if 'ROLE_SUPER_ADMIN' in user.roles %}
+                            <span class="badge bg-danger mb-1">Toutes les zones</span>
+                            {% else %}
+                            <span class="badge {{ user.zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }} mb-1">
+                                {{ user.zone }}
+                            </span>
+                            {% endif %}
+
+                            <div class="mt-3">
+                                <small class="text-muted">
+                                    {% if 'ROLE_SUPER_ADMIN' in user.roles %}
+                                    En tant que Super Administrateur, vous avez accès à toutes les fonctionnalités du
+                                    système.
+                                    {% elseif 'ROLE_ADMIN' in user.roles %}
+                                    En tant qu'Administrateur {{ user.zone }}, vous gérez uniquement cette zone.
+                                    {% else %}
+                                    En tant qu'utilisateur, vous créez des rapports pour la zone {{ user.zone }}.
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -207,6 +316,7 @@
         border: none;
         box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
         transition: all 0.3s ease;
+        border-radius: 10px;
     }
 
     .card:hover {
@@ -285,14 +395,30 @@
         background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
     }
 
+    .bg-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+        color: #212529 !important;
+    }
+
     .bg-success {
         background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    }
+
+    .bg-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%) !important;
     }
 
     .alert-info {
         background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         border: 1px solid rgba(102, 126, 234, 0.2);
         color: #5a5c69;
+        border-radius: 8px;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(224, 168, 0, 0.1) 100%);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        color: #856404;
         border-radius: 8px;
     }
 
@@ -305,7 +431,8 @@
         color: #667eea !important;
     }
 
-    .h5 {
+    .h5,
+    .h6 {
         font-weight: 700;
         color: #5a5c69;
     }
@@ -317,11 +444,6 @@
 
     .form-group {
         margin-bottom: 1.5rem;
-    }
-
-    .hr {
-        border-top: 1px solid #e3e6f0;
-        margin: 2rem 0;
     }
 
     /* Responsive adjustments */
@@ -374,6 +496,10 @@
         background-repeat: no-repeat;
         background-position: right calc(0.375em + 0.1875rem) center;
         background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    .list-unstyled li {
+        padding: 3px 0;
     }
 </style>
 {% endblock %}
