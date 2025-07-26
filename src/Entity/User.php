@@ -63,11 +63,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::TIME_MUTABLE)]
     private ?\DateTimeInterface $heureCreation = null;
 
-    #[ORM\Column(length: 50, nullable: false)]
-    #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+
+    #[ORM\Column(length: 50, nullable: true)] // Changé de nullable: false à nullable: true
     #[Assert\Choice(
         choices: ['SIMTIS', 'SIMTIS TISSAGE'],
-        message: 'Veuillez choisir une zone valide (SIMTIS ou SIMTIS TISSAGE)'
+        message: 'Veuillez choisir une zone valide (SIMTIS ou SIMTIS TISSAGE)',
+        groups: ['zone_required'] // Ajouter un groupe de validation
     )]
     private ?string $zone = null;
 
@@ -80,6 +81,43 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->dateCreation = new \DateTime();
         $this->heureCreation = new \DateTime();
         $this->roles = ['ROLE_USER'];
+    }
+
+    /**
+     * Vérifie si l'utilisateur a besoin d'une zone
+     */
+    public function needsZone(): bool
+    {
+        // Les super admins n'ont pas besoin de zone
+        return !$this->isSuperAdmin();
+    }
+
+    /**
+     * Obtient la zone d'affichage
+     */
+    public function getDisplayZone(): string
+    {
+        if ($this->isSuperAdmin()) {
+            return 'Toutes les zones';
+        }
+
+        return $this->zone ?? 'Non définie';
+    }
+
+    /**
+     * Obtient les zones que cet utilisateur peut gérer
+     */
+    public function getManagedZones(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return self::ZONES_DISPONIBLES;
+        }
+
+        if ($this->isAdmin() && $this->zone) {
+            return [$this->zone => $this->zone];
+        }
+
+        return [];
     }
 
     public function getId(): ?int
@@ -192,10 +230,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->zone;
     }
 
-    public function setZone(string $zone): static
+    public function setZone(?string $zone): static
     {
-        // Validation supplémentaire au niveau de l'entité
-        if (!in_array($zone, ['SIMTIS', 'SIMTIS TISSAGE'])) {
+        // Validation seulement si une zone est fournie
+        if ($zone !== null && !in_array($zone, ['SIMTIS', 'SIMTIS TISSAGE'])) {
             throw new \InvalidArgumentException('Zone invalide. Les zones autorisées sont : SIMTIS, SIMTIS TISSAGE');
         }
 
@@ -277,21 +315,5 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         // Utilisateur normal ne peut rien gérer
         return false;
-    }
-
-    /**
-     * Obtient les zones que cet utilisateur peut gérer
-     */
-    public function getManagedZones(): array
-    {
-        if ($this->isSuperAdmin()) {
-            return self::ZONES_DISPONIBLES;
-        }
-
-        if ($this->isAdmin()) {
-            return [$this->getZone() => $this->getZone()];
-        }
-
-        return [];
     }
 }

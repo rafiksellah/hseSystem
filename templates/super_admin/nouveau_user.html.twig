@@ -221,4 +221,113 @@
         }
     });
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const rolesSelect = document.getElementById('user_roles');
+        const zoneContainer = document.querySelector('#user_zone').closest('.mb-3');
+        const zoneSelect = document.getElementById('user_zone');
+        const zoneHelp = zoneContainer.querySelector('.form-text');
+
+        if (rolesSelect && zoneContainer) {
+            function toggleZoneRequirement() {
+                const selectedRoles = Array.from(rolesSelect.selectedOptions).map(option => option.value);
+                const isSuperAdmin = selectedRoles.includes('ROLE_SUPER_ADMIN');
+
+                if (isSuperAdmin) {
+                    // Zone optionnelle pour Super Admin
+                    zoneContainer.style.opacity = '0.6';
+                    zoneSelect.required = false;
+                    if (zoneHelp) {
+                        zoneHelp.innerHTML = '<i class="fas fa-crown text-warning"></i> Zone optionnelle pour les Super Administrateurs';
+                        zoneHelp.className = 'form-text text-warning';
+                    }
+
+                    // Ajouter un indicateur visuel
+                    const label = zoneContainer.querySelector('label');
+                    if (label && !label.querySelector('.optional-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-warning ms-2 optional-badge';
+                        badge.textContent = 'Optionnel';
+                        label.appendChild(badge);
+                    }
+                } else {
+                    // Zone obligatoire pour les autres rôles
+                    zoneContainer.style.opacity = '1';
+                    zoneSelect.required = true;
+                    if (zoneHelp) {
+                        zoneHelp.innerHTML = '<i class="fas fa-map-marker-alt text-info"></i> Zone de responsabilité obligatoire';
+                        zoneHelp.className = 'form-text text-info';
+                    }
+
+                    // Supprimer l'indicateur optionnel
+                    const optionalBadge = zoneContainer.querySelector('.optional-badge');
+                    if (optionalBadge) {
+                        optionalBadge.remove();
+                    }
+                }
+            }
+
+            // Écouter les changements de rôle
+            rolesSelect.addEventListener('change', toggleZoneRequirement);
+
+            // Initialiser au chargement
+            toggleZoneRequirement();
+        }
+
+        // Validation du formulaire
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                const rolesSelect = document.getElementById('user_roles');
+                const zoneSelect = document.getElementById('user_zone');
+
+                if (rolesSelect && zoneSelect) {
+                    const selectedRoles = Array.from(rolesSelect.selectedOptions).map(option => option.value);
+                    const isSuperAdmin = selectedRoles.includes('ROLE_SUPER_ADMIN');
+
+                    // Si ce n'est pas un super admin et qu'aucune zone n'est sélectionnée
+                    if (!isSuperAdmin && !zoneSelect.value) {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        // Afficher une alerte
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-danger alert-dismissible fade show';
+                        alert.innerHTML = `
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Erreur :</strong> La zone est obligatoire pour les utilisateurs et administrateurs.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+
+                        // Insérer l'alerte au début du formulaire
+                        form.insertBefore(alert, form.firstChild);
+
+                        // Faire défiler vers le haut
+                        form.scrollIntoView({ behavior: 'smooth' });
+
+                        return false;
+                    }
+                }
+
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+    });
+</script>
+
+<style>
+    .zone-optional {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+    }
+
+    .zone-required {
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+</style>
 {% endblock %}

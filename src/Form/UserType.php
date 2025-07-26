@@ -1,5 +1,5 @@
 <?php
-// src/Form/UserType.php
+// src/Form/UserType.php - Version corrigée
 
 namespace App\Form;
 
@@ -16,6 +16,8 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 
 class UserType extends AbstractType
 {
@@ -65,6 +67,7 @@ class UserType extends AbstractType
         $zoneChoices = ['SIMTIS' => 'SIMTIS', 'SIMTIS TISSAGE' => 'SIMTIS TISSAGE'];
         $disabled = false;
         $help = null;
+        $required = true;
 
         // Si l'utilisateur connecté est un admin (pas super admin), limiter les choix
         if ($currentUser && in_array('ROLE_ADMIN', $currentUser->getRoles()) && !$options['is_super_admin']) {
@@ -75,11 +78,17 @@ class UserType extends AbstractType
             $help = 'Vous ne pouvez créer des utilisateurs que pour votre zone';
         }
 
+        // Pour les super admins, la zone est optionnelle
+        if ($options['is_super_admin']) {
+            $help = 'Zone optionnelle pour les Super Administrateurs (ils peuvent gérer toutes les zones)';
+            $required = false;
+        }
+
         $builder->add('zone', ChoiceType::class, [
             'label' => 'Zone',
             'choices' => $zoneChoices,
-            'placeholder' => $disabled ? null : 'Sélectionnez une zone',
-            'required' => true,
+            'placeholder' => $required ? ($disabled ? null : 'Sélectionnez une zone') : 'Aucune zone (Super Admin)',
+            'required' => $required,
             'attr' => [
                 'class' => 'form-select'
             ],
@@ -101,7 +110,8 @@ class UserType extends AbstractType
                 'data' => ['ROLE_USER'], // Valeur par défaut
                 'attr' => [
                     'class' => 'form-select',
-                    'multiple' => true
+                    'multiple' => true,
+                    'id' => 'user_roles'
                 ],
                 'help' => 'Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs rôles'
             ]);
@@ -181,7 +191,8 @@ class UserType extends AbstractType
                     'expanded' => false,
                     'attr' => [
                         'class' => 'form-select',
-                        'multiple' => true
+                        'multiple' => true,
+                        'id' => 'user_roles'
                     ],
                     'help' => 'Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs rôles'
                 ]);
@@ -194,6 +205,21 @@ class UserType extends AbstractType
                 'class' => 'btn btn-primary w-100'
             ]
         ]);
+
+        // Ajouter un événement pour gérer dynamiquement la zone selon le rôle
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+            $data = $event->getData();
+            $form = $event->getForm();
+
+            // Si le rôle sélectionné est SUPER_ADMIN, la zone n'est pas obligatoire
+            if (isset($data['roles']) && in_array('ROLE_SUPER_ADMIN', $data['roles'])) {
+                // Permettre une zone vide pour les super admins
+                if (empty($data['zone'])) {
+                    $data['zone'] = null;
+                    $event->setData($data);
+                }
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -201,7 +227,7 @@ class UserType extends AbstractType
         $resolver->setDefaults([
             'data_class' => User::class,
             'is_edit' => false,
-            'is_super_admin' => false, // Ajouter cette option
+            'is_super_admin' => false,
         ]);
     }
 }

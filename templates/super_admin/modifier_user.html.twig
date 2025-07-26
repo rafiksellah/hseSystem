@@ -7,6 +7,25 @@
 <small class="text-muted">{{ user.fullName }} ({{ user.codeAgent }})</small>
 {% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .bg-purple {
+        background-color: #6610f2 !important;
+    }
+
+    .zone-optional {
+        opacity: 0.6;
+        transition: opacity 0.3s ease;
+    }
+
+    .zone-required {
+        opacity: 1;
+        transition: opacity 0.3s ease;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="row justify-content-center">
     <div class="col-lg-8">
@@ -28,9 +47,15 @@
                     </div>
                     <div class="col-md-6">
                         <p><strong>Zone :</strong>
+                            {% if user.zone %}
                             <span class="badge {{ user.zone == 'SIMTIS' ? 'bg-info' : 'bg-purple' }}">
                                 {{ user.zone }}
                             </span>
+                            {% else %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-crown"></i> Accès Global
+                            </span>
+                            {% endif %}
                         </p>
                         <p><strong>Rôle actuel :</strong>
                             {% if 'ROLE_SUPER_ADMIN' in user.roles %}
@@ -116,7 +141,8 @@
                             {% if form.roles is defined %}
                             <div class="mb-3">
                                 {{ form_label(form.roles, 'Rôles', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.roles, {'attr': {'class': 'form-select', 'multiple': true}}) }}
+                                {{ form_widget(form.roles, {'attr': {'class': 'form-select', 'multiple': true, 'id':
+                                'user_roles'}}) }}
                                 {{ form_errors(form.roles) }}
                                 <div class="form-text">
                                     <i class="fas fa-shield-alt"></i> Maintenez Ctrl (Cmd sur Mac) pour sélectionner
@@ -195,44 +221,218 @@
         <!-- Statistiques utilisateur -->
         <div class="card shadow mt-4">
             <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-success">
+                <h6 class="m-0 font-weight-bold text-info">
                     <i class="fas fa-chart-bar"></i> Statistiques de l'Utilisateur
                 </h6>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4 text-center">
-                        <h4 class="text-primary">{{ user.rapportsHSE|length }}</h4>
-                        <small class="text-muted">Rapports HSE créés</small>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-primary">{{ user.rapportsHSE|length }}</h4>
+                            <small class="text-muted">Rapports HSE créés</small>
+                        </div>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <h4 class="text-success">{{ user.zone }}</h4>
-                        <small class="text-muted">Zone assignée</small>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-success">
+                                {{ user.rapportsHSE|filter(r => r.statut == 'Clôturé')|length }}
+                            </h4>
+                            <small class="text-muted">Rapports clôturés</small>
+                        </div>
                     </div>
-                    <div class="col-md-4 text-center">
-                        <h4 class="text-info">
-                            {{ (date().diff(user.dateCreation).days) }}
-                        </h4>
-                        <small class="text-muted">Jours depuis création</small>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4 class="text-warning">
+                                {{ user.rapportsHSE|filter(r => r.statut == 'En cours')|length }}
+                            </h4>
+                            <small class="text-muted">Rapports en cours</small>
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.rapportsHSE|length > 0 %}
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">Derniers Rapports HSE</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Zone</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rapport in user.rapportsHSE|slice(0, 5) %}
+                                    <tr>
+                                        <td>{{ rapport.date|date('d/m/Y') }}</td>
+                                        <td>
+                                            {% if rapport.zone %}
+                                            <span class="badge bg-light text-dark">{{ rapport.zone }}</span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }}">
+                                                {{ rapport.statut }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ path('app_admin_rapport_voir', {'id': rapport.id}) }}"
+                                                class="btn btn-outline-info btn-sm">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if user.rapportsHSE|length > 5 %}
+                        <div class="text-center">
+                            <a href="{{ path('app_super_admin_rapports', {'codeAgt': user.codeAgent}) }}"
+                                class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-list"></i> Voir tous ses rapports ({{ user.rapportsHSE|length }})
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Danger Zone -->
+        {% if user.id != app.user.id %}
+        <div class="card shadow mt-4 border-danger">
+            <div class="card-header py-3 bg-danger text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-exclamation-triangle"></i> Zone Dangereuse
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="text-danger">Supprimer cet utilisateur</h6>
+                        <p class="text-muted mb-0">
+                            Cette action est irréversible. L'utilisateur sera définitivement supprimé du système.
+                            {% if user.rapportsHSE|length > 0 %}
+                            <br><strong class="text-warning">Attention :</strong> Cet utilisateur a {{
+                            user.rapportsHSE|length }} rapport(s) HSE associé(s).
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ path('app_super_admin_user_supprimer', {'id': user.id}) }}" class="btn btn-danger"
+                            onclick="return confirm('⚠️ ATTENTION ⚠️\n\nÊtes-vous absolument sûr de vouloir supprimer l\'utilisateur {{ user.fullName }} ?\n\nCette action est IRRÉVERSIBLE et supprimera :\n- Le compte utilisateur\n- Toutes ses données associées\n\nTapez OUI en majuscules pour confirmer :') && prompt('Tapez OUI pour confirmer la suppression :') === 'OUI'">
+                            <i class="fas fa-trash"></i> Supprimer Utilisateur
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
+{% endblock %}
 
-<style>
-    .bg-purple {
-        background-color: #6610f2 !important;
-    }
-</style>
-
+{% block javascripts %}
+{{ parent() }}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const rolesSelect = document.getElementById('user_roles');
+        const zoneContainer = document.querySelector('#user_zone').closest('.mb-3');
+        const zoneSelect = document.getElementById('user_zone');
+        const zoneHelp = zoneContainer.querySelector('.form-text');
+
+        if (rolesSelect && zoneContainer) {
+            function toggleZoneRequirement() {
+                const selectedRoles = Array.from(rolesSelect.selectedOptions).map(option => option.value);
+                const isSuperAdmin = selectedRoles.includes('ROLE_SUPER_ADMIN');
+
+                if (isSuperAdmin) {
+                    // Zone optionnelle pour Super Admin
+                    zoneContainer.style.opacity = '0.6';
+                    zoneSelect.required = false;
+                    if (zoneHelp) {
+                        zoneHelp.innerHTML = '<i class="fas fa-crown text-warning"></i> Zone optionnelle pour les Super Administrateurs';
+                        zoneHelp.className = 'form-text text-warning';
+                    }
+
+                    // Ajouter un indicateur visuel
+                    const label = zoneContainer.querySelector('label');
+                    if (label && !label.querySelector('.optional-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-warning ms-2 optional-badge';
+                        badge.textContent = 'Optionnel';
+                        label.appendChild(badge);
+                    }
+                } else {
+                    // Zone obligatoire pour les autres rôles
+                    zoneContainer.style.opacity = '1';
+                    zoneSelect.required = true;
+                    if (zoneHelp) {
+                        zoneHelp.innerHTML = '<i class="fas fa-map-marker-alt text-info"></i> Zone de responsabilité obligatoire';
+                        zoneHelp.className = 'form-text text-info';
+                    }
+
+                    // Supprimer l'indicateur optionnel
+                    const optionalBadge = zoneContainer.querySelector('.optional-badge');
+                    if (optionalBadge) {
+                        optionalBadge.remove();
+                    }
+                }
+            }
+
+            // Écouter les changements de rôle
+            rolesSelect.addEventListener('change', toggleZoneRequirement);
+
+            // Initialiser au chargement
+            toggleZoneRequirement();
+        }
+
         // Validation du formulaire
         const form = document.querySelector('.needs-validation');
         if (form) {
             form.addEventListener('submit', function (event) {
+                const rolesSelect = document.getElementById('user_roles');
+                const zoneSelect = document.getElementById('user_zone');
+
+                if (rolesSelect && zoneSelect) {
+                    const selectedRoles = Array.from(rolesSelect.selectedOptions).map(option => option.value);
+                    const isSuperAdmin = selectedRoles.includes('ROLE_SUPER_ADMIN');
+
+                    // Si ce n'est pas un super admin et qu'aucune zone n'est sélectionnée
+                    if (!isSuperAdmin && !zoneSelect.value) {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        // Afficher une alerte
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-danger alert-dismissible fade show';
+                        alert.innerHTML = `
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Erreur :</strong> La zone est obligatoire pour les utilisateurs et administrateurs.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+
+                        // Insérer l'alerte au début du formulaire
+                        form.insertBefore(alert, form.firstChild);
+
+                        // Faire défiler vers le haut
+                        form.scrollIntoView({ behavior: 'smooth' });
+
+                        return false;
+                    }
+                }
+
                 if (!form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();

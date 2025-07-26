@@ -105,15 +105,17 @@ class SuperAdminController extends AbstractController
 
         $form = $this->createForm(UserType::class, $user, [
             'is_edit' => false,
-            'is_super_admin' => true // Permettre la sélection du rôle
+            'is_super_admin' => true
         ]);
 
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Vérifier que la zone est bien définie
-            if (!$user->getZone()) {
-                $this->addFlash('error', 'La zone doit être sélectionnée.');
+            $roles = $user->getRoles();
+
+            // Vérifier la zone seulement pour les non-super-admins
+            if (!in_array('ROLE_SUPER_ADMIN', $roles) && !$user->getZone()) {
+                $this->addFlash('error', 'La zone doit être sélectionnée pour les utilisateurs et administrateurs.');
                 return $this->render('super_admin/nouveau_user.html.twig', [
                     'form' => $form,
                 ]);
@@ -141,10 +143,12 @@ class SuperAdminController extends AbstractController
                 $roleDisplay = 'Utilisateur';
             }
 
+            $zoneMessage = $user->getZone() ? 'dans la zone ' . $user->getZone() : 'avec accès global';
+
             $this->addFlash(
                 'success',
                 'L\'utilisateur ' . $user->getFullName() . ' (' . $roleDisplay . ') ' .
-                    'a été créé avec succès dans la zone ' . $user->getZone() . ' !'
+                    'a été créé avec succès ' . $zoneMessage . ' !'
             );
 
             return $this->redirectToRoute('app_super_admin_users');
@@ -162,7 +166,6 @@ class SuperAdminController extends AbstractController
         EntityManagerInterface $entityManager,
         UserPasswordHasherInterface $userPasswordHasher
     ): Response {
-        // Le super admin peut modifier n'importe quel utilisateur
         $form = $this->createForm(UserType::class, $user, [
             'is_edit' => true,
             'is_super_admin' => true
@@ -171,6 +174,17 @@ class SuperAdminController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $roles = $user->getRoles();
+
+            // Vérifier la zone seulement pour les non-super-admins
+            if (!in_array('ROLE_SUPER_ADMIN', $roles) && !$user->getZone()) {
+                $this->addFlash('error', 'La zone doit être sélectionnée pour les utilisateurs et administrateurs.');
+                return $this->render('super_admin/modifier_user.html.twig', [
+                    'form' => $form,
+                    'user' => $user,
+                ]);
+            }
+
             // Encoder le nouveau mot de passe seulement s'il a été fourni
             $plainPassword = $form->get('plainPassword')->getData();
             if ($plainPassword) {
