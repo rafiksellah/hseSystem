@@ -305,6 +305,15 @@ class SuperAdminController extends AbstractController
         ]);
     }
 
+    #[Route('/rapport/{id}/voir', name: 'app_super_admin_rapport_voir', requirements: ['id' => '\d+'])]
+    public function voirRapport(RapportHSE $rapport): Response
+    {
+        // Super admin peut voir tous les rapports
+        return $this->render('super_admin/rapport_details.html.twig', [
+            'rapport' => $rapport,
+        ]);
+    }
+
     #[Route('/statistiques', name: 'app_super_admin_statistiques')]
     public function statistiques(
         RapportHSERepository $rapportRepository,

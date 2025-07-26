@@ -7,586 +7,629 @@
 {% endblock %}
 
 {% block body %}
-	<style>
-		body {
-			background-color: #f8f9fa;
-		}
-		.page-header {
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			color: white;
-			border-radius: 15px;
-			margin-bottom: 2rem;
-		}
-		.zone-badge {
-			font-size: 0.9rem;
-			padding: 0.5rem 1rem;
-			border-radius: 25px;
-			font-weight: 600;
-		}
-		.zone-simtis {
-			background: linear-gradient(135deg, #007bff, #0056b3);
-			color: white;
-		}
-		.zone-tissage {
-			background: linear-gradient(135deg, #28a745, #1e7e34);
-			color: white;
-		}
-		.zone-super {
-			background: linear-gradient(135deg, #dc3545, #b02a37);
-			color: white;
-		}
-		.search-card {
-			border: none;
-			border-radius: 15px;
-			box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-		}
-		.table-card {
-			border: none;
-			border-radius: 15px;
-			overflow: hidden;
-			box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-		}
-		.table thead th {
-			background: linear-gradient(135deg, #495057, #343a40);
-			color: white;
-			border: none;
-			font-weight: 600;
-			padding: 1rem 0.75rem;
-		}
-		.table tbody tr {
-			transition: all 0.2s;
-		}
-		.table tbody tr:hover {
-			background-color: rgba(0, 123, 255, 0.05);
-			transform: translateY(-1px);
-		}
-		.status-badge {
-			padding: 0.5rem 0.75rem;
-			border-radius: 20px;
-			font-size: 0.8rem;
-			font-weight: 600;
-		}
-		.status-en-cours {
-			background: linear-gradient(135deg, #ffc107, #e0a800);
-			color: #000;
-		}
-		.status-cloture {
-			background: linear-gradient(135deg, #28a745, #1e7e34);
-			color: white;
-		}
-		.btn-action {
-			border-radius: 8px;
-			padding: 0.375rem 0.75rem;
-			transition: all 0.2s;
-		}
-		.btn-action:hover {
-			transform: translateY(-1px);
-			box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
-		}
-		.filter-section {
-			background: rgba(255, 255, 255, 0.95);
-			backdrop-filter: blur(10px);
-			border-radius: 15px;
-			border: 1px solid rgba(0, 0, 0, 0.1);
-		}
-		.permission-info {
-			background: linear-gradient(135deg, #17a2b8, #138496);
-			color: white;
-			border-radius: 10px;
-			border-left: 4px solid rgba(255, 255, 255, 0.3);
-		}
-		.export-dropdown .dropdown-menu {
-			border-radius: 10px;
-			border: none;
-			box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-		}
-		.pagination .page-link {
-			border-radius: 8px;
-			margin: 0 2px;
-			border: none;
-			color: #495057;
-		}
-		.pagination .page-item.active .page-link {
-			background: linear-gradient(135deg, #007bff, #0056b3);
-			border: none;
-		}
-	</style>
+<style>
+	body {
+		background-color: #f8f9fa;
+	}
 
-	<div
-		class="container-fluid py-4">
-		<!-- En-tête de page -->
-		<div class="page-header p-4 mb-4">
-			<div class="d-flex justify-content-between align-items-center">
-				<div>
-					<h1 class="h3 mb-2">
-						<i class="fas fa-list-alt me-2"></i>
-						Rapports HSE
-					</h1>
-					<div
-						class="d-flex align-items-center gap-3">
-						<!-- Badge de zone -->
-						{% if user_zone == 'SIMTIS' %}
-							<span class="zone-badge zone-simtis">
-								<i class="fas fa-industry me-1"></i>Zone SIMTIS
-							</span>
-						{% elseif user_zone == 'SIMTIS TISSAGE' %}
-							<span class="zone-badge zone-tissage">
-								<i class="fas fa-cogs me-1"></i>Zone SIMTIS TISSAGE
-							</span>
-						{% endif %}
+	.page-header {
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: white;
+		border-radius: 15px;
+		margin-bottom: 2rem;
+	}
 
-						<!-- Badge de permissions -->
-						{% if is_granted('ROLE_SUPER_ADMIN') %}
-							<span class="zone-badge zone-super">
-								<i class="fas fa-crown me-1"></i>Accès Complet
-							</span>
-						{% else %}
-							<span class="badge bg-light text-dark">
-								<i class="fas fa-user-shield me-1"></i>Admin
-								{{ user_zone }}
-							</span>
-						{% endif %}
-					</div>
-				</div>
+	.zone-badge {
+		font-size: 0.9rem;
+		padding: 0.5rem 1rem;
+		border-radius: 25px;
+		font-weight: 600;
+	}
 
-				<!-- Actions principales -->
-				<div class="d-flex gap-2">
-					<a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-light btn-lg">
-						<i class="fas fa-plus me-2"></i>Nouveau Rapport
-					</a>
-					{% if is_granted('ROLE_ADMIN') %}
-						<div class="dropdown export-dropdown">
-							<button class="btn btn-success btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown">
-								<i class="fas fa-download me-2"></i>Exporter
-							</button>
-							<ul class="dropdown-menu">
-								<li>
-									<a class="dropdown-item" href="{{ path('app_admin_export_excel', search_params) }}">
-										<i class="fas fa-file-excel text-success me-2"></i>Fichier Excel
-									</a>
-								</li>
-								<li>
-									<a class="dropdown-item" href="{{ path('app_admin_export_pdf', search_params) }}">
-										<i class="fas fa-file-pdf text-danger me-2"></i>Fichier PDF
-									</a>
-								</li>
-							</ul>
-						</div>
+	.zone-simtis {
+		background: linear-gradient(135deg, #007bff, #0056b3);
+		color: white;
+	}
+
+	.zone-tissage {
+		background: linear-gradient(135deg, #28a745, #1e7e34);
+		color: white;
+	}
+
+	.zone-super {
+		background: linear-gradient(135deg, #dc3545, #b02a37);
+		color: white;
+	}
+
+	.search-card {
+		border: none;
+		border-radius: 15px;
+		box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+	}
+
+	.table-card {
+		border: none;
+		border-radius: 15px;
+		overflow: hidden;
+		box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+	}
+
+	.table thead th {
+		background: linear-gradient(135deg, #495057, #343a40);
+		color: white;
+		border: none;
+		font-weight: 600;
+		padding: 1rem 0.75rem;
+	}
+
+	.table tbody tr {
+		transition: all 0.2s;
+	}
+
+	.table tbody tr:hover {
+		background-color: rgba(0, 123, 255, 0.05);
+		transform: translateY(-1px);
+	}
+
+	.status-badge {
+		padding: 0.5rem 0.75rem;
+		border-radius: 20px;
+		font-size: 0.8rem;
+		font-weight: 600;
+	}
+
+	.status-en-cours {
+		background: linear-gradient(135deg, #ffc107, #e0a800);
+		color: #000;
+	}
+
+	.status-cloture {
+		background: linear-gradient(135deg, #28a745, #1e7e34);
+		color: white;
+	}
+
+	.btn-action {
+		border-radius: 8px;
+		padding: 0.375rem 0.75rem;
+		transition: all 0.2s;
+	}
+
+	.btn-action:hover {
+		transform: translateY(-1px);
+		box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+	}
+
+	.filter-section {
+		background: rgba(255, 255, 255, 0.95);
+		backdrop-filter: blur(10px);
+		border-radius: 15px;
+		border: 1px solid rgba(0, 0, 0, 0.1);
+	}
+
+	.permission-info {
+		background: linear-gradient(135deg, #17a2b8, #138496);
+		color: white;
+		border-radius: 10px;
+		border-left: 4px solid rgba(255, 255, 255, 0.3);
+	}
+
+	.export-dropdown .dropdown-menu {
+		border-radius: 10px;
+		border: none;
+		box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+	}
+
+	.pagination .page-link {
+		border-radius: 8px;
+		margin: 0 2px;
+		border: none;
+		color: #495057;
+	}
+
+	.pagination .page-item.active .page-link {
+		background: linear-gradient(135deg, #007bff, #0056b3);
+		border: none;
+	}
+</style>
+
+<div class="container-fluid py-4">
+	<!-- En-tête de page -->
+	<div class="page-header p-4 mb-4">
+		<div class="d-flex justify-content-between align-items-center">
+			<div>
+				<h1 class="h3 mb-2">
+					<i class="fas fa-list-alt me-2"></i>
+					Rapports HSE
+				</h1>
+				<div class="d-flex align-items-center gap-3">
+					<!-- Badge de zone -->
+					{% if user_zone == 'SIMTIS' %}
+					<span class="zone-badge zone-simtis">
+						<i class="fas fa-industry me-1"></i>Zone SIMTIS
+					</span>
+					{% elseif user_zone == 'SIMTIS TISSAGE' %}
+					<span class="zone-badge zone-tissage">
+						<i class="fas fa-cogs me-1"></i>Zone SIMTIS TISSAGE
+					</span>
 					{% endif %}
-				</div>
-			</div>
-		</div>
 
-		<!-- Informations sur les permissions -->
-		<div class="permission-info p-3 mb-4">
-			<div class="d-flex align-items-center">
-				<i class="fas fa-info-circle fa-2x me-3"></i>
-				<div>
+					<!-- Badge de permissions -->
 					{% if is_granted('ROLE_SUPER_ADMIN') %}
-						<h6 class="mb-1">Mode Super Administrateur</h6>
-						<p class="mb-0 opacity-75">Vous avez accès à tous les rapports de toutes les zones (SIMTIS et SIMTIS TISSAGE).</p>
-					{% elseif is_granted('ROLE_ADMIN') %}
-						<h6 class="mb-1">Mode Administrateur -
-							{{ user_zone }}</h6>
-						<p class="mb-0 opacity-75">Vous pouvez voir et gérer tous les rapports des utilisateurs de votre zone
-							{{ user_zone }}.</p>
+					<span class="zone-badge zone-super">
+						<i class="fas fa-crown me-1"></i>Accès Complet
+					</span>
 					{% else %}
-						<h6 class="mb-1">Mode Utilisateur -
-							{{ user_zone }}</h6>
-						<p class="mb-0 opacity-75">Vous pouvez voir vos rapports et ceux de votre zone
-							{{ user_zone }}.</p>
+					<span class="badge bg-light text-dark">
+						<i class="fas fa-user-shield me-1"></i>Admin
+						{{ user_zone }}
+					</span>
 					{% endif %}
 				</div>
 			</div>
-		</div>
 
-		<!-- Formulaire de recherche -->
-		<div class="search-card card mb-4">
-			<div class="card-header bg-white border-0">
-				<div class="d-flex justify-content-between align-items-center">
-					<h5 class="mb-0">
-						<i class="fas fa-search text-primary me-2"></i>Recherche et Filtres
-					</h5>
-					<button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#searchForm">
-						<i class="fas fa-filter me-1"></i>
-						{% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or search_params.dateDebut or search_params.dateFin %}
-							Filtres actifs
-						{% else %}
-							Afficher filtres
-						{% endif %}
+			<!-- Actions principales -->
+			<div class="d-flex gap-2">
+				<a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-light btn-lg">
+					<i class="fas fa-plus me-2"></i>Nouveau Rapport
+				</a>
+				{% if is_granted('ROLE_ADMIN') %}
+				<div class="dropdown export-dropdown">
+					<button class="btn btn-success btn-lg dropdown-toggle" type="button" data-bs-toggle="dropdown">
+						<i class="fas fa-download me-2"></i>Exporter
 					</button>
-				</div>
-			</div>
-			<div class="collapse {% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or search_params.dateDebut or search_params.dateFin %}show{% endif %}" id="searchForm">
-				<div class="card-body filter-section">
-					<form
-						method="GET" class="row g-3">
-						<!-- Première ligne de filtres -->
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-id-badge text-primary me-1"></i>Code Agent
-							</label>
-							<input type="text" name="codeAgt" class="form-control" value="{{ search_params.codeAgt }}" placeholder="Ex: AGT001">
-						</div>
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-user text-primary me-1"></i>Nom Agent
-							</label>
-							<input type="text" name="nom" class="form-control" value="{{ search_params.nom }}" placeholder="Nom de l'agent">
-						</div>
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-map-marker-alt text-primary me-1"></i>Zone de Travail
-							</label>
-							<select name="zone" class="form-select">
-								<option value="">Toutes les zones</option>
-								{% for key, value in zones_disponibles %}
-									<option value="{{ key }}" {{ search_params.zone == key ? 'selected' : '' }}>
-										{{ value }}
-									</option>
-								{% endfor %}
-							</select>
-						</div>
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-flag text-primary me-1"></i>Statut
-							</label>
-							<select name="statut" class="form-select">
-								<option value="">Tous les statuts</option>
-								<option value="En cours" {{ search_params.statut == 'En cours' ? 'selected' : '' }}>
-									En cours
-								</option>
-								<option value="Clôturé" {{ search_params.statut == 'Clôturé' ? 'selected' : '' }}>
-									Clôturé
-								</option>
-							</select>
-						</div>
-
-						<!-- Deuxième ligne de filtres -->
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-calendar-alt text-success me-1"></i>Date début
-							</label>
-							<input type="date" name="dateDebut" class="form-control" value="{{ search_params.dateDebut }}">
-						</div>
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-calendar-alt text-success me-1"></i>Date fin
-							</label>
-							<input type="date" name="dateFin" class="form-control" value="{{ search_params.dateFin }}">
-						</div>
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-calendar-check text-warning me-1"></i>Clôture début
-							</label>
-							<input type="date" name="dateClotureDebut" class="form-control" value="{{ search_params.dateClotureDebut }}">
-						</div>
-						<div class="col-md-3">
-							<label class="form-label fw-bold">
-								<i class="fas fa-calendar-check text-warning me-1"></i>Clôture fin
-							</label>
-							<input type="date" name="dateClotureFin" class="form-control" value="{{ search_params.dateClotureFin }}">
-						</div>
-
-						<!-- Boutons d'action -->
-						<div class="col-12">
-							<div class="d-flex gap-2 justify-content-end">
-								<button type="submit" class="btn btn-primary">
-									<i class="fas fa-search me-1"></i>Rechercher
-								</button>
-								<a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-secondary">
-									<i class="fas fa-times me-1"></i>Réinitialiser
-								</a>
-							</div>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
-
-		<!-- Tableau des rapports -->
-		<div class="table-card card">
-			<div class="card-header bg-white border-0">
-				<div class="d-flex justify-content-between align-items-center">
-					<h5 class="mb-0">
-						<i class="fas fa-table text-success me-2"></i>
-						Liste des Rapports
-						{% if not is_granted('ROLE_SUPER_ADMIN') %}
-							- Zone
-							{{ user_zone }}
-						{% endif %}
-					</h5>
-					<div class="d-flex align-items-center gap-3">
-						<span class="badge bg-info fs-6 px-3 py-2">
-							<i class="fas fa-list-ol me-1"></i>
-							{{ rapports|length }}
-							rapport(s) affiché(s)
-						</span>
-						{% if is_granted('ROLE_ADMIN') %}
-							<div class="dropdown export-dropdown">
-								<button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-									<i class="fas fa-download me-1"></i>Export
-								</button>
-								<ul class="dropdown-menu">
-									<li>
-										<a class="dropdown-item" href="{{ path('app_admin_export_excel', search_params) }}">
-											<i class="fas fa-file-excel text-success me-2"></i>Excel
-										</a>
-									</li>
-									<li>
-										<a class="dropdown-item" href="{{ path('app_admin_export_pdf', search_params) }}">
-											<i class="fas fa-file-pdf text-danger me-2"></i>PDF
-										</a>
-									</li>
-								</ul>
-							</div>
-						{% endif %}
-					</div>
-				</div>
-			</div>
-			<div class="card-body p-0">
-				{% if rapports|length > 0 %}
-					<div class="table-responsive">
-						<table class="table table-hover mb-0">
-							<thead>
-								<tr>
-									<th>
-										<i class="fas fa-id-badge me-1"></i>Code Agent</th>
-									<th>
-										<i class="fas fa-user me-1"></i>Nom Agent</th>
-									<th>
-										<i class="fas fa-map-marker-alt me-1"></i>Zone Travail</th>
-									{% if is_granted('ROLE_SUPER_ADMIN') %}
-										<th>
-											<i class="fas fa-building me-1"></i>Zone Utilisateur</th>
-									{% endif %}
-									<th>
-										<i class="fas fa-calendar me-1"></i>Date Création</th>
-									<th>
-										<i class="fas fa-flag me-1"></i>Statut</th>
-									<th>
-										<i class="fas fa-calendar-check me-1"></i>Date Clôture</th>
-									<th>
-										<i class="fas fa-cogs me-1"></i>Actions</th>
-								</tr>
-							</thead>
-							<tbody>
-								{% for rapport in rapports %}
-									<tr>
-										<td>
-											<div class="d-flex align-items-center">
-												<div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; font-size: 0.8rem;">
-													{{ rapport.codeAgt|slice(0, 2)|upper }}
-												</div>
-												<span class="fw-bold text-primary">{{ rapport.codeAgt }}</span>
-											</div>
-										</td>
-										<td>
-											<div class="fw-bold">{{ rapport.nom }}</div>
-											<small class="text-muted">{{ rapport.user ? rapport.user.email : 'N/A' }}</small>
-										</td>
-										<td>
-											{% if rapport.zone %}
-												<span class="badge bg-secondary">
-													<i class="fas fa-map-marker-alt me-1"></i>
-													{{ rapport.zone }}
-												</span>
-											{% else %}
-												<span class="text-muted fst-italic">Non spécifiée</span>
-											{% endif %}
-										</td>
-										{% if is_granted('ROLE_SUPER_ADMIN') %}
-											<td>
-												<span class="zone-badge {{ rapport.zoneUtilisateur == 'SIMTIS' ? 'zone-simtis' : 'zone-tissage' }}">
-													{% if rapport.zoneUtilisateur == 'SIMTIS' %}
-														<i class="fas fa-industry me-1"></i>SIMTIS
-													{% else %}
-														<i class="fas fa-cogs me-1"></i>TISSAGE
-													{% endif %}
-												</span>
-											</td>
-										{% endif %}
-										<td>
-											<div class="fw-bold">{{ rapport.date|date('d/m/Y') }}</div>
-											<small class="text-muted">{{ rapport.heure|date('H:i') }}</small>
-										</td>
-										<td>
-											{% if rapport.statut == 'En cours' %}
-												<span class="status-badge status-en-cours">
-													<i class="fas fa-clock me-1"></i>
-													{{ rapport.statut }}
-												</span>
-											{% else %}
-												<span class="status-badge status-cloture">
-													<i class="fas fa-check-circle me-1"></i>
-													{{ rapport.statut }}
-												</span>
-											{% endif %}
-										</td>
-										<td>
-											{% if rapport.dateCloture %}
-												<div class="fw-bold text-success">{{ rapport.dateCloture|date('d/m/Y') }}</div>
-												{% if rapport.heureAction %}
-													<small class="text-muted">{{ rapport.heureAction|date('H:i') }}</small>
-												{% endif %}
-											{% else %}
-												<span class="text-muted fst-italic">
-													<i class="fas fa-minus me-1"></i>En attente
-												</span>
-											{% endif %}
-										</td>
-										<td>
-											<div class="btn-group btn-group-sm">
-												<a href="{{ path('app_admin_rapport_detail', {id: rapport.id}) }}" class="btn btn-outline-primary btn-action" title="Voir les détails">
-													<i class="fas fa-eye"></i>
-												</a>
-												{% if rapport.canBeModifiedByUser(app.user) %}
-													<a href="{{ path('app_admin_rapport_modifier', {id: rapport.id}) }}" class="btn btn-outline-warning btn-action" title="Modifier le rapport">
-														<i class="fas fa-edit"></i>
-													</a>
-												{% endif %}
-												{% if is_granted('ROLE_SUPER_ADMIN') %}
-													<a href="{{ path('app_admin_rapport_supprimer', {id: rapport.id}) }}" class="btn btn-outline-danger btn-action" title="Supprimer le rapport" onclick="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce rapport ?\\n\\nCette action est irréversible!')">
-														<i class="fas fa-trash"></i>
-													</a>
-												{% endif %}
-											</div>
-										</td>
-									</tr>
-								{% endfor %}
-							</tbody>
-						</table>
-					</div>
-
-					<!-- Pagination -->
-					{% if total_pages > 1 %}
-						<div class="d-flex justify-content-center p-4">
-							<nav aria-label="Pagination des rapports">
-								<ul class="pagination">
-									{% if current_page > 1 %}
-										<li class="page-item">
-											<a class="page-link" href="{{ path('app_admin_rapports', search_params|merge({page: current_page - 1})) }}">
-												<i class="fas fa-chevron-left me-1"></i>Précédent
-											</a>
-										</li>
-									{% endif %}
-
-									{% for page in 1..total_pages %}
-										{% if page == current_page %}
-											<li class="page-item active">
-												<span class="page-link">{{ page }}</span>
-											</li>
-										{% elseif page > current_page - 3 and page < current_page + 3 %}
-											<li class="page-item">
-												<a class="page-link" href="{{ path('app_admin_rapports', search_params|merge({page: page})) }}">{{ page }}</a>
-											</li>
-										{% endif %}
-									{% endfor %}
-
-									{% if current_page < total_pages %}
-										<li class="page-item">
-											<a class="page-link" href="{{ path('app_admin_rapports', search_params|merge({page: current_page + 1})) }}">
-												Suivant<i class="fas fa-chevron-right ms-1"></i>
-											</a>
-										</li>
-									{% endif %}
-								</ul>
-							</nav>
-						</div>
-					{% endif %}
-				{% else %}
-					<!-- Message quand aucun rapport -->
-					<div class="text-center py-5">
-						<div class="mb-4">
-							<i class="fas fa-search fa-4x text-muted"></i>
-						</div>
-						<h5 class="text-muted mb-3">Aucun rapport trouvé</h5>
-						<p class="text-muted mb-4">
-							{% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or search_params.dateDebut or search_params.dateFin %}
-								Aucun rapport ne correspond à vos critères de recherche.
-							{% else %}
-								{% if is_granted('ROLE_SUPER_ADMIN') %}
-									Aucun rapport n'a été créé dans le système.
-								{% else %}
-									Aucun rapport n'a été créé pour la zone
-									{{ user_zone }}.
-								{% endif %}
-							{% endif %}
-						</p>
-						<div class="d-flex gap-2 justify-content-center">
-							<a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-primary">
-								<i class="fas fa-plus me-1"></i>Créer un nouveau rapport
+					<ul class="dropdown-menu">
+						<li>
+							<a class="dropdown-item" href="{{ path('app_admin_export_excel', search_params) }}">
+								<i class="fas fa-file-excel text-success me-2"></i>Fichier Excel
 							</a>
-							{% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or search_params.dateDebut or search_params.dateFin %}
-								<a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-secondary">
-									<i class="fas fa-times me-1"></i>Réinitialiser les filtres
-								</a>
-							{% endif %}
-						</div>
-					</div>
+						</li>
+						<li>
+							<a class="dropdown-item" href="{{ path('app_admin_export_pdf', search_params) }}">
+								<i class="fas fa-file-pdf text-danger me-2"></i>Fichier PDF
+							</a>
+						</li>
+					</ul>
+				</div>
 				{% endif %}
 			</div>
 		</div>
+	</div>
 
-		<!-- Résumé en bas de page -->
-		{% if rapports|length > 0 %}
-			<div class="row mt-4">
-				<div class="col-md-6">
-					<div class="card border-0 bg-light">
-						<div class="card-body text-center">
-							<h6 class="text-muted mb-2">Résumé de la page</h6>
-							<div class="fw-bold text-primary">
-								{{ rapports|length }}
-								rapport(s) affiché(s)
-								{% if total_pages > 1 %}
-									sur
-									{{ total_pages }}
-									page(s)
-								{% endif %}
-							</div>
+	<!-- Informations sur les permissions -->
+	<div class="permission-info p-3 mb-4">
+		<div class="d-flex align-items-center">
+			<i class="fas fa-info-circle fa-2x me-3"></i>
+			<div>
+				{% if is_granted('ROLE_SUPER_ADMIN') %}
+				<h6 class="mb-1">Mode Super Administrateur</h6>
+				<p class="mb-0 opacity-75">Vous avez accès à tous les rapports de toutes les zones (SIMTIS et SIMTIS
+					TISSAGE).</p>
+				{% elseif is_granted('ROLE_ADMIN') %}
+				<h6 class="mb-1">Mode Administrateur -
+					{{ user_zone }}</h6>
+				<p class="mb-0 opacity-75">Vous pouvez voir et gérer tous les rapports des utilisateurs de votre zone
+					{{ user_zone }}.</p>
+				{% else %}
+				<h6 class="mb-1">Mode Utilisateur -
+					{{ user_zone }}</h6>
+				<p class="mb-0 opacity-75">Vous pouvez voir vos rapports et ceux de votre zone
+					{{ user_zone }}.</p>
+				{% endif %}
+			</div>
+		</div>
+	</div>
+
+	<!-- Formulaire de recherche -->
+	<div class="search-card card mb-4">
+		<div class="card-header bg-white border-0">
+			<div class="d-flex justify-content-between align-items-center">
+				<h5 class="mb-0">
+					<i class="fas fa-search text-primary me-2"></i>Recherche et Filtres
+				</h5>
+				<button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse"
+					data-bs-target="#searchForm">
+					<i class="fas fa-filter me-1"></i>
+					{% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or
+					search_params.dateDebut or search_params.dateFin %}
+					Filtres actifs
+					{% else %}
+					Afficher filtres
+					{% endif %}
+				</button>
+			</div>
+		</div>
+		<div class="collapse {% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or search_params.dateDebut or search_params.dateFin %}show{% endif %}"
+			id="searchForm">
+			<div class="card-body filter-section">
+				<form method="GET" class="row g-3">
+					<!-- Première ligne de filtres -->
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-id-badge text-primary me-1"></i>Code Agent
+						</label>
+						<input type="text" name="codeAgt" class="form-control" value="{{ search_params.codeAgt }}"
+							placeholder="Ex: AGT001">
+					</div>
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-user text-primary me-1"></i>Nom Agent
+						</label>
+						<input type="text" name="nom" class="form-control" value="{{ search_params.nom }}"
+							placeholder="Nom de l'agent">
+					</div>
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-map-marker-alt text-primary me-1"></i>Zone de Travail
+						</label>
+						<select name="zone" class="form-select">
+							<option value="">Toutes les zones</option>
+							{% for key, value in zones_disponibles %}
+							<option value="{{ key }}" {{ search_params.zone==key ? 'selected' : '' }}>
+								{{ value }}
+							</option>
+							{% endfor %}
+						</select>
+					</div>
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-flag text-primary me-1"></i>Statut
+						</label>
+						<select name="statut" class="form-select">
+							<option value="">Tous les statuts</option>
+							<option value="En cours" {{ search_params.statut=='En cours' ? 'selected' : '' }}>
+								En cours
+							</option>
+							<option value="Clôturé" {{ search_params.statut=='Clôturé' ? 'selected' : '' }}>
+								Clôturé
+							</option>
+						</select>
+					</div>
+
+					<!-- Deuxième ligne de filtres -->
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-calendar-alt text-success me-1"></i>Date début
+						</label>
+						<input type="date" name="dateDebut" class="form-control" value="{{ search_params.dateDebut }}">
+					</div>
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-calendar-alt text-success me-1"></i>Date fin
+						</label>
+						<input type="date" name="dateFin" class="form-control" value="{{ search_params.dateFin }}">
+					</div>
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-calendar-check text-warning me-1"></i>Clôture début
+						</label>
+						<input type="date" name="dateClotureDebut" class="form-control"
+							value="{{ search_params.dateClotureDebut }}">
+					</div>
+					<div class="col-md-3">
+						<label class="form-label fw-bold">
+							<i class="fas fa-calendar-check text-warning me-1"></i>Clôture fin
+						</label>
+						<input type="date" name="dateClotureFin" class="form-control"
+							value="{{ search_params.dateClotureFin }}">
+					</div>
+
+					<!-- Boutons d'action -->
+					<div class="col-12">
+						<div class="d-flex gap-2 justify-content-end">
+							<button type="submit" class="btn btn-primary">
+								<i class="fas fa-search me-1"></i>Rechercher
+							</button>
+							<a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-secondary">
+								<i class="fas fa-times me-1"></i>Réinitialiser
+							</a>
 						</div>
 					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<!-- Tableau des rapports -->
+	<div class="table-card card">
+		<div class="card-header bg-white border-0">
+			<div class="d-flex justify-content-between align-items-center">
+				<h5 class="mb-0">
+					<i class="fas fa-table text-success me-2"></i>
+					Liste des Rapports
+					{% if not is_granted('ROLE_SUPER_ADMIN') %}
+					- Zone
+					{{ user_zone }}
+					{% endif %}
+				</h5>
+				<div class="d-flex align-items-center gap-3">
+					<span class="badge bg-info fs-6 px-3 py-2">
+						<i class="fas fa-list-ol me-1"></i>
+						{{ rapports|length }}
+						rapport(s) affiché(s)
+					</span>
+					{% if is_granted('ROLE_ADMIN') %}
+					<div class="dropdown export-dropdown">
+						<button type="button" class="btn btn-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+							<i class="fas fa-download me-1"></i>Export
+						</button>
+						<ul class="dropdown-menu">
+							<li>
+								<a class="dropdown-item" href="{{ path('app_admin_export_excel', search_params) }}">
+									<i class="fas fa-file-excel text-success me-2"></i>Excel
+								</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="{{ path('app_admin_export_pdf', search_params) }}">
+									<i class="fas fa-file-pdf text-danger me-2"></i>PDF
+								</a>
+							</li>
+						</ul>
+					</div>
+					{% endif %}
 				</div>
-				<div class="col-md-6">
-					<div class="card border-0 bg-light">
-						<div class="card-body text-center">
-							<h6 class="text-muted mb-2">Zone de gestion</h6>
-							<div class="fw-bold">
-								{% if is_granted('ROLE_SUPER_ADMIN') %}
-									<span class="text-danger">Toutes les zones</span>
+			</div>
+		</div>
+		<div class="card-body p-0">
+			{% if rapports|length > 0 %}
+			<div class="table-responsive">
+				<table class="table table-hover mb-0">
+					<thead>
+						<tr>
+							<th>
+								<i class="fas fa-id-badge me-1"></i>Code Agent
+							</th>
+							<th>
+								<i class="fas fa-user me-1"></i>Nom Agent
+							</th>
+							<th>
+								<i class="fas fa-map-marker-alt me-1"></i>Zone Travail
+							</th>
+							{% if is_granted('ROLE_SUPER_ADMIN') %}
+							<th>
+								<i class="fas fa-building me-1"></i>Zone Utilisateur
+							</th>
+							{% endif %}
+							<th>
+								<i class="fas fa-calendar me-1"></i>Date Création
+							</th>
+							<th>
+								<i class="fas fa-flag me-1"></i>Statut
+							</th>
+							<th>
+								<i class="fas fa-calendar-check me-1"></i>Date Clôture
+							</th>
+							<th>
+								<i class="fas fa-cogs me-1"></i>Actions
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for rapport in rapports %}
+						<tr>
+							<td>
+								<div class="d-flex align-items-center">
+									<div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+										style="width: 35px; height: 35px; font-size: 0.8rem;">
+										{{ rapport.codeAgt|slice(0, 2)|upper }}
+									</div>
+									<span class="fw-bold text-primary">{{ rapport.codeAgt }}</span>
+								</div>
+							</td>
+							<td>
+								<div class="fw-bold">{{ rapport.nom }}</div>
+								<small class="text-muted">{{ rapport.user ? rapport.user.email : 'N/A' }}</small>
+							</td>
+							<td>
+								{% if rapport.zone %}
+								<span class="badge bg-secondary">
+									<i class="fas fa-map-marker-alt me-1"></i>
+									{{ rapport.zone }}
+								</span>
 								{% else %}
-									<span class="text-success">{{ user_zone }}</span>
+								<span class="text-muted fst-italic">Non spécifiée</span>
 								{% endif %}
-							</div>
-						</div>
+							</td>
+							{% if is_granted('ROLE_SUPER_ADMIN') %}
+							<td>
+								<span
+									class="zone-badge {{ rapport.zoneUtilisateur == 'SIMTIS' ? 'zone-simtis' : 'zone-tissage' }}">
+									{% if rapport.zoneUtilisateur == 'SIMTIS' %}
+									<i class="fas fa-industry me-1"></i>SIMTIS
+									{% else %}
+									<i class="fas fa-cogs me-1"></i>TISSAGE
+									{% endif %}
+								</span>
+							</td>
+							{% endif %}
+							<td>
+								<div class="fw-bold">{{ rapport.date|date('d/m/Y') }}</div>
+								<small class="text-muted">{{ rapport.heure|date('H:i') }}</small>
+							</td>
+							<td>
+								{% if rapport.statut == 'En cours' %}
+								<span class="status-badge status-en-cours">
+									<i class="fas fa-clock me-1"></i>
+									{{ rapport.statut }}
+								</span>
+								{% else %}
+								<span class="status-badge status-cloture">
+									<i class="fas fa-check-circle me-1"></i>
+									{{ rapport.statut }}
+								</span>
+								{% endif %}
+							</td>
+							<td>
+								{% if rapport.dateCloture %}
+								<div class="fw-bold text-success">{{ rapport.dateCloture|date('d/m/Y') }}</div>
+								{% if rapport.heureAction %}
+								<small class="text-muted">{{ rapport.heureAction|date('H:i') }}</small>
+								{% endif %}
+								{% else %}
+								<span class="text-muted fst-italic">
+									<i class="fas fa-minus me-1"></i>En attente
+								</span>
+								{% endif %}
+							</td>
+							<td>
+								<div class="btn-group btn-group-sm">
+									<a href="{{ path('app_admin_rapport_detail', {id: rapport.id}) }}"
+										class="btn btn-outline-primary btn-action" title="Voir les détails">
+										<i class="fas fa-eye"></i>
+									</a>
+									{% if rapport.canBeModifiedByUser(app.user) %}
+									<a href="{{ path('app_admin_rapport_modifier', {id: rapport.id}) }}"
+										class="btn btn-outline-warning btn-action" title="Modifier le rapport">
+										<i class="fas fa-edit"></i>
+									</a>
+									{% endif %}
+									{% if is_granted('ROLE_SUPER_ADMIN') %}
+									<a href="{{ path('app_admin_rapport_supprimer', {id: rapport.id}) }}"
+										class="btn btn-outline-danger btn-action" title="Supprimer le rapport"
+										onclick="return confirm('⚠️ Êtes-vous sûr de vouloir supprimer ce rapport ?\\n\\nCette action est irréversible!')">
+										<i class="fas fa-trash"></i>
+									</a>
+									{% endif %}
+								</div>
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+
+			<!-- Pagination -->
+			{% if total_pages > 1 %}
+			<div class="d-flex justify-content-center p-4">
+				<nav aria-label="Pagination des rapports">
+					<ul class="pagination">
+						{% if current_page > 1 %}
+						<li class="page-item">
+							<a class="page-link"
+								href="{{ path('app_admin_rapports', search_params|merge({page: current_page - 1})) }}">
+								<i class="fas fa-chevron-left me-1"></i>Précédent
+							</a>
+						</li>
+						{% endif %}
+
+						{% for page in 1..total_pages %}
+						{% if page == current_page %}
+						<li class="page-item active">
+							<span class="page-link">{{ page }}</span>
+						</li>
+						{% elseif page > current_page - 3 and page < current_page + 3 %} <li class="page-item">
+							<a class="page-link"
+								href="{{ path('app_admin_rapports', search_params|merge({page: page})) }}">{{ page
+								}}</a>
+							</li>
+							{% endif %}
+							{% endfor %}
+
+							{% if current_page < total_pages %} <li class="page-item">
+								<a class="page-link"
+									href="{{ path('app_admin_rapports', search_params|merge({page: current_page + 1})) }}">
+									Suivant<i class="fas fa-chevron-right ms-1"></i>
+								</a>
+								</li>
+								{% endif %}
+					</ul>
+				</nav>
+			</div>
+			{% endif %}
+			{% else %}
+			<!-- Message quand aucun rapport -->
+			<div class="text-center py-5">
+				<div class="mb-4">
+					<i class="fas fa-search fa-4x text-muted"></i>
+				</div>
+				<h5 class="text-muted mb-3">Aucun rapport trouvé</h5>
+				<p class="text-muted mb-4">
+					{% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or
+					search_params.dateDebut or search_params.dateFin %}
+					Aucun rapport ne correspond à vos critères de recherche.
+					{% else %}
+					{% if is_granted('ROLE_SUPER_ADMIN') %}
+					Aucun rapport n'a été créé dans le système.
+					{% else %}
+					Aucun rapport n'a été créé pour la zone
+					{{ user_zone }}.
+					{% endif %}
+					{% endif %}
+				</p>
+				<div class="d-flex gap-2 justify-content-center">
+					<a href="{{ path('app_admin_rapport_nouveau') }}" class="btn btn-primary">
+						<i class="fas fa-plus me-1"></i>Créer un nouveau rapport
+					</a>
+					{% if search_params.codeAgt or search_params.nom or search_params.zone or search_params.statut or
+					search_params.dateDebut or search_params.dateFin %}
+					<a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-secondary">
+						<i class="fas fa-times me-1"></i>Réinitialiser les filtres
+					</a>
+					{% endif %}
+				</div>
+			</div>
+			{% endif %}
+		</div>
+	</div>
+
+	<!-- Résumé en bas de page -->
+	{% if rapports|length > 0 %}
+	<div class="row mt-4">
+		<div class="col-md-6">
+			<div class="card border-0 bg-light">
+				<div class="card-body text-center">
+					<h6 class="text-muted mb-2">Résumé de la page</h6>
+					<div class="fw-bold text-primary">
+						{{ rapports|length }}
+						rapport(s) affiché(s)
+						{% if total_pages > 1 %}
+						sur
+						{{ total_pages }}
+						page(s)
+						{% endif %}
 					</div>
 				</div>
 			</div>
-		{% endif %}
+		</div>
+		<div class="col-md-6">
+			<div class="card border-0 bg-light">
+				<div class="card-body text-center">
+					<h6 class="text-muted mb-2">Zone de gestion</h6>
+					<div class="fw-bold">
+						{% if is_granted('ROLE_SUPER_ADMIN') %}
+						<span class="text-danger">Toutes les zones</span>
+						{% else %}
+						<span class="text-success">{{ user_zone }}</span>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
+	{% endif %}
+</div>
 
-	<script>
-		// Animation au chargement
-document.addEventListener('DOMContentLoaded', function () {
-const rows = document.querySelectorAll('tbody tr');
-rows.forEach((row, index) => {
-row.style.opacity = '0';
-row.style.transform = 'translateY(20px)';
-setTimeout(() => {
-row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-row.style.opacity = '1';
-row.style.transform = 'translateY(0)';
-}, index * 50);
-});
-});
+<script>
+	// Animation au chargement
+	document.addEventListener('DOMContentLoaded', function () {
+		const rows = document.querySelectorAll('tbody tr');
+		rows.forEach((row, index) => {
+			row.style.opacity = '0';
+			row.style.transform = 'translateY(20px)';
+			setTimeout(() => {
+				row.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+				row.style.opacity = '1';
+				row.style.transform = 'translateY(0)';
+			}, index * 50);
+		});
+	});
 
-// Confirmation de suppression améliorée
-function confirmDelete(event, rapportId, agentName) {
-event.preventDefault();
+	// Confirmation de suppression améliorée
+	function confirmDelete(event, rapportId, agentName) {
+		event.preventDefault();
 
-if (confirm (`⚠️ ATTENTION!\\n\\nVous êtes sur le point de supprimer définitivement le rapport de ${agentName}.\\n\\nCette action est IRRÉVERSIBLE!\\n\\nConfirmez-vous la suppression?`)) {
-window.location.href = event.target.closest('a').href;
-}
-}
-	</script>
+		if (confirm(`⚠️ ATTENTION!\\n\\nVous êtes sur le point de supprimer définitivement le rapport de ${agentName}.\\n\\nCette action est IRRÉVERSIBLE!\\n\\nConfirmez-vous la suppression?`)) {
+			window.location.href = event.target.closest('a').href;
+		}
+	}
+</script>
 {% endblock %}

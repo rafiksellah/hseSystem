@@ -1,0 +1,447 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails Utilisateur - {{ user.fullName }}{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-user-circle text-info"></i> Détails de l'Utilisateur
+<small class="text-muted">{{ user.fullName }} ({{ user.codeAgent }})</small>
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .bg-purple {
+        background-color: #6610f2 !important;
+    }
+
+    .info-card {
+        border-left: 4px solid #007bff;
+    }
+
+    .stats-card {
+        transition: transform 0.2s;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 30px;
+        margin-bottom: 20px;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #007bff;
+    }
+
+    .timeline-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: 12px;
+        top: 15px;
+        width: 2px;
+        height: calc(100% + 5px);
+        background-color: #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="row">
+    <!-- Informations principales -->
+    <div class="col-lg-4 mb-4">
+        <!-- Carte utilisateur -->
+        <div class="card shadow info-card">
+            <div class="card-header py-3 bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-user"></i> Informations Générales
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                <!-- Avatar -->
+                <div class="mb-3">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center"
+                        style="width: 80px; height: 80px; font-size: 2rem;">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+
+                <!-- Nom et Code -->
+                <h4 class="mb-1">{{ user.fullName }}</h4>
+                <p class="text-muted mb-3">{{ user.codeAgent }}</p>
+
+                <!-- Rôle -->
+                <div class="mb-3">
+                    {% if 'ROLE_SUPER_ADMIN' in user.roles %}
+                    <span class="badge bg-danger fs-6">
+                        <i class="fas fa-crown"></i> Super Administrateur
+                    </span>
+                    {% elseif 'ROLE_ADMIN' in user.roles %}
+                    <span class="badge bg-warning fs-6">
+                        <i class="fas fa-user-shield"></i> Administrateur
+                    </span>
+                    {% else %}
+                    <span class="badge bg-success fs-6">
+                        <i class="fas fa-user"></i> Utilisateur
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Zone -->
+                <div class="mb-3">
+                    {% if user.zone %}
+                    <span class="badge {{ user.zone == 'SIMTIS' ? 'bg-info' : 'bg-purple' }} fs-6">
+                        <i class="fas fa-building"></i> {{ user.zone }}
+                    </span>
+                    {% else %}
+                    <span class="badge bg-warning fs-6">
+                        <i class="fas fa-globe"></i> Accès Global
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Actions rapides -->
+                <div class="d-grid gap-2">
+                    <a href="{{ path('app_super_admin_user_modifier', {'id': user.id}) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    {% if user.id != app.user.id %}
+                    <a href="{{ path('app_super_admin_user_supprimer', {'id': user.id}) }}"
+                        class="btn btn-outline-danger"
+                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations de contact -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-address-card"></i> Contact
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <strong>Email :</strong>
+                        <br><a href="mailto:{{ user.email }}" class="text-decoration-none">{{ user.email }}</a>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <strong>Code Agent :</strong>
+                        <br><span class="badge bg-secondary">{{ user.codeAgent }}</span>
+                    </div>
+                    <div class="col-12">
+                        <strong>Compte créé :</strong>
+                        <br><small class="text-muted">{{ user.dateCreation|date('d/m/Y à H:i') }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques et activité -->
+    <div class="col-lg-8">
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Rapports Créés
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ user.rapportsHSE|length }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Rapports Clôturés
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ user.rapportsHSE|filter(r => r.statut == 'Clôturé')|length }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    En Cours
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ user.rapportsHSE|filter(r => r.statut == 'En cours')|length }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clock fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-3">
+                <div class="card stats-card border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Taux Clôture
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {% set total = user.rapportsHSE|length %}
+                                    {% set clotures = user.rapportsHSE|filter(r => r.statut == 'Clôturé')|length %}
+                                    {{ total > 0 ? ((clotures / total) * 100)|round : 0 }}%
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Derniers rapports HSE -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list"></i> Derniers Rapports HSE
+                </h6>
+                {% if user.rapportsHSE|length > 0 %}
+                <a href="{{ path('app_super_admin_rapports', {'codeAgt': user.codeAgent}) }}"
+                    class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye"></i> Voir tous ({{ user.rapportsHSE|length }})
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if user.rapportsHSE|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Zone Travail</th>
+                                <th>Description</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rapport in user.rapportsHSE|slice(0, 5) %}
+                            <tr>
+                                <td>
+                                    <div>{{ rapport.date|date('d/m/Y') }}</div>
+                                    <small class="text-muted">{{ rapport.heure|date('H:i') }}</small>
+                                </td>
+                                <td>
+                                    {% if rapport.zone %}
+                                    <span class="badge bg-light text-dark">{{ rapport.zone }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if rapport.descriptionAnomalie %}
+                                    <div style="max-width: 200px;">
+                                        {{ rapport.descriptionAnomalie|length > 50 ?
+                                        rapport.descriptionAnomalie|slice(0, 50) ~ '...' :
+                                        rapport.descriptionAnomalie }}
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">Aucune description</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }}">
+                                        {{ rapport.statut }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('app_admin_rapport_voir', {'id': rapport.id}) }}"
+                                            class="btn btn-outline-info" title="Voir">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('app_admin_rapport_modifier', {'id': rapport.id}) }}"
+                                            class="btn btn-outline-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun rapport HSE</h5>
+                    <p class="text-muted">Cet utilisateur n'a pas encore créé de rapport HSE.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Activité récente / Timeline -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-history"></i> Activité Récente
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <!-- Création du compte -->
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-user-plus text-success"></i> Compte créé
+                                </h6>
+                                <p class="text-muted mb-0">L'utilisateur a rejoint le système</p>
+                            </div>
+                            <small class="text-muted">{{ user.dateCreation|date('d/m/Y H:i') }}</small>
+                        </div>
+                    </div>
+
+                    <!-- Derniers rapports -->
+                    {% for rapport in user.rapportsHSE|slice(0, 3) %}
+                    <div class="timeline-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="fas fa-clipboard-list text-primary"></i> Rapport HSE créé
+                                </h6>
+                                <p class="text-muted mb-0">
+                                    {% if rapport.zone %}Zone: {{ rapport.zone }}{% endif %}
+                                    {% if rapport.descriptionAnomalie %}
+                                    <br>{{ rapport.descriptionAnomalie|length > 80 ?
+                                    rapport.descriptionAnomalie|slice(0, 80) ~ '...' :
+                                    rapport.descriptionAnomalie }}
+                                    {% endif %}
+                                </p>
+                                <span
+                                    class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-warning' }} badge-sm">
+                                    {{ rapport.statut }}
+                                </span>
+                            </div>
+                            <small class="text-muted">{{ rapport.dateCreation|date('d/m/Y H:i') }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    {% if user.rapportsHSE|length == 0 %}
+                    <div class="timeline-item">
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p class="mb-0">Aucune activité récente</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ path('app_super_admin_users') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour à la liste
+                    </a>
+
+                    <div class="btn-group">
+                        <a href="{{ path('app_super_admin_user_modifier', {'id': user.id}) }}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Modifier
+                        </a>
+                        {% if user.rapportsHSE|length > 0 %}
+                        <a href="{{ path('app_super_admin_rapports', {'codeAgt': user.codeAgent}) }}"
+                            class="btn btn-info">
+                            <i class="fas fa-clipboard-list"></i> Ses rapports
+                        </a>
+                        {% endif %}
+                        {% if user.id != app.user.id %}
+                        <a href="{{ path('app_super_admin_user_supprimer', {'id': user.id}) }}" class="btn btn-danger"
+                            onclick="return confirm('⚠️ ATTENTION ⚠️\n\nÊtes-vous sûr de vouloir supprimer {{ user.fullName }} ?\nCette action est irréversible!')">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Animation des cartes statistiques
+        const statsCards = document.querySelectorAll('.stats-card');
+        statsCards.forEach(card => {
+            card.addEventListener('mouseenter', function () {
+                this.style.transform = 'translateY(-5px)';
+                this.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
+            });
+
+            card.addEventListener('mouseleave', function () {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '';
+            });
+        });
+
+        // Tooltip pour les actions
+        const tooltipElements = document.querySelectorAll('[title]');
+        tooltipElements.forEach(element => {
+            element.addEventListener('mouseenter', function () {
+                // Simple tooltip implementation si besoin
+            });
+        });
+    });
+</script>
+{% endblock %}
