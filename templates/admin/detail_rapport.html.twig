@@ -345,10 +345,10 @@
                     {% if is_granted('ROLE_ADMIN') %}
                     <div class="dropdown">
                         <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button"
-                            data-bs-toggle="dropdown">
+                            id="exportDropdown{{ rapport.id }}" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-download"></i> Exporter ce rapport
                         </button>
-                        <ul class="dropdown-menu w-100">
+                        <ul class="dropdown-menu w-100" aria-labelledby="exportDropdown{{ rapport.id }}">
                             <li>
                                 <a class="dropdown-item"
                                     href="{{ path('app_admin_export_rapport_excel', {id: rapport.id}) }}">
@@ -435,5 +435,4 @@
 </div>
 {% endif %}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

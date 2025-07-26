@@ -45,6 +45,14 @@ class PdfExportService
         return $response;
     }
 
+    /**
+     * Méthode pour exporter un seul rapport HSE - MÉTHODE MANQUANTE AJOUTÉE
+     */
+    public function exportSingleRapportHSE($rapport): StreamedResponse
+    {
+        return $this->exportRapportsHSE([$rapport], 'Rapport HSE - ' . $rapport->getCodeAgt());
+    }
+
     private function generateHtml(array $rapports, string $title): string
     {
         // Calculer des statistiques
