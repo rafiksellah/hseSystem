@@ -37,9 +37,35 @@ class RapportHSEType extends AbstractType
     {
         $token = $this->tokenStorage->getToken();
         $currentUser = $token ? $token->getUser() : null;
+        $isAdminSelfReport = $options['is_admin_self_report'] ?? false;
 
-        $builder
-            ->add('user', EntityType::class, [
+        // Configuration du champ user selon le type d'utilisateur
+        if ($isAdminSelfReport) {
+            // Pour un admin qui crée son propre rapport, masquer le champ ou le rendre readonly
+            $builder->add('user', EntityType::class, [
+                'class' => User::class,
+                'choice_label' => function (User $user) {
+                    return $user->getCodeAgent() . ' - ' . $user->getNom() . ' ' . $user->getPrenom() . ' (' . $user->getZone() . ')';
+                },
+                'choice_value' => 'id',
+                'label' => 'Agent (Vous-même)',
+                'data' => $currentUser, // Pré-sélectionner l'utilisateur actuel
+                'attr' => [
+                    'class' => 'form-select',
+                    'id' => 'user-select',
+                    'readonly' => true
+                ],
+                'query_builder' => function (UserRepository $repository) use ($currentUser) {
+                    // Montrer seulement l'utilisateur actuel
+                    return $repository->createQueryBuilder('u')
+                        ->andWhere('u.id = :currentUserId')
+                        ->setParameter('currentUserId', $currentUser->getId());
+                },
+                'help' => 'En tant qu\'administrateur, vous ne pouvez créer des rapports que pour vous-même.'
+            ]);
+        } else {
+            // Pour un super admin, afficher tous les utilisateurs possibles
+            $builder->add('user', EntityType::class, [
                 'class' => User::class,
                 'choice_label' => function (User $user) {
                     return $user->getCodeAgent() . ' - ' . $user->getNom() . ' ' . $user->getPrenom() . ' (' . $user->getZone() . ')';
@@ -72,7 +98,10 @@ class RapportHSEType extends AbstractType
 
                     return $qb;
                 }
-            ])
+            ]);
+        }
+
+        $builder
             ->add('codeAgt', TextType::class, [
                 'label' => 'Code AGT',
                 'attr' => [
@@ -272,6 +301,7 @@ class RapportHSEType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => RapportHSE::class,
+            'is_admin_self_report' => false,
         ]);
     }
 }

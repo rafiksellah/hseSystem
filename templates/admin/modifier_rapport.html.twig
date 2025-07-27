@@ -19,25 +19,55 @@
                             {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
                             <span class="badge bg-danger">SUPER ADMIN</span> - Accès complet à tous les rapports
                             {% elseif 'ROLE_ADMIN' in app.user.roles %}
-                            <span class="badge bg-warning">ADMIN {{ app.user.zone }}</span> - Accès aux rapports de
-                            votre zone uniquement
+                            <span class="badge bg-warning">ADMIN {{ app.user.zone }}</span> - Modification de vos
+                            propres rapports uniquement
                             {% else %}
-                            <span class="badge bg-success">UTILISATEUR</span> - Accès à vos propres rapports
+                            <span class="badge bg-success">UTILISATEUR</span> - Modification de vos propres rapports
                             {% endif %}
                         </small>
                     </div>
                     <div class="col-md-4 text-end">
                         <span class="badge bg-info">Zone du rapport: {{ rapport.zoneUtilisateur ?? 'Non définie'
                             }}</span>
+                        {% if rapport.user %}
+                        <br><span class="badge bg-secondary mt-1">Propriétaire: {{ rapport.user.nom }} {{
+                            rapport.user.prenom }}</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Alerte si admin modifie son propre rapport -->
+        {% if 'ROLE_ADMIN' in app.user.roles and 'ROLE_SUPER_ADMIN' not in app.user.roles and rapport.user and
+        rapport.user.id == app.user.id %}
+        <div class="alert alert-info mb-4">
+            <h6><i class="fas fa-info-circle"></i> Modification de votre rapport</h6>
+            <p class="mb-0">
+                Vous modifiez votre propre rapport HSE. Vos informations personnelles ne peuvent pas être changées.
+            </p>
+        </div>
+        {% elseif 'ROLE_SUPER_ADMIN' in app.user.roles %}
+        <div class="alert alert-warning mb-4">
+            <h6><i class="fas fa-crown"></i> Super Administrateur</h6>
+            <p class="mb-0">
+                Vous pouvez modifier ce rapport et changer l'agent assigné si nécessaire.
+            </p>
+        </div>
+        {% endif %}
+
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-edit"></i> Modifier le Rapport HSE #{{ rapport.id }}
+                    {% if 'ROLE_ADMIN' in app.user.roles and 'ROLE_SUPER_ADMIN' not in app.user.roles %}
+                    <span class="badge bg-info ms-2">Votre rapport</span>
+                    {% endif %}
+                    {% if rapport.statut %}
+                    <span class="badge {{ rapport.statut == 'Clôturé' ? 'bg-success' : 'bg-primary' }} ms-2">
+                        {{ rapport.statut }}
+                    </span>
+                    {% endif %}
                 </h5>
             </div>
             <div class="card-body">
@@ -46,7 +76,12 @@
                 <!-- Section 1: Sélection de l'agent -->
                 <div class="form-section mb-4">
                     <h6 class="text-primary mb-3">
-                        <i class="fas fa-user"></i> Informations de l'agent
+                        <i class="fas fa-user"></i>
+                        {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                        Informations de l'agent
+                        {% else %}
+                        Informations de l'agent (Non modifiable)
+                        {% endif %}
                     </h6>
                     <div class="row">
                         <div class="col-md-6">
@@ -54,22 +89,28 @@
                                 {{ form_label(form.user, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.user) }}
                                 {{ form_errors(form.user) }}
+
+                                {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i> Changer l'agent mettra à jour automatiquement les
                                     informations
-                                    {% if 'ROLE_SUPER_ADMIN' not in app.user.roles %}
-                                    <br><small class="text-muted">
-                                        <i class="fas fa-shield-alt"></i> Vous ne voyez que les utilisateurs de votre
-                                        zone : {{ app.user.zone }}
-                                    </small>
+                                </div>
+                                {% else %}
+                                <div class="form-text">
+                                    <i class="fas fa-lock text-warning"></i>
+                                    {% if 'ROLE_ADMIN' in app.user.roles %}
+                                    En tant qu'admin, vous ne pouvez modifier que vos propres rapports
+                                    {% else %}
+                                    Vous ne pouvez modifier que vos propres rapports
                                     {% endif %}
                                 </div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Zone de l'agent</label>
-                                <input type="text" class="form-control" id="userZone" readonly
+                                <input type="text" class="form-control zone-readonly" id="userZone" readonly
                                     value="{{ rapport.user ? rapport.user.zone : '' }}"
                                     placeholder="Zone de l'agent sélectionné">
                                 <div class="form-text">
@@ -129,8 +170,12 @@
                                 {{ form_widget(form.zone) }}
                                 {{ form_errors(form.zone) }}
                                 <div class="form-text">
-                                    <i class="fas fa-info-circle"></i> Les zones disponibles dépendent de l'agent
-                                    sélectionné
+                                    <i class="fas fa-info-circle"></i>
+                                    {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                    Les zones disponibles dépendent de l'agent sélectionné
+                                    {% else %}
+                                    Zones disponibles pour votre secteur : {{ app.user.zone }}
+                                    {% endif %}
                                     {% if rapport.user %}
                                     <br><small class="text-info">
                                         <i class="fas fa-user"></i> Agent actuel: {{ rapport.user.zone }}
@@ -193,8 +238,17 @@
                                 {% if rapport.photoConstat %}
                                 <div class="mt-2">
                                     <small class="text-muted">Photo actuelle:</small>
-                                    <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo constat"
-                                        class="img-thumbnail" style="max-width: 200px; max-height: 150px;">
+                                    <div class="image-preview">
+                                        <img src="{{ asset('uploads/' ~ rapport.photoConstat) }}" alt="Photo constat"
+                                            class="img-thumbnail current-image"
+                                            style="max-width: 200px; max-height: 150px;">
+                                        <div class="image-overlay">
+                                            <small class="text-info">
+                                                <i class="fas fa-camera"></i> Sélectionnez une nouvelle photo pour la
+                                                remplacer
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
                                 {% endif %}
                             </div>
@@ -242,9 +296,17 @@
                                     {% if rapport.photoActionCloturee %}
                                     <div class="mt-2">
                                         <small class="text-muted">Photo actuelle:</small>
-                                        <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}"
-                                            alt="Photo action" class="img-thumbnail"
-                                            style="max-width: 200px; max-height: 150px;">
+                                        <div class="image-preview">
+                                            <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}"
+                                                alt="Photo action" class="img-thumbnail current-image"
+                                                style="max-width: 200px; max-height: 150px;">
+                                            <div class="image-overlay">
+                                                <small class="text-info">
+                                                    <i class="fas fa-camera"></i> Sélectionnez une nouvelle photo pour
+                                                    la remplacer
+                                                </small>
+                                            </div>
+                                        </div>
                                     </div>
                                     {% endif %}
                                 </div>
@@ -257,7 +319,12 @@
                     <a href="{{ path('app_admin_rapport_detail', {id: rapport.id}) }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Retour au détail
                     </a>
-                    {{ form_widget(form.submit) }}
+                    <div>
+                        <a href="{{ path('app_admin_rapports') }}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-list"></i> Liste des rapports
+                        </a>
+                        {{ form_widget(form.submit, {'attr': {'class': 'btn btn-success'}}) }}
+                    </div>
                 </div>
 
                 {{ form_end(form) }}
@@ -276,164 +343,181 @@
         const userZoneInput = document.getElementById('userZone');
         const zoneSelect = document.getElementById('rapport_hse_zone');
 
-        // Fonction pour gérer les champs d'action
-        if (actionClotureeSelect && actionFields) {
-            function toggleActionFields() {
-                if (actionClotureeSelect.value === 'oui') {
-                    actionFields.style.display = 'block';
-                } else {
-                    actionFields.style.display = 'none';
-                }
+        // Vérifier les types d'utilisateur
+        const isAdmin = {{ ('ROLE_ADMIN' in app.user.roles and 'ROLE_SUPER_ADMIN' not in app.user.roles) ? 'true' : 'false' }};
+    const isSuperAdmin = {{ 'ROLE_SUPER_ADMIN' in app.user.roles ?'true': 'false' }};
+    const isOwner = {{ (rapport.user and rapport.user.id == app.user.id) ?'true' : 'false' }};
+
+    console.log('Permissions:', { isAdmin: isAdmin, isSuperAdmin: isSuperAdmin, isOwner: isOwner });
+
+    // Fonction pour gérer les champs d'action
+    if (actionClotureeSelect && actionFields) {
+        function toggleActionFields() {
+            if (actionClotureeSelect.value === 'oui') {
+                actionFields.style.display = 'block';
+            } else {
+                actionFields.style.display = 'none';
             }
-
-            actionClotureeSelect.addEventListener('change', toggleActionFields);
-            toggleActionFields(); // Initialiser au chargement
         }
 
-        // Fonction pour remplir automatiquement les champs quand on change d'utilisateur
-        if (userSelect && codeAgtInput && nomInput) {
-            userSelect.addEventListener('change', function () {
-                const selectedValue = this.value;
-                console.log('Nouvel utilisateur sélectionné:', selectedValue);
+        actionClotureeSelect.addEventListener('change', toggleActionFields);
+        toggleActionFields(); // Initialiser au chargement
+    }
 
-                if (selectedValue) {
-                    // Réinitialiser les styles
-                    resetFieldStyles();
+    // Si c'est un admin qui modifie son propre rapport, styliser les champs readonly
+    if (isAdmin && isOwner) {
+        if (codeAgtInput && nomInput) {
+            codeAgtInput.style.backgroundColor = '#d4edda';
+            codeAgtInput.style.borderColor = '#28a745';
+            nomInput.style.backgroundColor = '#d4edda';
+            nomInput.style.borderColor = '#28a745';
+        }
+    }
 
-                    // Utiliser une requête AJAX pour récupérer les données utilisateur
-                    fetch('{{ path("app_admin_get_user_data") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify({
-                            userId: selectedValue
-                        })
+    // Fonction pour remplir automatiquement les champs quand on change d'utilisateur (super admin seulement)
+    if (userSelect && codeAgtInput && nomInput && isSuperAdmin) {
+        userSelect.addEventListener('change', function () {
+            const selectedValue = this.value;
+            console.log('Nouvel utilisateur sélectionné:', selectedValue);
+
+            if (selectedValue) {
+                // Réinitialiser les styles
+                resetFieldStyles();
+
+                // Utiliser une requête AJAX pour récupérer les données utilisateur
+                fetch('{{ path("app_admin_get_user_data") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        userId: selectedValue
                     })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Erreur réseau: ' + response.status);
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erreur réseau: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Données reçues:', data);
+
+                        if (data.success) {
+                            // Remplir les champs
+                            codeAgtInput.value = data.codeAgent || '';
+                            nomInput.value = data.nomComplet || '';
+
+                            // Afficher la zone de l'utilisateur
+                            if (userZoneInput) {
+                                userZoneInput.value = data.zone || '';
+                                userZoneInput.style.backgroundColor = '#e7f3ff';
+                                userZoneInput.style.borderColor = '#0066cc';
                             }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('Données reçues:', data);
 
-                            if (data.success) {
-                                // Remplir les champs
-                                codeAgtInput.value = data.codeAgent || '';
-                                nomInput.value = data.nomComplet || '';
+                            // Mettre à jour les options de zones
+                            if (zoneSelect && data.zones) {
+                                // Sauvegarder la valeur actuelle
+                                const currentZoneValue = zoneSelect.value;
 
-                                // Afficher la zone de l'utilisateur
-                                if (userZoneInput) {
-                                    userZoneInput.value = data.zone || '';
-                                    userZoneInput.style.backgroundColor = '#e7f3ff';
-                                    userZoneInput.style.borderColor = '#0066cc';
+                                // Vider d'abord le select
+                                zoneSelect.innerHTML = '<option value="">Sélectionnez une zone</option>';
+
+                                // Ajouter les nouvelles options
+                                Object.entries(data.zones).forEach(([key, value]) => {
+                                    const option = document.createElement('option');
+                                    option.value = key;
+                                    option.textContent = value;
+                                    zoneSelect.appendChild(option);
+                                });
+
+                                // Restaurer la valeur si elle existe toujours
+                                if (currentZoneValue && data.zones[currentZoneValue]) {
+                                    zoneSelect.value = currentZoneValue;
                                 }
 
-                                // Mettre à jour les options de zones
-                                if (zoneSelect && data.zones) {
-                                    // Sauvegarder la valeur actuelle
-                                    const currentZoneValue = zoneSelect.value;
-
-                                    // Vider d'abord le select
-                                    zoneSelect.innerHTML = '<option value="">Sélectionnez une zone</option>';
-
-                                    // Ajouter les nouvelles options
-                                    Object.entries(data.zones).forEach(([key, value]) => {
-                                        const option = document.createElement('option');
-                                        option.value = key;
-                                        option.textContent = value;
-                                        zoneSelect.appendChild(option);
-                                    });
-
-                                    // Restaurer la valeur si elle existe toujours
-                                    if (currentZoneValue && data.zones[currentZoneValue]) {
-                                        zoneSelect.value = currentZoneValue;
-                                    }
-
-                                    // Style pour indiquer que les zones ont été mises à jour
-                                    zoneSelect.style.backgroundColor = '#e7f3ff';
-                                    zoneSelect.style.borderColor = '#0066cc';
-                                }
-
-                                // Styles pour indiquer que les champs sont remplis
-                                setSuccessStyles();
-
-                                // Afficher un message de succès
-                                showMessage('Données utilisateur mises à jour! Zone: ' + data.zone, 'success');
-                            } else {
-                                console.error('Erreur:', data.message);
-                                setErrorStyles();
-                                showMessage('Erreur: ' + data.message, 'error');
+                                // Style pour indiquer que les zones ont été mises à jour
+                                zoneSelect.style.backgroundColor = '#e7f3ff';
+                                zoneSelect.style.borderColor = '#0066cc';
                             }
-                        })
-                        .catch(error => {
-                            console.error('Erreur AJAX:', error);
+
+                            // Styles pour indiquer que les champs sont remplis
+                            setSuccessStyles();
+
+                            // Afficher un message de succès
+                            showMessage('Données utilisateur mises à jour! Zone: ' + data.zone, 'success');
+                        } else {
+                            console.error('Erreur:', data.message);
                             setErrorStyles();
-                            showMessage('Erreur de connexion lors du chargement des données', 'error');
-                        });
-                }
-            });
-        }
+                            showMessage('Erreur: ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur AJAX:', error);
+                        setErrorStyles();
+                        showMessage('Erreur de connexion lors du chargement des données', 'error');
+                    });
+            }
+        });
+    }
 
-        // Fonctions utilitaires
-        function resetFieldStyles() {
-            [codeAgtInput, nomInput, userZoneInput, zoneSelect].forEach(field => {
-                if (field) {
-                    field.style.backgroundColor = '';
-                    field.style.color = '';
-                    field.style.borderColor = '';
-                }
-            });
-        }
+    // Fonctions utilitaires
+    function resetFieldStyles() {
+        [codeAgtInput, nomInput, userZoneInput, zoneSelect].forEach(field => {
+            if (field) {
+                field.style.backgroundColor = '';
+                field.style.color = '';
+                field.style.borderColor = '';
+            }
+        });
+    }
 
-        function setSuccessStyles() {
-            [codeAgtInput, nomInput].forEach(field => {
-                if (field) {
-                    field.style.backgroundColor = '#d4edda';
-                    field.style.color = '#155724';
-                    field.style.borderColor = '#28a745';
-                }
-            });
-        }
+    function setSuccessStyles() {
+        [codeAgtInput, nomInput].forEach(field => {
+            if (field) {
+                field.style.backgroundColor = '#d4edda';
+                field.style.color = '#155724';
+                field.style.borderColor = '#28a745';
+            }
+        });
+    }
 
-        function setErrorStyles() {
-            [codeAgtInput, nomInput, userZoneInput, zoneSelect].forEach(field => {
-                if (field) {
-                    field.style.backgroundColor = '#f8d7da';
-                    field.style.color = '#721c24';
-                    field.style.borderColor = '#dc3545';
-                }
-            });
-        }
+    function setErrorStyles() {
+        [codeAgtInput, nomInput, userZoneInput, zoneSelect].forEach(field => {
+            if (field) {
+                field.style.backgroundColor = '#f8d7da';
+                field.style.color = '#721c24';
+                field.style.borderColor = '#dc3545';
+            }
+        });
+    }
 
-        // Fonction pour afficher des messages
-        function showMessage(message, type) {
-            // Supprimer les anciens messages
-            const oldMessages = document.querySelectorAll('.temp-message');
-            oldMessages.forEach(msg => msg.remove());
+    // Fonction pour afficher des messages
+    function showMessage(message, type) {
+        // Supprimer les anciens messages
+        const oldMessages = document.querySelectorAll('.temp-message');
+        oldMessages.forEach(msg => msg.remove());
 
-            // Créer un nouveau message
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show temp-message`;
-            alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        // Créer un nouveau message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show temp-message`;
+        alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
 
-            // Insérer le message au début du card-body
-            const cardBody = document.querySelector('.card-body');
-            cardBody.insertBefore(alertDiv, cardBody.firstChild);
+        // Insérer le message au début du card-body
+        const cardBody = document.querySelector('.card-body');
+        cardBody.insertBefore(alertDiv, cardBody.firstChild);
 
-            // Supprimer automatiquement après 5 secondes
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.remove();
-                }
-            }, 5000);
-        }
+        // Supprimer automatiquement après 5 secondes
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
     });
 </script>
 
@@ -464,15 +548,35 @@
         border-bottom: 2px solid #28a745;
     }
 
-    .img-thumbnail {
+    .zone-readonly {
+        background-color: #f8f9fa !important;
+        font-weight: 500;
+        border: 2px solid #0066cc;
+    }
+
+    .image-preview {
+        position: relative;
+        display: inline-block;
+    }
+
+    .current-image {
         border: 2px solid #dee2e6;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
     }
 
-    #userZone {
-        background-color: #f8f9fa;
-        font-weight: 500;
+    .current-image:hover {
+        border-color: #007bff;
+        transform: scale(1.05);
+    }
+
+    .image-overlay {
+        position: absolute;
+        bottom: -25px;
+        left: 0;
+        right: 0;
+        text-align: center;
     }
 
     .zone-indicator {
@@ -484,10 +588,27 @@
         font-weight: bold;
     }
 
-    .permission-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
+    /* Styles spéciaux pour les différents rôles */
+    .admin-readonly .form-control[readonly] {
+        background-color: #d4edda !important;
+        border-color: #28a745 !important;
+        color: #155724 !important;
+    }
+
+    .admin-readonly .form-select[readonly] {
+        background-color: #d4edda !important;
+        border-color: #28a745 !important;
+        color: #155724 !important;
+    }
+
+    /* Animation pour les changements de statut */
+    .badge {
+        transition: all 0.3s ease;
+    }
+
+    /* Style pour la card des permissions */
+    .card .card-body {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     }
 </style>
 {% endblock %}

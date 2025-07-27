@@ -7,10 +7,32 @@
 {% block body %}
 <div class="row justify-content-center">
     <div class="col-md-10">
+
+        <!-- Affichage des informations selon le rôle -->
+        {% if 'ROLE_SUPER_ADMIN' not in app.user.roles and 'ROLE_ADMIN' in app.user.roles %}
+        <div class="alert alert-info mb-4">
+            <h6><i class="fas fa-info-circle"></i> Information</h6>
+            <p class="mb-0">
+                En tant qu'<strong>Administrateur {{ app.user.zone }}</strong>, vous créez un rapport pour vous-même.
+                Vos informations sont automatiquement pré-remplies.
+            </p>
+        </div>
+        {% elseif 'ROLE_SUPER_ADMIN' in app.user.roles %}
+        <div class="alert alert-warning mb-4">
+            <h6><i class="fas fa-crown"></i> Super Administrateur</h6>
+            <p class="mb-0">
+                Vous pouvez créer des rapports pour n'importe quel utilisateur de toutes les zones.
+            </p>
+        </div>
+        {% endif %}
+
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-plus-circle"></i> Nouveau Rapport HSE
+                    {% if 'ROLE_ADMIN' in app.user.roles and 'ROLE_SUPER_ADMIN' not in app.user.roles %}
+                    <span class="badge bg-info ms-2">Rapport personnel</span>
+                    {% endif %}
                 </h5>
             </div>
             <div class="card-body">
@@ -19,7 +41,12 @@
                 <!-- Section 1: Sélection de l'agent -->
                 <div class="form-section mb-4">
                     <h6 class="text-primary mb-3">
-                        <i class="fas fa-user"></i> Sélection de l'agent
+                        <i class="fas fa-user"></i>
+                        {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                        Sélection de l'agent
+                        {% else %}
+                        Informations de l'agent (Vous-même)
+                        {% endif %}
                     </h6>
                     <div class="row">
                         <div class="col-md-6">
@@ -27,23 +54,24 @@
                                 {{ form_label(form.user, null, {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.user) }}
                                 {{ form_errors(form.user) }}
+
+                                {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i> Sélectionnez l'agent pour remplir automatiquement
                                     les informations
-                                    {% if 'ROLE_SUPER_ADMIN' not in app.user.roles %}
-                                    <br><small class="text-muted">
-                                        <i class="fas fa-shield-alt"></i> Vous ne voyez que les utilisateurs de votre
-                                        zone : {{ app.user.zone }}
-                                    </small>
-                                    {% endif %}
                                 </div>
+                                {% else %}
+                                <div class="form-text">
+                                    <i class="fas fa-lock"></i> Vous ne pouvez créer des rapports que pour vous-même
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Zone de l'agent</label>
-                                <input type="text" class="form-control" id="userZone" readonly
-                                    placeholder="Sera rempli automatiquement">
+                                <input type="text" class="form-control zone-readonly" id="userZone" readonly
+                                    value="{{ app.user.zone }}" placeholder="Zone de l'agent sélectionné">
                                 <div class="form-text">
                                     <i class="fas fa-info-circle"></i> Zone automatique basée sur l'agent sélectionné
                                 </div>
@@ -101,8 +129,12 @@
                                 {{ form_widget(form.zone) }}
                                 {{ form_errors(form.zone) }}
                                 <div class="form-text">
-                                    <i class="fas fa-info-circle"></i> Les zones disponibles dépendent de l'agent
-                                    sélectionné
+                                    <i class="fas fa-info-circle"></i>
+                                    {% if 'ROLE_SUPER_ADMIN' in app.user.roles %}
+                                    Les zones disponibles dépendent de l'agent sélectionné
+                                    {% else %}
+                                    Zones disponibles pour votre secteur : {{ app.user.zone }}
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -231,162 +263,209 @@
         const userZoneInput = document.getElementById('userZone');
         const zoneSelect = document.getElementById('rapport_hse_zone');
 
-        console.log('Éléments trouvés:', {
-            userSelect: userSelect,
-            codeAgtInput: codeAgtInput,
-            nomInput: nomInput,
-            dateInput: dateInput,
-            heureInput: heureInput,
-            userZoneInput: userZoneInput,
-            zoneSelect: zoneSelect
-        });
+        // Vérifier si l'utilisateur est un admin (pas super admin)
+        const isAdmin = {{ ('ROLE_ADMIN' in app.user.roles and 'ROLE_SUPER_ADMIN' not in app.user.roles) ? 'true' : 'false' }};
+    const isSuperAdmin = {{ 'ROLE_SUPER_ADMIN' in app.user.roles ?'true': 'false' }};
 
-        // Fonction pour gérer les champs d'action
-        if (actionClotureeSelect && actionFields) {
-            function toggleActionFields() {
-                if (actionClotureeSelect.value === 'oui') {
-                    actionFields.style.display = 'block';
-                } else {
-                    actionFields.style.display = 'none';
-                }
+    console.log('Type utilisateur:', { isAdmin: isAdmin, isSuperAdmin: isSuperAdmin });
+
+    // Fonction pour gérer les champs d'action
+    if (actionClotureeSelect && actionFields) {
+        function toggleActionFields() {
+            if (actionClotureeSelect.value === 'oui') {
+                actionFields.style.display = 'block';
+            } else {
+                actionFields.style.display = 'none';
             }
-
-            actionClotureeSelect.addEventListener('change', toggleActionFields);
-            toggleActionFields(); // Initialiser
         }
 
-        // Fonction pour remplir automatiquement les champs quand on sélectionne un utilisateur
-        if (userSelect && codeAgtInput && nomInput) {
-            userSelect.addEventListener('change', function () {
-                const selectedValue = this.value;
-                console.log('Valeur sélectionnée:', selectedValue);
+        actionClotureeSelect.addEventListener('change', toggleActionFields);
+        toggleActionFields(); // Initialiser
+    }
 
-                if (selectedValue) {
-                    // Réinitialiser les styles
-                    resetFieldStyles();
+    // Si c'est un admin normal, pré-remplir automatiquement les champs au chargement
+    if (isAdmin && !isSuperAdmin) {
+        // Les champs sont déjà pré-remplis par le serveur, on applique juste les styles
+        if (codeAgtInput && nomInput) {
+            codeAgtInput.style.backgroundColor = '#d4edda';
+            codeAgtInput.style.borderColor = '#28a745';
+            nomInput.style.backgroundColor = '#d4edda';
+            nomInput.style.borderColor = '#28a745';
+        }
 
-                    // Utiliser une requête AJAX pour récupérer les données utilisateur
-                    fetch('{{ path("app_admin_get_user_data") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify({
-                            userId: selectedValue
-                        })
+        // Charger les zones pour l'utilisateur actuel
+        loadZonesForCurrentUser();
+    }
+
+    // Fonction pour charger les zones de l'utilisateur actuel (admin)
+    function loadZonesForCurrentUser() {
+        if (userSelect && userSelect.value) {
+            fetch('{{ path("app_admin_get_user_data") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    userId: userSelect.value
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.zones && zoneSelect) {
+                        // Vider d'abord le select
+                        zoneSelect.innerHTML = '<option value="">Sélectionnez une zone</option>';
+
+                        // Ajouter les nouvelles options
+                        Object.entries(data.zones).forEach(([key, value]) => {
+                            const option = document.createElement('option');
+                            option.value = key;
+                            option.textContent = value;
+                            zoneSelect.appendChild(option);
+                        });
+
+                        // Style pour indiquer que les zones ont été chargées
+                        zoneSelect.style.backgroundColor = '#e7f3ff';
+                        zoneSelect.style.borderColor = '#0066cc';
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des zones:', error);
+                });
+        }
+    }
+
+    // Fonction pour remplir automatiquement les champs quand on sélectionne un utilisateur (pour super admin)
+    if (userSelect && codeAgtInput && nomInput && isSuperAdmin) {
+        userSelect.addEventListener('change', function () {
+            const selectedValue = this.value;
+            console.log('Valeur sélectionnée:', selectedValue);
+
+            if (selectedValue) {
+                // Réinitialiser les styles
+                resetFieldStyles();
+
+                // Utiliser une requête AJAX pour récupérer les données utilisateur
+                fetch('{{ path("app_admin_get_user_data") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        userId: selectedValue
                     })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Erreur réseau: ' + response.status);
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erreur réseau: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Données reçues:', data);
+
+                        if (data.success) {
+                            // Remplir les champs
+                            codeAgtInput.value = data.codeAgent || '';
+                            nomInput.value = data.nomComplet || '';
+
+                            // Afficher la zone de l'utilisateur
+                            if (userZoneInput) {
+                                userZoneInput.value = data.zone || '';
+                                userZoneInput.style.backgroundColor = '#e7f3ff';
+                                userZoneInput.style.borderColor = '#0066cc';
                             }
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log('Données reçues:', data);
 
-                            if (data.success) {
-                                // Remplir les champs
-                                codeAgtInput.value = data.codeAgent || '';
-                                nomInput.value = data.nomComplet || '';
+                            // Mettre à jour les options de zones
+                            if (zoneSelect && data.zones) {
+                                // Vider d'abord le select
+                                zoneSelect.innerHTML = '<option value="">Sélectionnez une zone</option>';
 
-                                // Afficher la zone de l'utilisateur
-                                if (userZoneInput) {
-                                    userZoneInput.value = data.zone || '';
-                                    userZoneInput.style.backgroundColor = '#e7f3ff';
-                                    userZoneInput.style.borderColor = '#0066cc';
-                                }
+                                // Ajouter les nouvelles options
+                                Object.entries(data.zones).forEach(([key, value]) => {
+                                    const option = document.createElement('option');
+                                    option.value = key;
+                                    option.textContent = value;
+                                    zoneSelect.appendChild(option);
+                                });
 
-                                // Mettre à jour les options de zones
-                                if (zoneSelect && data.zones) {
-                                    // Vider d'abord le select
-                                    zoneSelect.innerHTML = '<option value="">Sélectionnez une zone</option>';
-
-                                    // Ajouter les nouvelles options
-                                    Object.entries(data.zones).forEach(([key, value]) => {
-                                        const option = document.createElement('option');
-                                        option.value = key;
-                                        option.textContent = value;
-                                        zoneSelect.appendChild(option);
-                                    });
-
-                                    // Style pour indiquer que les zones ont été mises à jour
-                                    zoneSelect.style.backgroundColor = '#e7f3ff';
-                                    zoneSelect.style.borderColor = '#0066cc';
-                                }
-
-                                // Remplir les champs date et heure avec les données utilisateur
-                                if (data.dateCreation && dateInput) {
-                                    dateInput.value = data.dateCreation;
-                                }
-                                if (data.heureCreation && heureInput) {
-                                    // Extraire seulement HH:MM du format HH:MM:SS
-                                    const heureFormatted = data.heureCreation.substring(0, 5);
-                                    heureInput.value = heureFormatted;
-                                }
-
-                                // Styles pour indiquer que les champs sont remplis
-                                setSuccessStyles();
-
-                                // Afficher un message de succès
-                                showMessage('Données utilisateur chargées avec succès! Zone: ' + data.zone, 'success');
-                            } else {
-                                console.error('Erreur:', data.message);
-                                // Réinitialiser les champs en cas d'erreur
-                                clearFields();
-                                setErrorStyles();
-                                showMessage('Erreur: ' + data.message, 'error');
+                                // Style pour indiquer que les zones ont été mises à jour
+                                zoneSelect.style.backgroundColor = '#e7f3ff';
+                                zoneSelect.style.borderColor = '#0066cc';
                             }
-                        })
-                        .catch(error => {
-                            console.error('Erreur AJAX:', error);
+
+                            // Remplir les champs date et heure avec les données utilisateur
+                            if (data.dateCreation && dateInput) {
+                                dateInput.value = data.dateCreation;
+                            }
+                            if (data.heureCreation && heureInput) {
+                                // Extraire seulement HH:MM du format HH:MM:SS
+                                const heureFormatted = data.heureCreation.substring(0, 5);
+                                heureInput.value = heureFormatted;
+                            }
+
+                            // Styles pour indiquer que les champs sont remplis
+                            setSuccessStyles();
+
+                            // Afficher un message de succès
+                            showMessage('Données utilisateur chargées avec succès! Zone: ' + data.zone, 'success');
+                        } else {
+                            console.error('Erreur:', data.message);
                             // Réinitialiser les champs en cas d'erreur
                             clearFields();
                             setErrorStyles();
-                            showMessage('Erreur de connexion lors du chargement des données', 'error');
-                        });
-                } else {
-                    // Réinitialiser les champs
-                    clearFields();
-                    resetFieldStyles();
-                }
-            });
-        } else {
-            console.error('Éléments non trouvés. Vérifiez les IDs des éléments.');
-        }
+                            showMessage('Erreur: ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur AJAX:', error);
+                        // Réinitialiser les champs en cas d'erreur
+                        clearFields();
+                        setErrorStyles();
+                        showMessage('Erreur de connexion lors du chargement des données', 'error');
+                    });
+            } else {
+                // Réinitialiser les champs
+                clearFields();
+                resetFieldStyles();
+            }
+        });
+    }
 
-        // Fonctions utilitaires
-        function resetFieldStyles() {
-            [codeAgtInput, nomInput, dateInput, heureInput, userZoneInput, zoneSelect].forEach(field => {
-                if (field) {
-                    field.style.backgroundColor = '';
-                    field.style.color = '';
-                    field.style.borderColor = '';
-                }
-            });
-        }
+    // Fonctions utilitaires
+    function resetFieldStyles() {
+        [codeAgtInput, nomInput, dateInput, heureInput, userZoneInput, zoneSelect].forEach(field => {
+            if (field) {
+                field.style.backgroundColor = '';
+                field.style.color = '';
+                field.style.borderColor = '';
+            }
+        });
+    }
 
-        function setSuccessStyles() {
-            [codeAgtInput, nomInput, dateInput, heureInput].forEach(field => {
-                if (field) {
-                    field.style.backgroundColor = '#d4edda';
-                    field.style.color = '#155724';
-                    field.style.borderColor = '#28a745';
-                }
-            });
-        }
+    function setSuccessStyles() {
+        [codeAgtInput, nomInput, dateInput, heureInput].forEach(field => {
+            if (field) {
+                field.style.backgroundColor = '#d4edda';
+                field.style.color = '#155724';
+                field.style.borderColor = '#28a745';
+            }
+        });
+    }
 
-        function setErrorStyles() {
-            [codeAgtInput, nomInput, dateInput, heureInput, userZoneInput, zoneSelect].forEach(field => {
-                if (field) {
-                    field.style.backgroundColor = '#f8d7da';
-                    field.style.color = '#721c24';
-                    field.style.borderColor = '#dc3545';
-                }
-            });
-        }
+    function setErrorStyles() {
+        [codeAgtInput, nomInput, dateInput, heureInput, userZoneInput, zoneSelect].forEach(field => {
+            if (field) {
+                field.style.backgroundColor = '#f8d7da';
+                field.style.color = '#721c24';
+                field.style.borderColor = '#dc3545';
+            }
+        });
+    }
 
-        function clearFields() {
+    function clearFields() {
+        if (isSuperAdmin) {
             codeAgtInput.value = '';
             nomInput.value = '';
 
@@ -410,32 +489,33 @@
                 heureInput.value = `${hours}:${minutes}`;
             }
         }
+    }
 
-        // Fonction pour afficher des messages
-        function showMessage(message, type) {
-            // Supprimer les anciens messages
-            const oldMessages = document.querySelectorAll('.temp-message');
-            oldMessages.forEach(msg => msg.remove());
+    // Fonction pour afficher des messages
+    function showMessage(message, type) {
+        // Supprimer les anciens messages
+        const oldMessages = document.querySelectorAll('.temp-message');
+        oldMessages.forEach(msg => msg.remove());
 
-            // Créer un nouveau message
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show temp-message`;
-            alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        // Créer un nouveau message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show temp-message`;
+        alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
 
-            // Insérer le message au début du card-body
-            const cardBody = document.querySelector('.card-body');
-            cardBody.insertBefore(alertDiv, cardBody.firstChild);
+        // Insérer le message au début du card-body
+        const cardBody = document.querySelector('.card-body');
+        cardBody.insertBefore(alertDiv, cardBody.firstChild);
 
-            // Supprimer automatiquement après 5 secondes
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.remove();
-                }
-            }, 5000);
-        }
+        // Supprimer automatiquement après 5 secondes
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
     });
 </script>
 
@@ -466,9 +546,10 @@
         border-bottom: 2px solid #28a745;
     }
 
-    #userZone {
-        background-color: #f8f9fa;
+    .zone-readonly {
+        background-color: #f8f9fa !important;
         font-weight: 500;
+        border: 2px solid #0066cc;
     }
 
     .zone-indicator {
@@ -478,6 +559,19 @@
         border-radius: 15px;
         font-size: 0.8em;
         font-weight: bold;
+    }
+
+    /* Styles spéciaux pour admin */
+    .admin-mode .form-control[readonly] {
+        background-color: #d4edda !important;
+        border-color: #28a745 !important;
+        color: #155724 !important;
+    }
+
+    .admin-mode .form-select[readonly] {
+        background-color: #d4edda !important;
+        border-color: #28a745 !important;
+        color: #155724 !important;
     }
 </style>
 {% endblock %}

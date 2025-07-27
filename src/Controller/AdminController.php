@@ -390,24 +390,48 @@ class AdminController extends AbstractController
         return $this->redirectToRoute('app_admin_users');
     }
 
-    #[Route('/rapport/nouveau', name: 'app_admin_rapport_nouveau')]
+    #[Route('/admin/rapport/nouveau', name: 'app_admin_rapport_nouveau')]
     public function nouveauRapport(
         Request $request,
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger
     ): Response {
         $rapport = new RapportHSE();
+        // Vérifier que l'utilisateur est connecté
+        /** @var User $currentUser */
+        $currentUser = $this->getUser();
 
         // Initialiser la date et l'heure actuelles par défaut
         $rapport->setDate(new \DateTime());
         $rapport->setHeure(new \DateTime());
 
-        $form = $this->createForm(RapportHSEType::class, $rapport);
+        // Si l'utilisateur est un admin (pas super admin), pré-remplir avec ses informations
+        if (in_array('ROLE_ADMIN', $currentUser->getRoles()) && !in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())) {
+            $rapport->setUser($currentUser);
+            $rapport->setCodeAgt($currentUser->getCodeAgent());
+            $rapport->setNom($currentUser->getNom() . ' ' . $currentUser->getPrenom());
+            $rapport->setZoneUtilisateur($currentUser->getZone());
+        }
+
+        $form = $this->createForm(RapportHSEType::class, $rapport, [
+            'is_admin_self_report' => in_array('ROLE_ADMIN', $currentUser->getRoles()) && !in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Récupérer l'utilisateur sélectionné
             $user = $form->get('user')->getData();
+
+            // Si c'est un admin (pas super admin), forcer l'utilisateur à être lui-même
+            if (in_array('ROLE_ADMIN', $currentUser->getRoles()) && !in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())) {
+                if ($user->getId() !== $currentUser->getId()) {
+                    $this->addFlash('error', 'Vous ne pouvez créer des rapports que pour vous-même !');
+                    return $this->render('admin/nouveau_rapport.html.twig', [
+                        'form' => $form,
+                    ]);
+                }
+            }
+
             if (!$user) {
                 $this->addFlash('error', 'Veuillez sélectionner un agent !');
                 return $this->render('admin/nouveau_rapport.html.twig', [
@@ -415,16 +439,17 @@ class AdminController extends AbstractController
                 ]);
             }
 
-            // Vérifier que l'admin peut créer un rapport pour cet utilisateur
-            $currentUser = $this->getUser();
-            if (
-                !in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles()) &&
-                $user->getZone() !== $currentUser->getZone()
-            ) {
-                $this->addFlash('error', 'Vous ne pouvez créer des rapports que pour les utilisateurs de votre zone !');
-                return $this->render('admin/nouveau_rapport.html.twig', [
-                    'form' => $form,
-                ]);
+            // Vérifier les permissions pour les super admins
+            if (in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())) {
+                // Super admin peut créer pour n'importe qui
+            } else {
+                // Admin normal : vérifier que c'est bien pour lui-même et de sa zone
+                if ($user->getId() !== $currentUser->getId() || $user->getZone() !== $currentUser->getZone()) {
+                    $this->addFlash('error', 'Vous ne pouvez créer des rapports que pour vous-même dans votre zone !');
+                    return $this->render('admin/nouveau_rapport.html.twig', [
+                        'form' => $form,
+                    ]);
+                }
             }
 
             // Associer l'utilisateur au rapport
@@ -433,8 +458,6 @@ class AdminController extends AbstractController
             // Remplir automatiquement les champs depuis l'utilisateur sélectionné
             $rapport->setCodeAgt($user->getCodeAgent());
             $rapport->setNom($user->getNom() . ' ' . $user->getPrenom());
-
-            // Définir la zone utilisateur automatiquement
             $rapport->setZoneUtilisateur($user->getZone());
 
             // Gérer l'upload de la photo du constat
@@ -602,53 +625,95 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/rapport/{id}/modifier', name: 'app_admin_rapport_modifier', requirements: ['id' => '\d+'])]
+    #[Route('/admin/rapport/{id}/modifier', name: 'app_admin_rapport_modifier')]
     public function modifierRapport(
-        RapportHSE $rapport,
+        int $id,
         Request $request,
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger
     ): Response {
-        // Vérifier que l'utilisateur peut modifier ce rapport
-        if (!$rapport->canBeModifiedByUser($this->getUser())) {
-            throw $this->createAccessDeniedException('Vous n\'avez pas l\'autorisation de modifier ce rapport.');
+        $rapport = $entityManager->getRepository(RapportHSE::class)->find($id);
+
+        if (!$rapport) {
+            throw $this->createNotFoundException('Rapport introuvable');
         }
 
-        $form = $this->createForm(RapportHSEType::class, $rapport);
+        $currentUser = $this->getUser();
+
+        // Vérifier les permissions d'accès au rapport
+        if (!$rapport->canBeModifiedByUser($currentUser)) {
+            $this->addFlash('error', 'Vous n\'avez pas l\'autorisation de modifier ce rapport');
+            return $this->redirectToRoute('app_admin_rapports');
+        }
+
+        // Déterminer si c'est un admin qui modifie son propre rapport
+        $isAdminSelfReport = (
+            in_array('ROLE_ADMIN', $currentUser->getRoles()) &&
+            !in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles()) &&
+            $rapport->getUser() &&
+            $rapport->getUser()->getId() === $currentUser->getId()
+        );
+
+        $form = $this->createForm(RapportHSEType::class, $rapport, [
+            'is_admin_self_report' => $isAdminSelfReport
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Récupérer l'utilisateur sélectionné
             $user = $form->get('user')->getData();
-            if (!$user) {
-                $this->addFlash('error', 'Veuillez sélectionner un agent !');
-                return $this->render('admin/modifier_rapport.html.twig', [
-                    'form' => $form,
-                    'rapport' => $rapport,
-                ]);
-            }
 
-            // Vérifier les permissions
-            $currentUser = $this->getUser();
-            if (
-                !in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles()) &&
-                $user->getZone() !== $currentUser->getZone()
-            ) {
-                $this->addFlash('error', 'Vous ne pouvez modifier que les rapports des utilisateurs de votre zone !');
-                return $this->render('admin/modifier_rapport.html.twig', [
-                    'form' => $form,
-                    'rapport' => $rapport,
-                ]);
+            // Vérifications de sécurité selon le rôle
+            if (in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())) {
+                // Super admin peut modifier pour n'importe qui
+            } else if (in_array('ROLE_ADMIN', $currentUser->getRoles())) {
+                // Admin normal : peut seulement modifier ses propres rapports
+                if ($user->getId() !== $currentUser->getId()) {
+                    $this->addFlash('error', 'Vous ne pouvez modifier que vos propres rapports !');
+                    return $this->render('admin/modifier_rapport.html.twig', [
+                        'form' => $form,
+                        'rapport' => $rapport
+                    ]);
+                }
+
+                // Vérifier que c'est dans sa zone
+                if ($user->getZone() !== $currentUser->getZone()) {
+                    $this->addFlash('error', 'Vous ne pouvez modifier que les rapports de votre zone !');
+                    return $this->render('admin/modifier_rapport.html.twig', [
+                        'form' => $form,
+                        'rapport' => $rapport
+                    ]);
+                }
+            } else {
+                // Utilisateur normal : peut seulement modifier ses propres rapports
+                if ($user->getId() !== $currentUser->getId()) {
+                    $this->addFlash('error', 'Vous ne pouvez modifier que vos propres rapports !');
+                    return $this->render('admin/modifier_rapport.html.twig', [
+                        'form' => $form,
+                        'rapport' => $rapport
+                    ]);
+                }
             }
 
             // Associer l'utilisateur au rapport
             $rapport->setUser($user);
+
+            // Remplir automatiquement les champs depuis l'utilisateur sélectionné
             $rapport->setCodeAgt($user->getCodeAgent());
             $rapport->setNom($user->getNom() . ' ' . $user->getPrenom());
+            $rapport->setZoneUtilisateur($user->getZone());
 
             // Gérer l'upload de la photo du constat
             $photoConstatFile = $form->get('photoConstatFile')->getData();
             if ($photoConstatFile) {
+                // Supprimer l'ancienne photo si elle existe
+                if ($rapport->getPhotoConstat()) {
+                    $oldPhotoPath = $this->getParameter('uploads_directory') . '/' . $rapport->getPhotoConstat();
+                    if (file_exists($oldPhotoPath)) {
+                        unlink($oldPhotoPath);
+                    }
+                }
+
                 $originalFilename = pathinfo($photoConstatFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $slugger->slug($originalFilename);
                 $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoConstatFile->guessExtension();
@@ -667,6 +732,14 @@ class AdminController extends AbstractController
             // Gérer l'upload de la photo d'action
             $photoActionFile = $form->get('photoActionFile')->getData();
             if ($photoActionFile) {
+                // Supprimer l'ancienne photo si elle existe
+                if ($rapport->getPhotoActionCloturee()) {
+                    $oldPhotoPath = $this->getParameter('uploads_directory') . '/' . $rapport->getPhotoActionCloturee();
+                    if (file_exists($oldPhotoPath)) {
+                        unlink($oldPhotoPath);
+                    }
+                }
+
                 $originalFilename = pathinfo($photoActionFile->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $slugger->slug($originalFilename);
                 $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoActionFile->guessExtension();
@@ -682,7 +755,7 @@ class AdminController extends AbstractController
                 }
             }
 
-            // Mettre à jour le statut
+            // Définir le statut en fonction de l'action clôturée
             if ($rapport->getActionCloturee() === 'oui') {
                 $rapport->setStatut('Clôturé');
             } else {
@@ -697,7 +770,7 @@ class AdminController extends AbstractController
 
         return $this->render('admin/modifier_rapport.html.twig', [
             'form' => $form,
-            'rapport' => $rapport,
+            'rapport' => $rapport
         ]);
     }
 
