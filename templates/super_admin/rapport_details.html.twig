@@ -197,10 +197,9 @@
                     <div class="col-md-6 mb-3">
                         <h6 class="text-primary">Photo du Constat</h6>
                         <div class="photo-container">
-                            <img src="{{ asset('uploads/rapports/' ~ rapport.photoConstat) }}" alt="Photo du constat"
+                            <img src="{{ asset('uploads/'~ rapport.photoConstat) }}" alt="Photo du constat"
                                 class="img-fluid" data-bs-toggle="modal" data-bs-target="#photoModal"
-                                data-photo="{{ asset('uploads/rapports/' ~ rapport.photoConstat) }}"
-                                style="cursor: pointer;">
+                                data-photo="{{ asset('uploads/' ~ rapport.photoConstat) }}" style="cursor: pointer;">
                         </div>
                     </div>
                     {% endif %}
@@ -209,10 +208,9 @@
                     <div class="col-md-6 mb-3">
                         <h6 class="text-success">Photo de l'Action Clôturée</h6>
                         <div class="photo-container">
-                            <img src="{{ asset('uploads/rapports/' ~ rapport.photoActionCloturee) }}"
-                                alt="Photo action clôturée" class="img-fluid" data-bs-toggle="modal"
-                                data-bs-target="#photoModal"
-                                data-photo="{{ asset('uploads/rapports/' ~ rapport.photoActionCloturee) }}"
+                            <img src="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}" alt="Photo action clôturée"
+                                class="img-fluid" data-bs-toggle="modal" data-bs-target="#photoModal"
+                                data-photo="{{ asset('uploads/' ~ rapport.photoActionCloturee) }}"
                                 style="cursor: pointer;">
                         </div>
                     </div>
