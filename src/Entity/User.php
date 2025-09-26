@@ -75,12 +75,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: RapportHSE::class, orphanRemoval: true)]
     private Collection $rapportsHSE;
 
+    #[ORM\OneToMany(mappedBy: 'validePar', targetEntity: Extincteur::class)]
+    private Collection $extincteursValides;
+
+    #[ORM\OneToMany(mappedBy: 'validePar', targetEntity: RIA::class)]
+    private Collection $riasValides;
+
+    #[ORM\OneToMany(mappedBy: 'inspectePar', targetEntity: InspectionExtincteur::class)]
+    private Collection $inspectionsExtincteurs;
+
+    #[ORM\OneToMany(mappedBy: 'inspectePar', targetEntity: InspectionMonteCharge::class)]
+    private Collection $inspectionsMonteCharge;
+
     public function __construct()
     {
         $this->rapportsHSE = new ArrayCollection();
         $this->dateCreation = new \DateTime();
         $this->heureCreation = new \DateTime();
         $this->roles = ['ROLE_USER'];
+        $this->extincteursValides = new ArrayCollection();
+        $this->riasValides = new ArrayCollection();
+        $this->inspectionsExtincteurs = new ArrayCollection();
+        $this->inspectionsMonteCharge = new ArrayCollection();
     }
 
     /**
@@ -315,5 +331,137 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         // Utilisateur normal ne peut rien gérer
         return false;
+    }
+
+    /**
+     * @return Collection<int, Extincteur>
+     */
+    public function getExtincteursValides(): Collection
+    {
+        return $this->extincteursValides;
+    }
+
+    public function addExtincteurValide(Extincteur $extincteur): static
+    {
+        if (!$this->extincteursValides->contains($extincteur)) {
+            $this->extincteursValides->add($extincteur);
+            $extincteur->setValidePar($this);
+        }
+        return $this;
+    }
+
+    public function removeExtincteurValide(Extincteur $extincteur): static
+    {
+        if ($this->extincteursValides->removeElement($extincteur)) {
+            if ($extincteur->getValidePar() === $this) {
+                $extincteur->setValidePar(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, RIA>
+     */
+    public function getRiasValides(): Collection
+    {
+        return $this->riasValides;
+    }
+
+    public function addRiaValide(RIA $ria): static
+    {
+        if (!$this->riasValides->contains($ria)) {
+            $this->riasValides->add($ria);
+            $ria->setValidePar($this);
+        }
+        return $this;
+    }
+
+    public function removeRiaValide(RIA $ria): static
+    {
+        if ($this->riasValides->removeElement($ria)) {
+            if ($ria->getValidePar() === $this) {
+                $ria->setValidePar(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, InspectionExtincteur>
+     */
+    public function getInspectionsExtincteurs(): Collection
+    {
+        return $this->inspectionsExtincteurs;
+    }
+
+    public function addInspectionExtincteur(InspectionExtincteur $inspection): static
+    {
+        if (!$this->inspectionsExtincteurs->contains($inspection)) {
+            $this->inspectionsExtincteurs->add($inspection);
+            $inspection->setInspectePar($this);
+        }
+        return $this;
+    }
+
+    public function removeInspectionExtincteur(InspectionExtincteur $inspection): static
+    {
+        if ($this->inspectionsExtincteurs->removeElement($inspection)) {
+            if ($inspection->getInspectePar() === $this) {
+                $inspection->setInspectePar(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, InspectionMonteCharge>
+     */
+    public function getInspectionsMonteCharge(): Collection
+    {
+        return $this->inspectionsMonteCharge;
+    }
+
+    public function addInspectionMonteCharge(InspectionMonteCharge $inspection): static
+    {
+        if (!$this->inspectionsMonteCharge->contains($inspection)) {
+            $this->inspectionsMonteCharge->add($inspection);
+            $inspection->setInspectePar($this);
+        }
+        return $this;
+    }
+
+    public function removeInspectionMonteCharge(InspectionMonteCharge $inspection): static
+    {
+        if ($this->inspectionsMonteCharge->removeElement($inspection)) {
+            if ($inspection->getInspectePar() === $this) {
+                $inspection->setInspectePar(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * Obtenir le nombre total d'inspections effectuées par l'utilisateur
+     */
+    public function getTotalInspections(): int
+    {
+        return $this->inspectionsExtincteurs->count() + $this->inspectionsMonteCharge->count();
+    }
+
+    /**
+     * Obtenir le nombre total d'équipements validés par l'utilisateur
+     */
+    public function getTotalValidations(): int
+    {
+        return $this->extincteursValides->count() + $this->riasValides->count();
+    }
+
+    /**
+     * Vérifier si l'utilisateur peut gérer les équipements
+     */
+    public function canManageEquipements(): bool
+    {
+        return in_array('ROLE_ADMIN', $this->getRoles()) || in_array('ROLE_SUPER_ADMIN', $this->getRoles());
     }
 }

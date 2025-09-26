@@ -1,0 +1,96 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Valider Extincteur{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-check-circle text-success"></i> Validation Extincteur
+<small class="text-muted">{{ extincteur.numerotation }}</small>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-fire-extinguisher"></i> Validation de l'extincteur {{ extincteur.numerotation }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Informations de l'extincteur -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6>Informations techniques</h6>
+              <ul class="list-unstyled">
+                <li><strong>Numéro:</strong> {{ extincteur.numerotation }}</li>
+                <li><strong>Zone:</strong> <span class="badge bg-info">{{ extincteur.zone }}</span></li>
+                <li><strong>Emplacement:</strong> {{ extincteur.emplacement ?? 'Non spécifié' }}</li>
+                <li><strong>Type:</strong> {{ extincteur.type ?? 'Non spécifié' }}</li>
+                <li><strong>Capacité:</strong> {{ extincteur.capacite ?? 'Non spécifiée' }}</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>Dates importantes</h6>
+              <ul class="list-unstyled">
+                <li><strong>Fabrication:</strong> {{ extincteur.dateFabrication ?
+                  extincteur.dateFabrication|date('d/m/Y') : 'Non spécifiée' }}</li>
+                <li><strong>Épreuve:</strong> {{ extincteur.dateEpreuve ? extincteur.dateEpreuve|date('d/m/Y') : 'Non
+                  spécifiée' }}</li>
+                <li><strong>Fin de vie:</strong> {{ extincteur.dateFinDeVie ? extincteur.dateFinDeVie|date('d/m/Y') :
+                  'Non spécifiée' }}</li>
+                <li><strong>N° série:</strong> {{ extincteur.numeroSerie ?? 'Non spécifié' }}</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Formulaire de validation -->
+          <form method="POST" class="border-top pt-4">
+            <div class="row">
+              <div class="col-12">
+                <h5 class="text-primary mb-3">
+                  <i class="fas fa-question-circle"></i> Validation de l'existence
+                </h5>
+                <div class="alert alert-info">
+                  <i class="fas fa-info-circle"></i>
+                  <strong>Question:</strong> Cet extincteur existe-t-il physiquement à l'emplacement indiqué ?
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="form-check form-check-inline me-4">
+                  <input class="form-check-input" type="radio" name="existe" id="existe_oui" value="oui" required>
+                  <label class="form-check-label fw-bold text-success" for="existe_oui">
+                    <i class="fas fa-check-circle"></i> Oui, l'extincteur existe
+                  </label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="existe" id="existe_non" value="non" required>
+                  <label class="form-check-label fw-bold text-danger" for="existe_non">
+                    <i class="fas fa-times-circle"></i> Non, l'extincteur n'existe pas
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="{{ path('app_equipements_extincteurs') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                  </a>
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check"></i> Valider la vérification
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

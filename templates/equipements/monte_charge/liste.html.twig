@@ -1,0 +1,264 @@
+{# templates/equipements/monte_charge/liste.html.twig - MODIFIÉE #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Monte-charge Tefil{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-elevator text-success"></i> Monte-charge Tefil
+<small class="text-muted">Inspection des portes</small>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Navigation -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-elevator"></i> Monte-charge Tefil - Inspection des portes
+                    </h5>
+                    <div>
+                        <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                        <a href="{{ path('app_equipements_monte_charge_nouveau') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> Ajouter
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Monte-charges disponibles -->
+        <div class="col-12 mb-4">
+            {% if monte_charges is not empty %}
+            {% for monteCharge in monte_charges %}
+            <div class="card shadow mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-elevator"></i> {{ monteCharge.type }}
+                        <small class="ms-2">{{ monteCharge.zone }}</small>
+                    </h5>
+
+                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                    <!-- Boutons d'administration pour Super Admin -->
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="{{ path('app_equipements_monte_charge_modifier', {'id': monteCharge.id}) }}"
+                            class="btn btn-outline-light" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ path('app_equipements_monte_charge_supprimer', {'id': monteCharge.id}) }}"
+                            class="btn btn-outline-danger"
+                            data-confirm="Êtes-vous sûr de vouloir supprimer le monte-charge {{ monteCharge.type }} ?"
+                            title="Supprimer">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <!-- Questions de contrôle -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-primary">
+                                <i class="fas fa-question-circle"></i> Questions de contrôle à vérifier pour chaque
+                                porte :
+                            </h6>
+                            {% set questions = {
+                            'portes_monte_charge_fermees': 'LES PORTES MONTE CHARGE SONT-ELLES FERMÉES ?',
+                            'consignes_utilisation_respectees': 'LES CONSIGNES D\'UTILISATION SONT-ELLES RESPECTÉES ?',
+                            'fins_courses_fonctionnent': 'LES FINS COURSES FONCTIONNENT CORRECTEMENT ?',
+                            'essai_vide_realise': 'UN ESSAI À VIDE A ÉTÉ RÉALISÉ ?'
+                            } %}
+                            <div class="row">
+                                {% for key, question in questions %}
+                                <div class="col-lg-6 mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        <span class="small">{{ question }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Portes du monte-charge -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-info mb-3">
+                                <i class="fas fa-door-open"></i> Portes disponibles pour inspection :
+                            </h6>
+                            <div class="row">
+                                {% for cle, porte in portes %}
+                                {% set derniereInspection = null %}
+                                {% for inspection in monteCharge.inspections %}
+                                {% if inspection.numeroPorte == cle and (derniereInspection is null or
+                                inspection.dateInspection > derniereInspection.dateInspection) %}
+                                {% set derniereInspection = inspection %}
+                                {% endif %}
+                                {% endfor %}
+
+                                <div class="col-lg-4 col-md-6 mb-3">
+                                    <div
+                                        class="card border {{ derniereInspection and derniereInspection.dateInspection > date('-1 day') ? 'border-success' : 'border-warning' }}">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">
+                                                <i class="fas fa-door-open"></i> {{ porte }}
+                                            </h6>
+
+                                            {% if derniereInspection and derniereInspection.dateInspection > date('-1
+                                            day') %}
+                                            <!-- Inspection récente -->
+                                            <div class="mb-2">
+                                                <span class="badge bg-success mb-2">
+                                                    <i class="fas fa-check-circle"></i> Inspectée
+                                                </span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    {{ derniereInspection.dateInspection|date('d/m/Y H:i') }}<br>
+                                                    par {{ derniereInspection.inspectePar.nom }} {{
+                                                    derniereInspection.inspectePar.prenom }}
+                                                </small>
+                                            </div>
+                                            {% if derniereInspection.valide %}
+                                            <div class="badge bg-success">
+                                                <i class="fas fa-thumbs-up"></i> Conforme
+                                            </div>
+                                            {% else %}
+                                            <div class="badge bg-danger">
+                                                <i class="fas fa-exclamation-triangle"></i> Non conforme
+                                            </div>
+                                            {% endif %}
+                                            {% else %}
+                                            <!-- Inspection possible -->
+                                            <p class="text-muted small mb-3">
+                                                {% if derniereInspection %}
+                                                Dernière inspection :<br>
+                                                {{ derniereInspection.dateInspection|date('d/m/Y H:i') }}
+                                                {% else %}
+                                                Jamais inspectée
+                                                {% endif %}
+                                            </p>
+                                            <a href="{{ path('app_equipements_monte_charge_inspecter', {
+                                                    'id': monteCharge.id,
+                                                    'porte': cle
+                                                }) }}" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-clipboard-check"></i> Inspecter
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-elevator fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun monte-charge configuré</h5>
+                {% if is_granted('ROLE_SUPER_ADMIN') %}
+                <a href="{{ path('app_equipements_monte_charge_nouveau') }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-plus"></i> Ajouter le premier monte-charge
+                </a>
+                <p class="text-muted mt-2">ou</p>
+                <a href="{{ path('app_equipements_init_monte_charges') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-cogs"></i> Initialiser les monte-charges par défaut
+                </a>
+                {% else %}
+                <p class="text-muted">Contactez un super administrateur pour ajouter les monte-charges.</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Dernières inspections -->
+    {% if inspections is not empty %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> Historique des inspections récentes
+                    </h5>
+                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                    <small>Actions administrateur disponibles</small>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Monte-charge</th>
+                                    <th>Porte</th>
+                                    <th>Date</th>
+                                    <th>Inspecteur</th>
+                                    <th>Résultat</th>
+                                    <th>Observations</th>
+                                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                    <th width="100">Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inspection in inspections|slice(0, 15) %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ inspection.monteCharge.type }}</strong><br>
+                                        <small class="text-muted">{{ inspection.monteCharge.zone }}</small>
+                                    </td>
+                                    <td><span class="badge bg-secondary">{{ inspection.numeroPorte }}</span></td>
+                                    <td>{{ inspection.dateInspection|date('d/m/Y H:i') }}</td>
+                                    <td>{{ inspection.inspectePar.nom }} {{ inspection.inspectePar.prenom }}</td>
+                                    <td>
+                                        {% if inspection.valide %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check"></i> Conforme
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times"></i> Non conforme
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if inspection.observations %}
+                                        <small>{{ inspection.observations|slice(0, 50) }}{{
+                                            inspection.observations|length > 50 ? '...' : '' }}</small>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                                    <td>
+                                        <a href="{{ path('app_equipements_monte_charge_inspection_supprimer', {'id': inspection.id}) }}"
+                                            class="btn btn-outline-danger btn-sm"
+                                            data-confirm="Êtes-vous sûr de vouloir supprimer cette inspection ?"
+                                            title="Supprimer l'inspection">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

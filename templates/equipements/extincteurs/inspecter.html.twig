@@ -1,0 +1,150 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inspection MLCI
+{% endblock %}
+
+{% block page_title %}
+	<i class="fas fa-clipboard-check text-warning"></i>
+	Inspection MLCI
+	<small class="text-muted">
+		{{ extincteur.numerotation }}</small>
+{% endblock %}
+{% block body %}
+	<div class="container-fluid">
+		<div class="row justify-content-center">
+			<div class="col-lg-10">
+				<div class="card shadow">
+					<div class="card-header bg-warning text-white">
+						<h5 class="mb-0">
+							<i class="fas fa-fire-extinguisher"></i>
+							Inspection MLCI - Extincteur
+							{{ extincteur.numerotation }}
+						</h5>
+					</div>
+					<div
+						class="card-body">
+						<!-- Informations de l'extincteur -->
+						<div class="alert alert-info mb-4">
+							<div class="row">
+								<div class="col-md-6">
+									<strong>Extincteur:</strong>
+									{{ extincteur.numerotation }}<br>
+									<strong>Zone:</strong>
+									<span class="badge bg-info">{{ extincteur.zone }}</span><br>
+									<strong>Emplacement:</strong>
+									{{ extincteur.emplacement ?? 'Non spécifié' }}
+								</div>
+								<div class="col-md-6">
+									<strong>Type:</strong>
+									{{ extincteur.type ?? 'Non spécifié' }}<br>
+									<strong>Capacité:</strong>
+									{{ extincteur.capacite ?? 'Non spécifiée' }}<br>
+									<strong>Inspecteur:</strong>
+									{{ app.user.nom }}
+									{{ app.user.prenom }}
+								</div>
+							</div>
+						</div>
+
+						<!-- Formulaire d'inspection -->
+						<form method="POST">
+							<h5 class="text-primary mb-3">
+								<i class="fas fa-clipboard-list"></i>
+								Critères de conformité
+							</h5>
+
+							<div class="row">
+								{% for key, critere in criteres %}
+									<div class="col-lg-6 mb-3">
+										<div class="card border">
+											<div class="card-body">
+												<h6 class="card-title">{{ loop.index }}.
+													{{ critere }}</h6>
+												<div class="form-check form-check-inline me-3">
+													<input class="form-check-input" type="radio" name="critere_{{ key }}" id="{{ key }}_oui" value="oui" required>
+													<label class="form-check-label text-success fw-bold" for="{{ key }}_oui">
+														<i class="fas fa-check"></i>
+														Oui
+													</label>
+												</div>
+												<div class="form-check form-check-inline">
+													<input class="form-check-input" type="radio" name="critere_{{ key }}" id="{{ key }}_non" value="non" required>
+													<label class="form-check-label text-danger fw-bold" for="{{ key }}_non">
+														<i class="fas fa-times"></i>
+														Non
+													</label>
+												</div>
+											</div>
+										</div>
+									</div>
+								{% endfor %}
+							</div>
+
+							<!-- Observations -->
+							<div class="row mt-4">
+								<div class="col-12">
+									<div class="form-group">
+										<label for="observations" class="form-label">
+											<i class="fas fa-comment"></i>
+											Observations (optionnel)
+										</label>
+										<textarea name="observations" id="observations" class="form-control" rows="4" placeholder="Commentaires additionnels sur l'inspection..."></textarea>
+									</div>
+								</div>
+							</div>
+
+							<!-- Boutons -->
+							<div class="row mt-4">
+								<div class="col-12">
+									<div class="d-flex justify-content-between">
+										<a href="{{ path('app_equipements_inspections') }}" class="btn btn-outline-secondary">
+											<i class="fas fa-arrow-left"></i>
+											Annuler
+										</a>
+										<button type="submit" class="btn btn-warning btn-lg">
+											<i class="fas fa-save"></i>
+											Enregistrer l'inspection
+										</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', function () { // Compter les réponses "Oui" en temps réel
+const radios = document.querySelectorAll('input[type="radio"]');
+const submitBtn = document.querySelector('button[type="submit"]');
+
+function updateSubmitButton() {
+const totalCriteres = {{ criteres| length }};
+const criteresOui = document.querySelectorAll('input[value="oui"]:checked').length;
+const criteresNon = document.querySelectorAll('input[value="non"]:checked').length;
+const totalReponses = criteresOui + criteresNon;
+
+if (totalReponses === totalCriteres) {
+if (criteresOui === totalCriteres) {
+submitBtn.className = 'btn btn-success btn-lg';
+submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> Inspection conforme - Enregistrer';
+} else {
+submitBtn.className = 'btn btn-danger btn-lg';
+submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Inspection non conforme - Enregistrer';
+}
+} else {
+submitBtn.className = 'btn btn-warning btn-lg';
+submitBtn.innerHTML = '<i class="fas fa-save"></i> Enregistrer l\'inspection (' + totalReponses + '/' + totalCriteres + ')';
+}
+}
+
+radios.forEach(radio => {
+radio.addEventListener('change', updateSubmitButton);
+});
+
+updateSubmitButton();
+});
+	</script>
+{% endblock %}

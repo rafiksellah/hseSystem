@@ -1,0 +1,214 @@
+{# templates/equipements/ria/liste.html.twig - MODIFIÉE #}
+{% extends 'base.html.twig' %}
+
+{% block title %}RIA - État{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-tint text-info"></i> RIA - État
+<small class="text-muted">Robinets d'Incendie Armés</small>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <!-- Barre d'outils -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-list"></i> Liste des RIA
+            {% if not is_granted('ROLE_SUPER_ADMIN') %}
+            - Zone {{ user_zone }}
+            {% endif %}
+          </h5>
+          <div>
+            <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
+              <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
+            <a href="{{ path('app_equipements_ria_nouveau') }}" class="btn btn-primary btn-sm">
+              <i class="fas fa-plus"></i> Ajouter
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Filtres -->
+          <form method="GET" class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label for="zone" class="form-label">Zone</label>
+              <select name="zone" id="zone" class="form-select form-select-sm">
+                <option value="">Toutes les zones</option>
+                {% for key, zone in zones_disponibles %}
+                <option value="{{ key }}" {{ search_params.zone==key ? 'selected' : '' }}>
+                  {{ zone }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="numerotation" class="form-label">Numéro</label>
+              <input type="text" name="numerotation" id="numerotation" class="form-control form-control-sm"
+                value="{{ search_params.numerotation }}" placeholder="Rechercher...">
+            </div>
+            <div class="col-md-3">
+              <label for="valide" class="form-label">État</label>
+              <select name="valide" id="valide" class="form-select form-select-sm">
+                <option value="">Tous</option>
+                <option value="0" {{ search_params.valide=='0' ? 'selected' : '' }}>Non validés</option>
+                <option value="1" {{ search_params.valide=='1' ? 'selected' : '' }}>Validés</option>
+              </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="submit" class="btn btn-outline-primary btn-sm me-2">
+                <i class="fas fa-search"></i> Filtrer
+              </button>
+              <a href="{{ path('app_equipements_ria') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-undo"></i> Reset
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des RIA -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          {% if rias is not empty %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Numéro</th>
+                  <th>Zone</th>
+                  <th>Agent extincteur</th>
+                  <th>Diamètre</th>
+                  <th>Longueur</th>
+                  <th>État</th>
+                  <th>Validé par</th>
+                  <th width="200">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ria in rias %}
+                <tr class="{{ ria.valide ? 'table-success' : '' }}">
+                  <td><strong>{{ ria.numerotation }}</strong></td>
+                  <td>
+                    <span class="badge {{ ria.zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
+                      {{ ria.zone }}
+                    </span>
+                  </td>
+                  <td>{{ ria.agentExtincteur ?? 'Non spécifié' }}</td>
+                  <td>
+                    {% if ria.dimatere %}
+                    {{ ria.dimatere }}mm
+                    {% else %}
+                    <span class="text-muted">Non spécifié</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if ria.longueur %}
+                    {{ ria.longueur }}m
+                    {% else %}
+                    <span class="text-muted">Non spécifiée</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if ria.valide %}
+                    <span class="badge bg-success">
+                      <i class="fas fa-check-circle"></i> Validé
+                    </span>
+                    {% else %}
+                    <span class="badge bg-warning">
+                      <i class="fas fa-clock"></i> En attente
+                    </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if ria.validePar %}
+                    <small>
+                      {{ ria.validePar.nom }} {{ ria.validePar.prenom }}<br>
+                      <span class="text-muted">{{ ria.dateValidation|date('d/m/Y H:i') }}</span>
+                    </small>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group-vertical d-flex gap-1" role="group">
+                      {% if not ria.valide %}
+                      <!-- Bouton de validation (prioritaire) -->
+                      <a href="{{ path('app_equipements_ria_valider', {'id': ria.id}) }}"
+                        class="btn btn-sm btn-outline-success" title="Valider">
+                        <i class="fas fa-check"></i> Valider
+                      </a>
+                      {% endif %}
+
+                      {% if is_admin %}
+                      <!-- Boutons d'administration -->
+                      <div class="btn-group btn-group-sm" role="group">
+                        <a href="{{ path('app_equipements_ria_modifier', {'id': ria.id}) }}"
+                          class="btn btn-outline-warning" title="Modifier">
+                          <i class="fas fa-edit"></i>
+                        </a>
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                        <a href="{{ path('app_equipements_ria_supprimer', {'id': ria.id}) }}"
+                          class="btn btn-outline-danger"
+                          data-confirm="Êtes-vous sûr de vouloir supprimer le RIA {{ ria.numerotation }} ?"
+                          title="Supprimer">
+                          <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                      </div>
+                      {% endif %}
+
+                      {% if ria.valide and not is_admin %}
+                      <span class="text-muted small">Validé</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          {% if total_pages > 1 %}
+          <nav aria-label="Navigation pagination">
+            <ul class="pagination justify-content-center">
+              {% for page in 1..total_pages %}
+              <li class="page-item {{ page == current_page ? 'active' : '' }}">
+                <a class="page-link" href="{{ path('app_equipements_ria', {
+                                    page: page,
+                                    zone: search_params.zone,
+                                    numerotation: search_params.numerotation,
+                                    valide: search_params.valide
+                                }) }}">{{ page }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </nav>
+          {% endif %}
+
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-tint fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucun RIA trouvé</h5>
+            {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
+            <a href="{{ path('app_equipements_ria_nouveau') }}" class="btn btn-primary mt-2">
+              <i class="fas fa-plus"></i> Ajouter le premier RIA
+            </a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{# templates/equipements/monte_charge/modifier.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier Monte-charge{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-edit text-warning"></i> Modifier le monte-charge
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">
+            <i class="fas fa-elevator"></i> Modifier Monte-charge
+            <small class="text-muted">- ID #{{ monte_charge.id }}</small>
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Informations actuelles -->
+          <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle"></i> Informations actuelles :</h6>
+            <ul class="mb-0">
+              <li><strong>Type :</strong> {{ monte_charge.type }}</li>
+              <li><strong>Zone :</strong> {{ monte_charge.zone }}</li>
+              <li><strong>Date de création :</strong> {{ monte_charge.dateCreation|date('d/m/Y H:i') }}</li>
+            </ul>
+          </div>
+
+          <form method="POST">
+            <div class="row mb-3">
+              <div class="col-12">
+                <label for="type" class="form-label">Type *</label>
+                <select name="type" id="type" class="form-select" required>
+                  <option value="">Sélectionnez un type</option>
+                  {% for key, type_name in types_disponibles %}
+                  <option value="{{ key }}" {{ monte_charge.type==key ? 'selected' : '' }}>
+                    {{ type_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <label for="zone" class="form-label">Zone *</label>
+                <select name="zone" id="zone" class="form-select" required>
+                  <option value="">Sélectionnez une zone</option>
+                  {% for key, zone_name in zones_disponibles %}
+                  <option value="{{ key }}" {{ monte_charge.zone==key ? 'selected' : '' }}>
+                    {{ zone_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- Statistiques d'inspections -->
+            {% if monte_charge.inspections|length > 0 %}
+            <div class="alert alert-secondary">
+              <h6><i class="fas fa-chart-bar"></i> Statistiques :</h6>
+              <p class="mb-0">
+                <strong>{{ monte_charge.inspections|length }}</strong> inspection(s) réalisée(s)
+              </p>
+            </div>
+            {% endif %}
+
+            <!-- Boutons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="{{ path('app_equipements_monte_charge') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                  </a>
+                  <button type="submit" class="btn btn-warning btn-lg">
+                    <i class="fas fa-save"></i> Enregistrer les modifications
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

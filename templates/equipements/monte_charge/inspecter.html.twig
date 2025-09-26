@@ -1,0 +1,164 @@
+{# templates/equipements/monte_charge/inspecter.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Inspecter Monte-charge{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-clipboard-check text-warning"></i> Inspection Monte-charge
+<small class="text-muted">{{ monte_charge.type }} - {{ porte_nom }}</small>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">
+            <i class="fas fa-elevator"></i> {{ monte_charge.type }}
+            <span class="badge bg-dark ms-2">{{ porte_nom }}</span>
+          </h5>
+          <small class="text-muted">{{ monte_charge.zone }}</small>
+        </div>
+        <div class="card-body">
+          <!-- Informations -->
+          <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle"></i> Instructions :</h6>
+            <ul class="mb-0">
+              <li>Répondez à chaque question par <strong>Oui</strong> ou <strong>Non</strong></li>
+              <li>Toutes les réponses doivent être <strong>"Oui"</strong> pour que l'inspection soit conforme</li>
+              <li>Ajoutez des observations si nécessaire</li>
+              <li>Une photo peut être ajoutée en cas de problème</li>
+            </ul>
+          </div>
+
+          <form method="POST" enctype="multipart/form-data">
+            <!-- Questions -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-question-circle"></i> Questions de contrôle :
+                </h6>
+
+                {% for key, question in questions %}
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <div class="row align-items-center">
+                      <div class="col-md-8">
+                        <label class="form-label fw-bold">{{ loop.index }}. {{ question }}</label>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" name="question_{{ key }}" id="oui_{{ key }}"
+                            value="oui" required>
+                          <label class="form-check-label text-success fw-bold" for="oui_{{ key }}">
+                            <i class="fas fa-check-circle"></i> Oui
+                          </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" name="question_{{ key }}" id="non_{{ key }}"
+                            value="non">
+                          <label class="form-check-label text-danger fw-bold" for="non_{{ key }}">
+                            <i class="fas fa-times-circle"></i> Non
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Observations -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <label for="observations" class="form-label">
+                  <i class="fas fa-comment-alt"></i> Observations (optionnel)
+                </label>
+                <textarea name="observations" id="observations" class="form-control" rows="4"
+                  placeholder="Décrivez les problèmes constatés, les actions correctives nécessaires..."></textarea>
+              </div>
+            </div>
+
+            <!-- Photo -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <label for="photo_observation" class="form-label">
+                  <i class="fas fa-camera"></i> Photo d'observation (optionnel)
+                </label>
+                <input type="file" name="photo_observation" id="photo_observation" class="form-control"
+                  accept="image/*">
+                <div class="form-text">
+                  Formats acceptés : JPG, PNG, GIF. Taille max : 5MB
+                </div>
+              </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="{{ path('app_equipements_monte_charge') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                  </a>
+                  <button type="submit" class="btn btn-warning btn-lg">
+                    <i class="fas fa-save"></i> Enregistrer l'inspection
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Validation côté client
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function (e) {
+      const radioGroups = document.querySelectorAll('input[type="radio"]');
+      const groupNames = new Set();
+      radioGroups.forEach(radio => groupNames.add(radio.name));
+
+      let allAnswered = true;
+      groupNames.forEach(groupName => {
+        const checked = document.querySelector(`input[name="${groupName}"]:checked`);
+        if (!checked) {
+          allAnswered = false;
+        }
+      });
+
+      if (!allAnswered) {
+        e.preventDefault();
+        alert('Veuillez répondre à toutes les questions avant de continuer.');
+      }
+    });
+
+    // Highlighting des réponses Non
+    const nonRadios = document.querySelectorAll('input[value="non"]');
+    nonRadios.forEach(radio => {
+      radio.addEventListener('change', function () {
+        if (this.checked) {
+          this.closest('.card').classList.add('border-danger');
+          this.closest('.card').classList.remove('border-success');
+        }
+      });
+    });
+
+    // Highlighting des réponses Oui
+    const ouiRadios = document.querySelectorAll('input[value="oui"]');
+    ouiRadios.forEach(radio => {
+      radio.addEventListener('change', function () {
+        if (this.checked) {
+          this.closest('.card').classList.add('border-success');
+          this.closest('.card').classList.remove('border-danger');
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

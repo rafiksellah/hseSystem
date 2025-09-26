@@ -278,7 +278,62 @@
                                 <i class="fas fa-chart-pie"></i> Statistiques Globales
                             </a>
                         </li>
+                        <!-- AJOUTEZ ICI LA SECTION GESTION ÉQUIPEMENTS POUR SUPER ADMIN -->
+                        <!-- Séparateur -->
+                        <li class="nav-item">
+                            <hr class="sidebar-divider">
+                            <div class="sidebar-heading">
+                                <small class="text-white-50">GESTION ÉQUIPEMENTS</small>
+                            </div>
+                        </li>
 
+                        <!-- Dashboard Équipements -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') starts with 'app_equipements' ? 'active' : '' }}"
+                                href="{{ path('app_equipements_dashboard') }}">
+                                <i class="fas fa-tools"></i> Équipements
+                                <small class="ms-1">(Sécurité incendie)</small>
+                            </a>
+                        </li>
+
+                        <!-- Sous-menu Équipements -->
+                        {% if app.request.get('_route') starts with 'app_equipements' %}
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_extincteurs' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_extincteurs') }}">
+                                    <i class="fas fa-fire-extinguisher text-danger"></i> Extincteurs - État
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') == 'app_equipements_inspections' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_inspections') }}">
+                                    <i class="fas fa-clipboard-check text-warning"></i> Inspection MLCI
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_ria' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_ria') }}">
+                                    <i class="fas fa-tint text-info"></i> RIA - État
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_monte_charge' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_monte_charge') }}">
+                                    <i class="fas fa-elevator text-success"></i> Monte-charge Tefil
+                                </a>
+                            </div>
+                        </li>
+                        {% endif %}
                         <!-- Séparateur -->
                         <li class="nav-item">
                             <hr class="sidebar-divider">
@@ -434,7 +489,74 @@
                             </a>
                         </li>
                         {% endif %}
+                        <!-- NOUVELLE SECTION GESTION ÉQUIPEMENTS -->
+                        <!-- ============================================ -->
 
+                        <!-- Séparateur -->
+                        <li class="nav-item">
+                            <hr class="sidebar-divider">
+                            <div class="sidebar-heading">
+                                <small class="text-white-50">GESTION ÉQUIPEMENTS</small>
+                            </div>
+                        </li>
+
+                        <!-- Dashboard Équipements (visible pour tous les utilisateurs connectés) -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') starts with 'app_equipements' ? 'active' : '' }}"
+                                href="{{ path('app_equipements_dashboard') }}">
+                                <i class="fas fa-tools"></i> Équipements
+                                <small class="ms-1">(Sécurité incendie)</small>
+                            </a>
+                        </li>
+
+                        <!-- Sous-menu Équipements (visible seulement si dans la section équipements) -->
+                        {% if app.request.get('_route') starts with 'app_equipements' %}
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_extincteurs' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_extincteurs') }}">
+                                    <i class="fas fa-fire-extinguisher text-danger"></i> Extincteurs - État
+                                    {% if 'ROLE_ADMIN' not in app.user.roles %}
+                                    <small class="ms-1">(Validation)</small>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') == 'app_equipements_inspections' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_inspections') }}">
+                                    <i class="fas fa-clipboard-check text-warning"></i> Inspection MLCI
+                                    <small class="ms-1">(12 critères)</small>
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_ria' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_ria') }}">
+                                    <i class="fas fa-tint text-info"></i> RIA - État
+                                    {% if 'ROLE_ADMIN' not in app.user.roles %}
+                                    <small class="ms-1">(Validation)</small>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_monte_charge' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_monte_charge') }}">
+                                    <i class="fas fa-elevator text-success"></i> Monte-charge Tefil
+                                    <small class="ms-1">(Inspection portes)</small>
+                                </a>
+                            </div>
+                        </li>
+
+                        {% endif %}
                         <li class="nav-item">
                             <a class="nav-link {{ app.request.get('_route') == 'app_admin_users' ? 'active' : '' }}"
                                 href="{{ path('app_admin_users') }}">
@@ -455,7 +577,6 @@
                                 <i class="fas fa-tachometer-alt"></i> Mon Dashboard
                             </a>
                         </li>
-
                         <!-- Séparateur -->
                         <li class="nav-item">
                             <hr class="sidebar-divider">
@@ -484,7 +605,69 @@
                                 <i class="fas fa-chart-bar"></i> Mes Statistiques
                             </a>
                         </li>
+                        <!-- SECTION GESTION ÉQUIPEMENTS POUR UTILISATEURS SIMPLES -->
+                        <!-- ======================================================= -->
 
+                        <!-- Séparateur -->
+                        <li class="nav-item">
+                            <hr class="sidebar-divider">
+                            <div class="sidebar-heading">
+                                <small class="text-white-50">GESTION ÉQUIPEMENTS</small>
+                            </div>
+                        </li>
+
+                        <!-- Dashboard Équipements -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') starts with 'app_equipements' ? 'active' : '' }}"
+                                href="{{ path('app_equipements_dashboard') }}">
+                                <i class="fas fa-tools"></i> Équipements
+                                <small class="ms-1">(Validation seulement)</small>
+                            </a>
+                        </li>
+
+                        <!-- Sous-menu Équipements pour utilisateurs simples -->
+                        {% if app.request.get('_route') starts with 'app_equipements' %}
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_extincteurs' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_extincteurs') }}">
+                                    <i class="fas fa-fire-extinguisher text-danger"></i> Extincteurs - État
+                                    <small class="ms-1">({{ app.user.zone }})</small>
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') == 'app_equipements_inspections' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_inspections') }}">
+                                    <i class="fas fa-clipboard-check text-warning"></i> Inspection MLCI
+                                    <small class="ms-1">({{ app.user.zone }})</small>
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_ria' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_ria') }}">
+                                    <i class="fas fa-tint text-info"></i> RIA - État
+                                    <small class="ms-1">({{ app.user.zone }})</small>
+                                </a>
+                            </div>
+                        </li>
+
+                        <li class="nav-item">
+                            <div class="ms-3">
+                                <a class="nav-link py-2 {{ app.request.get('_route') starts with 'app_equipements_monte_charge' ? 'active' : '' }}"
+                                    href="{{ path('app_equipements_monte_charge') }}">
+                                    <i class="fas fa-elevator text-success"></i> Monte-charge Tefil
+                                </a>
+                            </div>
+                        </li>
+
+                        {% endif %}
                         <!-- Séparateur -->
                         <li class="nav-item">
                             <hr class="sidebar-divider">

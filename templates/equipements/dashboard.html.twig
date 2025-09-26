@@ -1,0 +1,230 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Équipements - HSE System{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-tools text-primary"></i> Gestion des Équipements
+<small class="text-muted">Extincteurs, RIA et Monte-charge</small>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <!-- Boutons de navigation principaux -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-compass"></i> Navigation - Gestion des Équipements
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <!-- Extincteurs - État -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_extincteurs') }}"
+                class="btn btn-outline-danger btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                <i class="fas fa-fire-extinguisher fa-3x mb-3"></i>
+                <h5>Extincteurs - État</h5>
+                <small class="text-muted">Vérification et validation</small>
+              </a>
+            </div>
+
+            <!-- Inspection MLCI -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_inspections') }}"
+                class="btn btn-outline-warning btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                <i class="fas fa-clipboard-check fa-3x mb-3"></i>
+                <h5>Inspection MLCI</h5>
+                <small class="text-muted">Contrôle de conformité</small>
+              </a>
+            </div>
+
+            <!-- RIA - État -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_ria') }}"
+                class="btn btn-outline-info btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                <i class="fas fa-tint fa-3x mb-3"></i>
+                <h5>RIA - État</h5>
+                <small class="text-muted">Robinets d'Incendie Armés</small>
+              </a>
+            </div>
+
+            <!-- Monte-charge Tefil -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_monte_charge') }}"
+                class="btn btn-outline-success btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                <i class="fas fa-elevator fa-3x mb-3"></i>
+                <h5>Monte-charge Tefil</h5>
+                <small class="text-muted">Inspection des portes</small>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Retour aux Rapports HSE -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card bg-light">
+        <div class="card-body text-center">
+          <a href="{{ path('app_admin_dashboard') }}" class="btn btn-secondary btn-lg">
+            <i class="fas fa-arrow-left"></i> Retour aux Rapports HSE
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques générales -->
+  <div class="row">
+    <!-- Statistiques Extincteurs -->
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow h-100">
+        <div class="card-header bg-danger text-white">
+          <h6 class="mb-0">
+            <i class="fas fa-fire-extinguisher"></i> Extincteurs
+          </h6>
+        </div>
+        <div class="card-body">
+          {% if stats_extincteurs is not empty %}
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Zone</th>
+                  <th>Total</th>
+                  <th>Validés</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in stats_extincteurs %}
+                <tr>
+                  <td><span class="badge bg-secondary">{{ stat.zone }}</span></td>
+                  <td>{{ stat.total }}</td>
+                  <td>{{ stat.valides }}</td>
+                  <td>
+                    {% set pourcentage = stat.total > 0 ? (stat.valides / stat.total * 100)|round : 0 %}
+                    <span
+                      class="badge {{ pourcentage == 100 ? 'bg-success' : (pourcentage > 50 ? 'bg-warning' : 'bg-danger') }}">
+                      {{ pourcentage }}%
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted">Aucune donnée disponible</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques RIA -->
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow h-100">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0">
+            <i class="fas fa-tint"></i> RIA
+          </h6>
+        </div>
+        <div class="card-body">
+          {% if stats_ria is not empty %}
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Zone</th>
+                  <th>Total</th>
+                  <th>Validés</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in stats_ria %}
+                <tr>
+                  <td><span class="badge bg-secondary">{{ stat.zone }}</span></td>
+                  <td>{{ stat.total }}</td>
+                  <td>{{ stat.valides }}</td>
+                  <td>
+                    {% set pourcentage = stat.total > 0 ? (stat.valides / stat.total * 100)|round : 0 %}
+                    <span
+                      class="badge {{ pourcentage == 100 ? 'bg-success' : (pourcentage > 50 ? 'bg-warning' : 'bg-danger') }}">
+                      {{ pourcentage }}%
+                    </span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted">Aucune donnée disponible</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques Monte-charge -->
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow h-100">
+        <div class="card-header bg-success text-white">
+          <h6 class="mb-0">
+            <i class="fas fa-elevator"></i> Monte-charge
+          </h6>
+        </div>
+        <div class="card-body">
+          {% if stats_monte_charge is not empty %}
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Inspections</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for stat in stats_monte_charge %}
+                <tr>
+                  <td>{{ stat.type }}</td>
+                  <td><span class="badge bg-primary">{{ stat.nombreInspections }}</span></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted">Aucune donnée disponible</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .btn-lg.w-100.h-100 {
+    min-height: 180px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-lg.w-100.h-100:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .card {
+    border-radius: 15px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    border-bottom: none;
+  }
+</style>
+{% endblock %}

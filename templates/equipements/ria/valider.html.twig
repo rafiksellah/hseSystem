@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Valider RIA{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-check-circle text-success"></i> Validation RIA
+<small class="text-muted">{{ ria.numerotation }}</small>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-tint"></i> Validation du RIA {{ ria.numerotation }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Informations du RIA -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6>Informations techniques</h6>
+              <ul class="list-unstyled">
+                <li><strong>Numéro:</strong> {{ ria.numerotation }}</li>
+                <li><strong>Zone:</strong> <span class="badge bg-info">{{ ria.zone }}</span></li>
+                <li><strong>Agent extincteur:</strong> {{ ria.agentExtincteur ?? 'Non spécifié' }}</li>
+                <li><strong>Diamètre:</strong> {{ ria.dimatere ?? 'Non spécifié' }} mm</li>
+                <li><strong>Longueur:</strong> {{ ria.longueur ?? 'Non spécifiée' }} m</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>Informations de création</h6>
+              <ul class="list-unstyled">
+                <li><strong>Créé le:</strong> {{ ria.dateCreation|date('d/m/Y H:i') }}</li>
+                <li><strong>État actuel:</strong> <span class="badge bg-warning">Non validé</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Formulaire de validation -->
+          <form method="POST" class="border-top pt-4">
+            <div class="row">
+              <div class="col-12">
+                <h5 class="text-primary mb-3">
+                  <i class="fas fa-question-circle"></i> Validation de l'existence
+                </h5>
+                <div class="alert alert-info">
+                  <i class="fas fa-info-circle"></i>
+                  <strong>Question:</strong> Ce RIA existe-t-il physiquement et est-il en bon état ?
+                </div>
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="form-check form-check-inline me-4">
+                  <input class="form-check-input" type="radio" name="existe" id="existe_oui" value="oui" required>
+                  <label class="form-check-label fw-bold text-success" for="existe_oui">
+                    <i class="fas fa-check-circle"></i> Oui, le RIA existe et fonctionne
+                  </label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="existe" id="existe_non" value="non" required>
+                  <label class="form-check-label fw-bold text-danger" for="existe_non">
+                    <i class="fas fa-times-circle"></i> Non, le RIA n'existe pas ou est défaillant
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="{{ path('app_equipements_ria') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                  </a>
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check"></i> Valider la vérification
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{# templates/equipements/extinction_inspection_suppression.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Supprimer Inspection{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-exclamation-triangle text-danger"></i> Supprimer Inspection
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow border-danger">
+        <div class="card-header bg-danger text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-trash"></i> Supprimer l'inspection
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert alert-danger">
+            <h6><i class="fas fa-exclamation-triangle"></i> Attention !</h6>
+            <p class="mb-0">Cette action supprimera définitivement l'inspection. Cette action est
+              <strong>irréversible</strong>.
+            </p>
+          </div>
+
+          <!-- Détails de l'inspection -->
+          <div class="card mb-4">
+            <div class="card-header bg-light">
+              <h6 class="mb-0">Détails de l'inspection :</h6>
+            </div>
+            <div class="card-body">
+              <ul class="list-unstyled mb-0">
+                <li><strong>Extincteur :</strong> {{ inspection.extincteur.numerotation }}</li>
+                <li><strong>Zone :</strong> {{ inspection.extincteur.zone }}</li>
+                <li><strong>Date d'inspection :</strong> {{ inspection.dateInspection|date('d/m/Y H:i') }}</li>
+                <li><strong>Inspecteur :</strong> {{ inspection.inspectePar.nom }} {{ inspection.inspectePar.prenom }}
+                </li>
+                <li><strong>Résultat :</strong>
+                  {% if inspection.valide %}
+                  <span class="badge bg-success">Conforme</span>
+                  {% else %}
+                  <span class="badge bg-danger">Non conforme</span>
+                  {% endif %}
+                </li>
+                {% if inspection.observations %}
+                <li><strong>Observations :</strong> {{ inspection.observations }}</li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+
+          <!-- Confirmation -->
+          <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="confirmSuppress">
+            <label class="form-check-label fw-bold" for="confirmSuppress">
+              Je confirme vouloir supprimer cette inspection définitivement.
+            </label>
+          </div>
+
+          <!-- Boutons -->
+          <div class="d-flex justify-content-between">
+            <a href="{{ retour_url }}" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left"></i> Annuler
+            </a>
+            <form method="POST" style="display: inline;">
+              <button type="submit" id="confirmButton" class="btn btn-danger" disabled>
+                <i class="fas fa-trash"></i> Supprimer l'inspection
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const checkbox = document.getElementById('confirmSuppress');
+    const button = document.getElementById('confirmButton');
+
+    checkbox.addEventListener('change', function () {
+      button.disabled = !this.checked;
+      if (this.checked) {
+        button.classList.remove('btn-danger');
+        button.classList.add('btn-outline-danger');
+      } else {
+        button.classList.remove('btn-outline-danger');
+        button.classList.add('btn-danger');
+      }
+    });
+  });
+</script>
+{% endblock %}

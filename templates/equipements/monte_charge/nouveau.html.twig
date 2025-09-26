@@ -1,0 +1,69 @@
+{# templates/equipements/monte_charge/nouveau.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Monte-charge{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-plus-circle text-primary"></i> Ajouter un monte-charge
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-elevator"></i> Nouveau Monte-charge
+          </h5>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="row mb-3">
+              <div class="col-12">
+                <label for="type" class="form-label">Type *</label>
+                <select name="type" id="type" class="form-select" required>
+                  <option value="">Sélectionnez un type</option>
+                  {% for key, type_name in types_disponibles %}
+                  <option value="{{ key }}" {{ monte_charge.type==key ? 'selected' : '' }}>
+                    {{ type_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <label for="zone" class="form-label">Zone *</label>
+                <select name="zone" id="zone" class="form-select" required>
+                  <option value="">Sélectionnez une zone</option>
+                  {% for key, zone_name in zones_disponibles %}
+                  <option value="{{ key }}" {{ monte_charge.zone==key ? 'selected' : '' }}>
+                    {{ zone_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="{{ path('app_equipements_monte_charge') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                  </a>
+                  <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Enregistrer le monte-charge
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

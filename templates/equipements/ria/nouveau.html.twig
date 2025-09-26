@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau RIA{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-plus-circle text-primary"></i> Ajouter un RIA
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-tint"></i> Nouveau RIA
+          </h5>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <!-- Informations de base -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-primary border-bottom pb-2">
+                  <i class="fas fa-info-circle"></i> Informations de base
+                </h6>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="numerotation" class="form-label">Numérotation *</label>
+                <input type="text" name="numerotation" id="numerotation" class="form-control"
+                  value="{{ ria.numerotation }}" required placeholder="Ex: ST.PF 01, EMB 01...">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="zone" class="form-label">Zone *</label>
+                <select name="zone" id="zone" class="form-select" required>
+                  <option value="">Sélectionnez une zone</option>
+                  {% for key, zone_name in zones_disponibles %}
+                  <option value="{{ key }}" {{ ria.zone==key ? 'selected' : '' }}>
+                    {{ zone_name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- Caractéristiques techniques -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-primary border-bottom pb-2">
+                  <i class="fas fa-cog"></i> Caractéristiques techniques
+                </h6>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="agent_extincteur" class="form-label">Agent extincteur</label>
+                <input type="text" name="agent_extincteur" id="agent_extincteur" class="form-control"
+                  value="{{ ria.agentExtincteur }}" placeholder="Ex: Eau">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="dimatere" class="form-label">Diamètre (mm)</label>
+                <input type="number" name="dimatere" id="dimatere" class="form-control" value="{{ ria.dimatere }}"
+                  placeholder="Ex: 33">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="longueur" class="form-label">Longueur (m)</label>
+                <input type="number" name="longueur" id="longueur" class="form-control" value="{{ ria.longueur }}"
+                  placeholder="Ex: 30">
+              </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="{{ path('app_equipements_ria') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                  </a>
+                  <button type="submit" class="btn btn-info btn-lg">
+                    <i class="fas fa-save"></i> Enregistrer le RIA
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
