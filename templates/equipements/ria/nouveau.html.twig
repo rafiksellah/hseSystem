@@ -27,8 +27,14 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label for="numerotation" class="form-label">Numérotation *</label>
-                <input type="text" name="numerotation" id="numerotation" class="form-control"
-                  value="{{ ria.numerotation }}" required placeholder="Ex: ST.PF 01, EMB 01...">
+                <select name="numerotation" id="numerotation" class="form-select" required>
+                  <option value="">Sélectionnez une numérotation</option>
+                  {% for key, numero in numerotations_disponibles %}
+                  <option value="{{ key }}" {{ ria.numerotation==key ? 'selected' : '' }}>
+                    {{ numero }}
+                  </option>
+                  {% endfor %}
+                </select>
               </div>
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone *</label>
@@ -52,18 +58,37 @@
               </div>
               <div class="col-md-4 mb-3">
                 <label for="agent_extincteur" class="form-label">Agent extincteur</label>
-                <input type="text" name="agent_extincteur" id="agent_extincteur" class="form-control"
-                  value="{{ ria.agentExtincteur }}" placeholder="Ex: Eau">
+                <select name="agent_extincteur" id="agent_extincteur" class="form-select">
+                  <option value="">Sélectionnez un agent</option>
+                  {% for key, agent in agents_disponibles %}
+                  <option value="{{ key }}" {{ ria.agentExtincteur==key ? 'selected' : '' }}>
+                    {{ agent }}
+                  </option>
+                  {% endfor %}
+                </select>
               </div>
+              <!-- Diamètre -->
               <div class="col-md-4 mb-3">
                 <label for="dimatere" class="form-label">Diamètre (mm)</label>
-                <input type="number" name="dimatere" id="dimatere" class="form-control" value="{{ ria.dimatere }}"
-                  placeholder="Ex: 33">
+                <select name="dimatere" id="dimatere" class="form-select">
+                  <option value="">Sélectionnez un diamètre</option>
+                  {% for key, diam in diametres_disponibles %}
+                  <option value="{{ diam }}" {{ ria.dimatere==diam ? 'selected' : '' }}>
+                    {{ diam }}mm
+                  </option>
+                  {% endfor %}
+                </select>
               </div>
               <div class="col-md-4 mb-3">
                 <label for="longueur" class="form-label">Longueur (m)</label>
-                <input type="number" name="longueur" id="longueur" class="form-control" value="{{ ria.longueur }}"
-                  placeholder="Ex: 30">
+                <select name="longueur" id="longueur" class="form-select">
+                  <option value="">Sélectionnez une longueur</option>
+                  {% for key, long in longueurs_disponibles %}
+                  <option value="{{ long }}" {{ ria.longueur==long ? 'selected' : '' }}>
+                    {{ long }}m
+                  </option>
+                  {% endfor %}
+                </select>
               </div>
             </div>
 

@@ -12,6 +12,56 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ExtincteurRepository::class)]
 class Extincteur
 {
+    public const NUMEROTATIONS_DISPONIBLES = [
+        '4' => '4',
+        '5' => '5',
+        '7' => '7',
+        '8' => '8',
+        '9' => '9',
+        '3' => '3',
+        '1' => '1',
+        '2' => '2',
+        '6' => '6',
+        '133' => '133',
+        '143' => '143',
+        '144' => '144',
+        '58C' => '58C',
+        '132' => '132',
+        '114C' => '114C',
+        '97B' => '97B',
+        '114B' => '114B',
+    ];
+
+    public const EMPLACEMENTS_DISPONIBLES = [
+        'ACCUEIL' => 'ACCUEIL',
+        'BUREAUX RH' => 'BUREAUX RH',
+        'ENTREE ADMINISTRATION' => 'ENTREE ADMINISTRATION',
+        'POSTE HSE' => 'POSTE HSE',
+        'ENTREE ADMINISTRATION (usine)' => 'ENTREE ADMINISTRATION (usine)',
+        'CAFETERIE' => 'CAFETERIE',
+        'CANTINE BRODERIE' => 'CANTINE BRODERIE',
+    ];
+
+    public const AGENTS_EXTINCTEUR = [
+        'CO2' => 'CO2',
+        'Poudre ABC' => 'Poudre ABC',
+        'EAU PULVIRISEE AVEC ADDITIF' => 'EAU PULVIRISEE AVEC ADDITIF',
+    ];
+
+    public const TYPES_DISPONIBLES = [
+        'Portatif P. permanente' => 'Portatif P. permanente',
+        'Portatif auxiliaire' => 'Portatif auxiliaire',
+    ];
+
+    public const CAPACITES_DISPONIBLES = [
+        '2KG' => '2KG',
+        '5KG' => '5KG',
+        '9 kg' => '9 kg',
+        '6L' => '6L',
+        '9L' => '9L',
+    ];
+
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -69,7 +119,14 @@ class Extincteur
         $this->inspections = new ArrayCollection();
         $this->dateCreation = new \DateTime();
     }
+    public static function getZonesForUser(User $user): array
+    {
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            return array_merge(RapportHSE::ZONES_SIMTIS, RapportHSE::ZONES_SIMTIS_TISSAGE);
+        }
 
+        return RapportHSE::getZonesForUserZone($user->getZone());
+    }
     public function getId(): ?int
     {
         return $this->id;

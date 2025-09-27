@@ -11,6 +11,43 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'ria')]
 class RIA
 {
+    public const NUMEROTATIONS_DISPONIBLES = [
+        'ST.PF 01' => 'ST.PF 01',
+        'ST.PF 02' => 'ST.PF 02',
+        'ST.PF 03' => 'ST.PF 03',
+        'EMB 01' => 'EMB 01',
+        'EMB 02' => 'EMB 02',
+        'EMB 03' => 'EMB 03',
+        'EMB 04' => 'EMB 04',
+        'CF 01' => 'CF 01',
+        'CF 02' => 'CF 02',
+        'CF 03' => 'CF 03',
+        'BR 01' => 'BR 01',
+        'BR 02' => 'BR 02',
+        'BR 03' => 'BR 03',
+        'BE 01' => 'BE 01',
+    ];
+
+    public const ZONES_RIA = [
+        '1ER ETAGE STARSS' => '1ER ETAGE STARSS',
+        '2EME ETAGE EMBALLAGE' => '2EME ETAGE EMBALLAGE',
+        '3EME ETAGE CHALES ET FOULARDS' => '3EME ETAGE CHALES ET FOULARDS',
+        'BRODERIE' => 'BRODERIE',
+        'BUREAUX D\'ETUDES' => 'BUREAUX D\'ETUDES',
+    ];
+
+    public const AGENTS_DISPONIBLES = [
+        'Eau' => 'Eau',
+    ];
+
+    public const DIAMETRES = [
+        '33' => 33,
+    ];
+
+    public const LONGUEURS = [
+        '30' => 30,
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

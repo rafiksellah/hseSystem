@@ -27,9 +27,16 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label for="numerotation" class="form-label">Numérotation *</label>
-                <input type="text" name="numerotation" id="numerotation" class="form-control"
-                  value="{{ extincteur.numerotation }}" required placeholder="Ex: 4, 5, 7...">
+                <select name="numerotation" id="numerotation" class="form-select" required>
+                  <option value="">Sélectionnez une numérotation</option>
+                  {% for key, numero in numerotations_disponibles %}
+                  <option value="{{ key }}" {{ extincteur.numerotation==key ? 'selected' : '' }}>
+                    {{ numero }}
+                  </option>
+                  {% endfor %}
+                </select>
               </div>
+
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone *</label>
                 <select name="zone" id="zone" class="form-select" required>
@@ -41,83 +48,106 @@
                   {% endfor %}
                 </select>
               </div>
-            </div>
 
-            <!-- Détails techniques -->
-            <div class="row mb-4">
-              <div class="col-12">
-                <h6 class="text-primary border-bottom pb-2">
-                  <i class="fas fa-cog"></i> Détails techniques
-                </h6>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="emplacement" class="form-label">Emplacement</label>
-                <input type="text" name="emplacement" id="emplacement" class="form-control"
-                  value="{{ extincteur.emplacement }}" placeholder="Localisation précise">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="agent_extincteur" class="form-label">Agent extincteur</label>
-                <input type="text" name="agent_extincteur" id="agent_extincteur" class="form-control"
-                  value="{{ extincteur.agentExtincteur }}" placeholder="Ex: CO2, Poudre ABC...">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="type" class="form-label">Type</label>
-                <input type="text" name="type" id="type" class="form-control" value="{{ extincteur.type }}"
-                  placeholder="Ex: Portatif P. permanente">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="capacite" class="form-label">Capacité</label>
-                <input type="text" name="capacite" id="capacite" class="form-control" value="{{ extincteur.capacite }}"
-                  placeholder="Ex: 2KG, 5KG...">
-              </div>
-            </div>
-
-            <!-- Dates importantes -->
-            <div class="row mb-4">
-              <div class="col-12">
-                <h6 class="text-primary border-bottom pb-2">
-                  <i class="fas fa-calendar"></i> Dates importantes
-                </h6>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="date_fabrication" class="form-label">Date de fabrication</label>
-                <input type="date" name="date_fabrication" id="date_fabrication" class="form-control"
-                  value="{{ extincteur.dateFabrication ? extincteur.dateFabrication|date('Y-m-d') : '' }}">
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="date_epreuve" class="form-label">Date d'épreuve</label>
-                <input type="date" name="date_epreuve" id="date_epreuve" class="form-control"
-                  value="{{ extincteur.dateEpreuve ? extincteur.dateEpreuve|date('Y-m-d') : '' }}">
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="date_fin_vie" class="form-label">Date de fin de vie</label>
-                <input type="date" name="date_fin_vie" id="date_fin_vie" class="form-control"
-                  value="{{ extincteur.dateFinDeVie ? extincteur.dateFinDeVie|date('Y-m-d') : '' }}">
-              </div>
-            </div>
-
-            <!-- Numéro de série -->
-            <div class="row mb-4">
-              <div class="col-md-6">
-                <label for="numero_serie" class="form-label">Numéro de série</label>
-                <input type="text" name="numero_serie" id="numero_serie" class="form-control"
-                  value="{{ extincteur.numeroSerie }}" placeholder="Numéro de série">
-              </div>
-            </div>
-
-            <!-- Boutons -->
-            <div class="row">
-              <div class="col-12">
-                <div class="d-flex justify-content-between">
-                  <a href="{{ path('app_equipements_extincteurs') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Annuler
-                  </a>
-                  <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="fas fa-save"></i> Enregistrer l'extincteur
-                  </button>
+              <!-- Détails techniques -->
+              <div class="row mb-4">
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2">
+                    <i class="fas fa-cog"></i> Détails techniques
+                  </h6>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="emplacement" class="form-label">Emplacement</label>
+                  <select name="emplacement" id="emplacement" class="form-select">
+                    <option value="">Sélectionnez un emplacement</option>
+                    {% for key, empl in emplacements_disponibles %}
+                    <option value="{{ key }}" {{ extincteur.emplacement==key ? 'selected' : '' }}>
+                      {{ empl }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="agent_extincteur" class="form-label">Agent extincteur</label>
+                  <select name="agent_extincteur" id="agent_extincteur" class="form-select">
+                    <option value="">Sélectionnez un agent</option>
+                    {% for key, agent in agents_disponibles %}
+                    <option value="{{ key }}" {{ extincteur.agentExtincteur==key ? 'selected' : '' }}>
+                      {{ agent }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="type" class="form-label">Type</label>
+                  <select name="type" id="type" class="form-select">
+                    <option value="">Sélectionnez un type</option>
+                    {% for key, type_name in types_disponibles %}
+                    <option value="{{ key }}" {{ extincteur.type==key ? 'selected' : '' }}>
+                      {{ type_name }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="capacite" class="form-label">Capacité</label>
+                  <select name="capacite" id="capacite" class="form-select">
+                    <option value="">Sélectionnez une capacité</option>
+                    {% for key, cap in capacites_disponibles %}
+                    <option value="{{ key }}" {{ extincteur.capacite==key ? 'selected' : '' }}>
+                      {{ cap }}
+                    </option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
-            </div>
+
+              <!-- Dates importantes -->
+              <div class="row mb-4">
+                <div class="col-12">
+                  <h6 class="text-primary border-bottom pb-2">
+                    <i class="fas fa-calendar"></i> Dates importantes
+                  </h6>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="date_fabrication" class="form-label">Date de fabrication</label>
+                  <input type="date" name="date_fabrication" id="date_fabrication" class="form-control"
+                    value="{{ extincteur.dateFabrication ? extincteur.dateFabrication|date('Y-m-d') : '' }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="date_epreuve" class="form-label">Date d'épreuve</label>
+                  <input type="date" name="date_epreuve" id="date_epreuve" class="form-control"
+                    value="{{ extincteur.dateEpreuve ? extincteur.dateEpreuve|date('Y-m-d') : '' }}">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="date_fin_vie" class="form-label">Date de fin de vie</label>
+                  <input type="date" name="date_fin_vie" id="date_fin_vie" class="form-control"
+                    value="{{ extincteur.dateFinDeVie ? extincteur.dateFinDeVie|date('Y-m-d') : '' }}">
+                </div>
+              </div>
+
+              <!-- Numéro de série -->
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <label for="numero_serie" class="form-label">Numéro de série</label>
+                  <input type="text" name="numero_serie" id="numero_serie" class="form-control"
+                    value="{{ extincteur.numeroSerie }}" placeholder="Numéro de série">
+                </div>
+              </div>
+
+              <!-- Boutons -->
+              <div class="row">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between">
+                    <a href="{{ path('app_equipements_extincteurs') }}" class="btn btn-outline-secondary">
+                      <i class="fas fa-arrow-left"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                      <i class="fas fa-save"></i> Enregistrer l'extincteur
+                    </button>
+                  </div>
+                </div>
+              </div>
           </form>
         </div>
       </div>

@@ -156,10 +156,14 @@ class EquipementsController extends AbstractController
         } else {
             $zonesDisponibles = [$user->getZone() => $user->getZone()];
         }
-
         return $this->render('equipements/extincteurs/nouveau.html.twig', [
             'extincteur' => $extincteur,
-            'zones_disponibles' => $zonesDisponibles,
+            'zones_disponibles' => Extincteur::getZonesForUser($user),
+            'numerotations_disponibles' => Extincteur::NUMEROTATIONS_DISPONIBLES,
+            'emplacements_disponibles' => Extincteur::EMPLACEMENTS_DISPONIBLES,
+            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR,
+            'types_disponibles' => Extincteur::TYPES_DISPONIBLES,
+            'capacites_disponibles' => Extincteur::CAPACITES_DISPONIBLES,
         ]);
     }
 
@@ -374,7 +378,11 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/ria/nouveau.html.twig', [
             'ria' => $ria,
-            'zones_disponibles' => $zonesDisponibles,
+            'zones_disponibles' => RIA::ZONES_RIA,
+            'numerotations_disponibles' => RIA::NUMEROTATIONS_DISPONIBLES,
+            'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
+            'diametres_disponibles' => RIA::DIAMETRES,
+            'longueurs_disponibles' => RIA::LONGUEURS,
         ]);
     }
 
