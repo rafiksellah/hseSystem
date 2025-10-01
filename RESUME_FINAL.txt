@@ -1,0 +1,67 @@
+═══════════════════════════════════════════════════════════════
+           MODIFICATIONS MODULE ÉQUIPEMENTS - TERMINÉ
+═══════════════════════════════════════════════════════════════
+
+✅ 1. FILTRES (zone + numérotation)
+   - templates/equipements/extincteurs/liste.html.twig
+   - templates/equipements/ria/liste.html.twig
+   - Boutons "Filtrer" et "Reset"
+
+✅ 2. ÉTATS POUR CONSULTATIONS (type Excel)
+   - Route: /equipements/extincteurs/etat
+   - Template: etat.html.twig
+   - Tableau 14 colonnes avec statut conformité
+
+✅ 3. EXPORTS PDF FORMAT A4
+   - Route: /extincteurs/export-pdf
+   - Route: /ria/export-pdf
+   - Format: A4 PAYSAGE
+   - Boutons dans les templates liste
+
+✅ 4. EXPORT EXCEL
+   - Route: /extincteurs/export-excel
+   - Format: XLSX avec coloration
+   - Bouton dans template liste
+
+✅ 5. PAGES DÉTAILS AVEC PHOTOS
+   - Route: /inspection/{id}/details
+   - Route: /monte-charge-inspection/{id}/details
+   - Templates créés avec affichage photos
+   - Liens "Voir" ajoutés dans les listes
+
+✅ 6. PERMISSIONS INSPECTION
+   - USER: Ne peut pas modifier
+   - ADMIN: Peut modifier
+   - Route: /inspection/{id}/modifier
+
+═══════════════════════════════════════════════════════════════
+
+FICHIERS MODIFIÉS:
+- src/Entity/Extincteur.php (+6 méthodes)
+- src/Entity/RIA.php (agent Mousse)
+- src/Entity/InspectionExtincteur.php (+photoObservation)
+- src/Entity/MonteCharge.php (+2 méthodes)
+- src/Controller/EquipementsController.php (+5 routes)
+- templates/equipements/extincteurs/liste.html.twig (boutons export)
+- templates/equipements/extincteurs/inspections.html.twig (liens détails)
+- templates/equipements/ria/liste.html.twig (bouton export)
+- templates/equipements/monte_charge/liste.html.twig (liens détails)
+
+FICHIERS CRÉÉS:
+- templates/equipements/extincteurs/pdf_etat.html.twig
+- templates/equipements/ria/pdf_etat.html.twig
+- templates/equipements/extincteurs/inspection_details.html.twig
+- templates/equipements/monte_charge/inspection_details.html.twig
+- templates/equipements/extincteurs/modifier_inspection.html.twig
+- templates/equipements/extincteurs/etat.html.twig
+
+═══════════════════════════════════════════════════════════════
+
+COMMANDE À EXÉCUTER:
+
+php bin/console cache:clear
+
+═══════════════════════════════════════════════════════════════
+
+TOUT EST PRÊT !
+

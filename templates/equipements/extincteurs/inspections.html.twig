@@ -96,6 +96,7 @@
                   <th>Date</th>
                   <th>Inspecteur</th>
                   <th>Résultat</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -113,6 +114,18 @@
                     <span class="badge bg-danger">
                       <i class="fas fa-times"></i> Non conforme
                     </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{{ path('app_equipements_inspection_details', {id: inspection.id}) }}" 
+                       class="btn btn-sm btn-info">
+                      <i class="fas fa-eye"></i> Voir
+                    </a>
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_equipements_inspection_modifier', {id: inspection.id}) }}" 
+                       class="btn btn-sm btn-warning">
+                      <i class="fas fa-edit"></i>
+                    </a>
                     {% endif %}
                   </td>
                 </tr>

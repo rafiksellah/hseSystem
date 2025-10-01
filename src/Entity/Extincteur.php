@@ -12,36 +12,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ExtincteurRepository::class)]
 class Extincteur
 {
-    public const NUMEROTATIONS_DISPONIBLES = [
-        '4' => '4',
-        '5' => '5',
-        '7' => '7',
-        '8' => '8',
-        '9' => '9',
-        '3' => '3',
-        '1' => '1',
-        '2' => '2',
-        '6' => '6',
-        '133' => '133',
-        '143' => '143',
-        '144' => '144',
-        '58C' => '58C',
-        '132' => '132',
-        '114C' => '114C',
-        '97B' => '97B',
-        '114B' => '114B',
-    ];
-
-    public const EMPLACEMENTS_DISPONIBLES = [
-        'ACCUEIL' => 'ACCUEIL',
-        'BUREAUX RH' => 'BUREAUX RH',
-        'ENTREE ADMINISTRATION' => 'ENTREE ADMINISTRATION',
-        'POSTE HSE' => 'POSTE HSE',
-        'ENTREE ADMINISTRATION (usine)' => 'ENTREE ADMINISTRATION (usine)',
-        'CAFETERIE' => 'CAFETERIE',
-        'CANTINE BRODERIE' => 'CANTINE BRODERIE',
-    ];
-
     public const AGENTS_EXTINCTEUR = [
         'CO2' => 'CO2',
         'Poudre ABC' => 'Poudre ABC',
@@ -119,13 +89,32 @@ class Extincteur
         $this->inspections = new ArrayCollection();
         $this->dateCreation = new \DateTime();
     }
+    /**
+     * Obtient les zones disponibles pour un utilisateur
+     */
     public static function getZonesForUser(User $user): array
     {
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            return array_merge(RapportHSE::ZONES_SIMTIS, RapportHSE::ZONES_SIMTIS_TISSAGE);
+            return [
+                'SIMTIS' => 'SIMTIS',
+                'SIMTIS TISSAGE' => 'SIMTIS TISSAGE'
+            ];
         }
 
-        return RapportHSE::getZonesForUserZone($user->getZone());
+        // Pour admin normal, retourner sa zone
+        return [$user->getZone() => $user->getZone()];
+    }
+
+    /**
+     * Obtient les emplacements disponibles selon la zone
+     */
+    public static function getEmplacementsByZone(string $zone): array
+    {
+        return match ($zone) {
+            'SIMTIS' => RapportHSE::ZONES_SIMTIS,
+            'SIMTIS TISSAGE' => RapportHSE::ZONES_SIMTIS_TISSAGE,
+            default => []
+        };
     }
     public function getId(): ?int
     {
@@ -311,5 +300,51 @@ class Extincteur
             }
         }
         return $this;
+    }
+
+    /**
+     * Retourne la dernière inspection
+     */
+    public function getDerniereInspection(): ?InspectionExtincteur
+    {
+        $inspections = $this->inspections->toArray();
+        usort($inspections, fn($a, $b) => $b->getDateInspection() <=> $a->getDateInspection());
+        return $inspections[0] ?? null;
+    }
+
+    /**
+     * Retourne le statut de conformité basé sur la dernière inspection
+     */
+    public function getStatutConformite(): string
+    {
+        $derniereInspection = $this->getDerniereInspection();
+        
+        if (!$derniereInspection) {
+            return 'Non inspecté';
+        }
+        
+        return $derniereInspection->isValide() ? 'Conforme' : 'Non conforme';
+    }
+
+    /**
+     * Vérifie si l'extincteur est conforme selon la dernière inspection
+     */
+    public function isConforme(): ?bool
+    {
+        $derniereInspection = $this->getDerniereInspection();
+        
+        if (!$derniereInspection) {
+            return null; // Pas encore inspecté
+        }
+        
+        return $derniereInspection->isValide();
+    }
+
+    /**
+     * Retourne le nombre total d'inspections
+     */
+    public function getNombreInspections(): int
+    {
+        return $this->inspections->count();
     }
 }

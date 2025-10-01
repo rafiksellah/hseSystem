@@ -206,9 +206,7 @@
                                     <th>Inspecteur</th>
                                     <th>Résultat</th>
                                     <th>Observations</th>
-                                    {% if is_granted('ROLE_SUPER_ADMIN') %}
-                                    <th width="100">Actions</th>
-                                    {% endif %}
+                                    <th width="150">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -240,16 +238,20 @@
                                         <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
-                                    {% if is_granted('ROLE_SUPER_ADMIN') %}
                                     <td>
+                                        <a href="{{ path('app_equipements_monte_charge_inspection_details', {id: inspection.id}) }}" 
+                                           class="btn btn-sm btn-info me-1">
+                                          <i class="fas fa-eye"></i> Voir
+                                        </a>
+                                        {% if is_granted('ROLE_SUPER_ADMIN') %}
                                         <a href="{{ path('app_equipements_monte_charge_inspection_supprimer', {'id': inspection.id}) }}"
                                             class="btn btn-outline-danger btn-sm"
-                                            data-confirm="Êtes-vous sûr de vouloir supprimer cette inspection ?"
+                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?')"
                                             title="Supprimer l'inspection">
                                             <i class="fas fa-trash"></i>
                                         </a>
+                                        {% endif %}
                                     </td>
-                                    {% endif %}
                                 </tr>
                                 {% endfor %}
                             </tbody>

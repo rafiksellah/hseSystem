@@ -51,6 +51,9 @@ class InspectionExtincteur
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $observations = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $photoObservation = null;
+
     public function __construct()
     {
         $this->dateInspection = new \DateTime();
@@ -125,6 +128,17 @@ class InspectionExtincteur
     public function setObservations(?string $observations): static
     {
         $this->observations = $observations;
+        return $this;
+    }
+
+    public function getPhotoObservation(): ?string
+    {
+        return $this->photoObservation;
+    }
+
+    public function setPhotoObservation(?string $photoObservation): static
+    {
+        $this->photoObservation = $photoObservation;
         return $this;
     }
 }

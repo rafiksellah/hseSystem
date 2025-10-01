@@ -14,14 +14,46 @@ use Symfony\Component\Validator\Constraints as Assert;
 class MonteCharge
 {
     public const TYPES = [
-        'Monte charge 01' => 'Monte charge 01',
-        'Monte charge 02' => 'Monte charge 02'
+        'CHARGE01' => 'CHARGE01',
+        'CHARGE02' => 'CHARGE02'
     ];
 
     public const ZONES = [
         'RDC TISSAGE-RENTRAGE-OURDISSOIR' => 'RDC TISSAGE-RENTRAGE-OURDISSOIR',
         'RDC TISSAGE-MEZZANINE-PRATO' => 'RDC TISSAGE-MEZZANINE-PRATO'
     ];
+
+    /**
+     * Retourne les portes disponibles pour un monte-charge donné
+     */
+    public static function getPortesForType(string $type): array
+    {
+        return match ($type) {
+            'CHARGE01' => [
+                'PORTE 1' => 'PORTE 1',
+                'PORTE 2' => 'PORTE 2',
+                'PORTE 3' => 'PORTE 3',
+            ],
+            'CHARGE02' => [
+                'PORTE 4' => 'PORTE 4',
+                'PORTE 5' => 'PORTE 5',
+                'PORTE 6' => 'PORTE 6',
+            ],
+            default => []
+        };
+    }
+
+    /**
+     * Retourne la zone pour un type de monte-charge
+     */
+    public static function getZoneForType(string $type): string
+    {
+        return match ($type) {
+            'CHARGE01' => 'RDC TISSAGE-RENTRAGE-OURDISSOIR',
+            'CHARGE02' => 'RDC TISSAGE-MEZZANINE-PRATO',
+            default => ''
+        };
+    }
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

@@ -27,14 +27,10 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label for="numerotation" class="form-label">Numérotation *</label>
-                <select name="numerotation" id="numerotation" class="form-select" required>
-                  <option value="">Sélectionnez une numérotation</option>
-                  {% for key, numero in numerotations_disponibles %}
-                  <option value="{{ key }}" {{ ria.numerotation==key ? 'selected' : '' }}>
-                    {{ numero }}
-                  </option>
-                  {% endfor %}
-                </select>
+                <input type="text" name="numerotation" id="numerotation" class="form-control" 
+                       value="{{ ria.numerotation }}" 
+                       placeholder="Ex: ST.PF 01, RIA-001" required>
+                <small class="text-muted">Numéro unique pour identifier le RIA</small>
               </div>
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone *</label>
@@ -70,25 +66,17 @@
               <!-- Diamètre -->
               <div class="col-md-4 mb-3">
                 <label for="dimatere" class="form-label">Diamètre (mm)</label>
-                <select name="dimatere" id="dimatere" class="form-select">
-                  <option value="">Sélectionnez un diamètre</option>
-                  {% for key, diam in diametres_disponibles %}
-                  <option value="{{ diam }}" {{ ria.dimatere==diam ? 'selected' : '' }}>
-                    {{ diam }}mm
-                  </option>
-                  {% endfor %}
-                </select>
+                <input type="number" name="dimatere" id="dimatere" class="form-control" 
+                       value="{{ ria.dimatere }}" 
+                       placeholder="Ex: 33" min="1" max="200">
+                <small class="text-muted">En millimètres</small>
               </div>
               <div class="col-md-4 mb-3">
                 <label for="longueur" class="form-label">Longueur (m)</label>
-                <select name="longueur" id="longueur" class="form-select">
-                  <option value="">Sélectionnez une longueur</option>
-                  {% for key, long in longueurs_disponibles %}
-                  <option value="{{ long }}" {{ ria.longueur==long ? 'selected' : '' }}>
-                    {{ long }}m
-                  </option>
-                  {% endfor %}
-                </select>
+                <input type="number" name="longueur" id="longueur" class="form-control" 
+                       value="{{ ria.longueur }}" 
+                       placeholder="Ex: 30" min="1" max="100">
+                <small class="text-muted">En mètres</small>
               </div>
             </div>
 

@@ -47,7 +47,7 @@
 						</div>
 
 						<!-- Formulaire d'inspection -->
-						<form method="POST">
+						<form method="POST" enctype="multipart/form-data">
 							<h5 class="text-primary mb-3">
 								<i class="fas fa-clipboard-list"></i>
 								Critères de conformité
@@ -83,12 +83,30 @@
 							<!-- Observations -->
 							<div class="row mt-4">
 								<div class="col-12">
-									<div class="form-group">
+									<div class="form-group mb-3">
 										<label for="observations" class="form-label">
 											<i class="fas fa-comment"></i>
 											Observations (optionnel)
 										</label>
 										<textarea name="observations" id="observations" class="form-control" rows="4" placeholder="Commentaires additionnels sur l'inspection..."></textarea>
+									</div>
+								</div>
+							</div>
+
+							<!-- Photo d'observation -->
+							<div class="row">
+								<div class="col-12">
+									<div class="form-group">
+										<label for="photo_observation" class="form-label">
+											<i class="fas fa-camera"></i>
+											Photo d'observation (optionnel)
+										</label>
+										<input type="file" name="photo_observation" id="photo_observation" 
+										       class="form-control" accept="image/*">
+										<small class="text-muted">
+											<i class="fas fa-info-circle"></i>
+											Format accepté : JPG, PNG, GIF (max 5MB)
+										</small>
 									</div>
 								</div>
 							</div>

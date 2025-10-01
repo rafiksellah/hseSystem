@@ -1,0 +1,62 @@
+MODIFICATIONS MODULE ÉQUIPEMENTS - RÉSUMÉ
+
+═══════════════════════════════════════════════════════════════
+
+1. FILTRES (extincteurs/liste.html.twig + ria/liste.html.twig)
+   ✅ Filtre par zone
+   ✅ Filtre par numérotation
+   ✅ Filtre par statut validation
+
+2. EXPORTS PDF FORMAT A4
+   ✅ templates/equipements/extincteurs/pdf_etat.html.twig (créé)
+   ✅ templates/equipements/ria/pdf_etat.html.twig (créé)
+   ✅ Route: /extincteurs/export-pdf
+   ✅ Route: /ria/export-pdf
+   ✅ Boutons dans liste.html.twig
+   ✅ Format: A4 PAYSAGE
+
+3. EXPORT EXCEL
+   ✅ Route: /extincteurs/export-excel
+   ✅ Bouton dans liste.html.twig
+
+4. PERMISSIONS INSPECTION
+   ✅ USER: Ne peut pas modifier
+   ✅ ADMIN: Peut modifier (route créée)
+   ✅ Route: /inspection/{id}/modifier
+
+5. STATUT CONFORMITÉ
+   ✅ Méthodes dans Extincteur.php:
+      - getStatutConformite()
+      - isConforme()
+      - getDerniereInspection()
+      - getNombreInspections()
+
+═══════════════════════════════════════════════════════════════
+
+COMMANDE POUR TESTER:
+
+php bin/console cache:clear
+
+6. PAGES DE DÉTAILS AVEC PHOTOS
+   ✅ templates/equipements/extincteurs/inspection_details.html.twig
+   ✅ templates/equipements/monte_charge/inspection_details.html.twig
+   ✅ Route: /inspection/{id}/details (Extincteurs)
+   ✅ Route: /monte-charge-inspection/{id}/details
+   ✅ Affichage photo si existe
+   ✅ Liens "Voir" dans les listes
+
+═══════════════════════════════════════════════════════════════
+
+COMMANDE POUR APPLIQUER:
+
+php bin/console cache:clear
+
+URLS À TESTER:
+
+/equipements/extincteurs                    → Liste + filtres + boutons export
+/equipements/ria                            → Liste + filtres + bouton export PDF
+/equipements/extincteurs/inspections        → Inspections avec liens "Voir"
+/equipements/monte-charge                   → Monte-charge avec liens "Voir"
+/equipements/inspection/{id}/details        → Page détails avec photo
+/equipements/monte-charge-inspection/{id}/details → Page détails avec photo
+

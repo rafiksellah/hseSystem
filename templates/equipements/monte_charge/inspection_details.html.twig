@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails Inspection Monte-Charge{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-clipboard-check text-primary"></i> Détails Inspection Monte-Charge
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Informations Monte-Charge -->
+      <div class="card mb-3">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">{{ inspection.monteCharge.type }} - {{ inspection.numeroPorte }}</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>Type:</strong> {{ inspection.monteCharge.type }}</p>
+              <p><strong>Zone:</strong> {{ inspection.monteCharge.zone }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Porte inspectée:</strong> <span class="badge bg-warning">{{ inspection.numeroPorte }}</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Détails Inspection -->
+      <div class="card mb-3">
+        <div class="card-header {{ inspection.valide ? 'bg-success' : 'bg-danger' }} text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-{{ inspection.valide ? 'check-circle' : 'times-circle' }}"></i>
+            Inspection {{ inspection.valide ? 'CONFORME' : 'NON CONFORME' }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Date inspection:</strong> {{ inspection.dateInspection|date('d/m/Y à H:i') }}</p>
+          <p><strong>Inspecté par:</strong> {{ inspection.inspectePar.fullName }} ({{ inspection.inspectePar.codeAgent }})</p>
+          
+          <h6 class="mt-4 mb-3">Questions vérifiées:</h6>
+          <div class="row">
+            {% for key, question in questions %}
+            <div class="col-md-12 mb-2">
+              <div class="d-flex align-items-start">
+                {% if inspection.reponses[key] is defined and inspection.reponses[key] %}
+                  <i class="fas fa-check-circle text-success me-2 mt-1"></i>
+                  <span>{{ question }}</span>
+                {% else %}
+                  <i class="fas fa-times-circle text-danger me-2 mt-1"></i>
+                  <span><strong>{{ question }}</strong></span>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+
+          {% if inspection.observations %}
+          <h6 class="mt-4 mb-3">Observations:</h6>
+          <div class="alert alert-secondary">
+            {{ inspection.observations|nl2br }}
+          </div>
+          {% endif %}
+
+          {% if inspection.photoObservation %}
+          <h6 class="mt-4 mb-3">Photo d'observation:</h6>
+          <div class="text-center">
+            <img src="{{ asset('uploads/photos/' ~ inspection.photoObservation) }}" 
+                 alt="Photo observation" 
+                 class="img-fluid img-thumbnail" 
+                 style="max-width: 600px;">
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex justify-content-between">
+        <a href="{{ path('app_equipements_monte_charge') }}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+        <div>
+          {% if is_granted('ROLE_SUPER_ADMIN') %}
+          <a href="{{ path('app_equipements_monte_charge_inspection_supprimer', {id: inspection.id}) }}" 
+             class="btn btn-danger"
+             onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?')">
+            <i class="fas fa-trash"></i> Supprimer
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

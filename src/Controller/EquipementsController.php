@@ -8,6 +8,7 @@ use App\Entity\RIA;
 use App\Entity\MonteCharge;
 use App\Entity\InspectionMonteCharge;
 use App\Entity\User;
+use App\Entity\RapportHSE;
 use App\Repository\ExtincteurRepository;
 use App\Repository\RIARepository;
 use App\Repository\MonteChargeRepository;
@@ -58,6 +59,55 @@ class EquipementsController extends AbstractController
     }
 
     // =============== EXTINCTEURS - ÉTAT ===============
+
+    #[Route('/extincteurs/etat', name: 'app_equipements_extincteurs_etat')]
+    public function etatExtincteurs(
+        ExtincteurRepository $extincteurRepository,
+        Request $request
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+        $page = $request->query->getInt('page', 1);
+        $limit = 50; // Plus de résultats pour la vue État
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'valide' => $request->query->get('valide', '')
+        ];
+
+        // Filtrer par zone pour les non-super-admins
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            $searchParams['zone'] = $user->getZone();
+        }
+
+        $extincteurs = $extincteurRepository->searchExtincteurs(
+            $searchParams,
+            $limit,
+            ($page - 1) * $limit
+        );
+
+        $totalExtincteurs = $extincteurRepository->countSearchExtincteurs($searchParams);
+        $totalPages = ceil($totalExtincteurs / $limit);
+
+        // Zones disponibles
+        $zonesDisponibles = [];
+        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            $zonesDisponibles = User::ZONES_DISPONIBLES;
+        } else {
+            $zonesDisponibles = [$user->getZone() => $user->getZone()];
+        }
+
+        return $this->render('equipements/extincteurs/etat.html.twig', [
+            'extincteurs' => $extincteurs,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'search_params' => $searchParams,
+            'zones_disponibles' => $zonesDisponibles,
+            'user_zone' => $user->getZone(),
+            'is_admin' => in_array('ROLE_ADMIN', $user->getRoles()),
+        ]);
+    }
 
     #[Route('/extincteurs', name: 'app_equipements_extincteurs')]
     public function extincteurs(
@@ -159,11 +209,11 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/extincteurs/nouveau.html.twig', [
             'extincteur' => $extincteur,
             'zones_disponibles' => Extincteur::getZonesForUser($user),
-            'numerotations_disponibles' => Extincteur::NUMEROTATIONS_DISPONIBLES,
-            'emplacements_disponibles' => Extincteur::EMPLACEMENTS_DISPONIBLES,
             'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR,
             'types_disponibles' => Extincteur::TYPES_DISPONIBLES,
             'capacites_disponibles' => Extincteur::CAPACITES_DISPONIBLES,
+            'emplacements_simtis' => RapportHSE::ZONES_SIMTIS,
+            'emplacements_simtis_tissage' => RapportHSE::ZONES_SIMTIS_TISSAGE,
         ]);
     }
 
@@ -243,7 +293,8 @@ class EquipementsController extends AbstractController
         Extincteur $extincteur,
         EntityManagerInterface $entityManager,
         InspectionExtincteurRepository $inspectionRepository,
-        Request $request
+        Request $request,
+        SluggerInterface $slugger
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
@@ -277,6 +328,24 @@ class EquipementsController extends AbstractController
             // Valider si tous les critères sont OK
             $tousValides = !in_array(false, $criteres, true);
             $inspection->setValide($tousValides);
+
+            // Gérer l'upload de photo si présent
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move(
+                        $this->getParameter('photos_directory'),
+                        $newFilename
+                    );
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
 
             $entityManager->persist($inspection);
             $entityManager->flush();
@@ -379,10 +448,7 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/ria/nouveau.html.twig', [
             'ria' => $ria,
             'zones_disponibles' => RIA::ZONES_RIA,
-            'numerotations_disponibles' => RIA::NUMEROTATIONS_DISPONIBLES,
             'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
-            'diametres_disponibles' => RIA::DIAMETRES,
-            'longueurs_disponibles' => RIA::LONGUEURS,
         ]);
     }
 
@@ -452,9 +518,10 @@ class EquipementsController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Vérifier si la porte est valide
-        if (!array_key_exists($porte, InspectionMonteCharge::PORTES)) {
-            throw $this->createNotFoundException('Porte non trouvée');
+        // Vérifier si la porte est valide pour ce monte-charge
+        $portesDisponibles = MonteCharge::getPortesForType($monteCharge->getType());
+        if (!array_key_exists($porte, $portesDisponibles)) {
+            throw $this->createNotFoundException('Porte non trouvée pour ce monte-charge');
         }
 
         // Vérifier s'il y a déjà une inspection récente (dans les 24h)
@@ -571,6 +638,11 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/extincteurs/modifier.html.twig', [
             'extincteur' => $extincteur,
             'zones_disponibles' => $zonesDisponibles,
+            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR,
+            'types_disponibles' => Extincteur::TYPES_DISPONIBLES,
+            'capacites_disponibles' => Extincteur::CAPACITES_DISPONIBLES,
+            'emplacements_simtis' => RapportHSE::ZONES_SIMTIS,
+            'emplacements_simtis_tissage' => RapportHSE::ZONES_SIMTIS_TISSAGE,
         ]);
     }
 
@@ -631,7 +703,8 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/ria/modifier.html.twig', [
             'ria' => $ria,
-            'zones_disponibles' => $zonesDisponibles,
+            'zones_disponibles' => RIA::ZONES_RIA,
+            'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
         ]);
     }
 
@@ -726,6 +799,95 @@ class EquipementsController extends AbstractController
         return $this->redirectToRoute('app_equipements_monte_charge');
     }
 
+    #[Route('/inspection/{id}/modifier', name: 'app_equipements_inspection_modifier')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function modifierInspection(
+        InspectionExtincteur $inspection,
+        Request $request,
+        EntityManagerInterface $entityManager,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Vérifier les permissions
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles()) && 
+            $inspection->getExtincteur()->getZone() !== $user->getZone()) {
+            throw $this->createAccessDeniedException('Accès non autorisé à cette inspection');
+        }
+
+        if ($request->isMethod('POST')) {
+            // Récupérer les réponses aux critères
+            $criteres = [];
+            foreach (InspectionExtincteur::CRITERES as $key => $label) {
+                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
+            }
+
+            $inspection->setCriteres($criteres);
+            $inspection->setObservations($request->request->get('observations'));
+
+            // Valider si tous les critères sont OK
+            $tousValides = !in_array(false, $criteres, true);
+            $inspection->setValide($tousValides);
+
+            // Gérer l'upload de nouvelle photo
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                // Supprimer l'ancienne photo si elle existe
+                if ($inspection->getPhotoObservation()) {
+                    $oldPhotoPath = $this->getParameter('photos_directory') . '/' . $inspection->getPhotoObservation();
+                    if (file_exists($oldPhotoPath)) {
+                        unlink($oldPhotoPath);
+                    }
+                }
+
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move(
+                        $this->getParameter('photos_directory'),
+                        $newFilename
+                    );
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Inspection modifiée avec succès !');
+            return $this->redirectToRoute('app_equipements_inspection_details', ['id' => $inspection->getId()]);
+        }
+
+        return $this->render('equipements/extincteurs/modifier_inspection.html.twig', [
+            'inspection' => $inspection,
+            'extincteur' => $inspection->getExtincteur(),
+            'criteres' => InspectionExtincteur::CRITERES,
+        ]);
+    }
+
+    #[Route('/inspection/{id}/details', name: 'app_equipements_inspection_details')]
+    public function voirDetailsInspection(
+        InspectionExtincteur $inspection
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Vérifier les permissions
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles()) && 
+            $inspection->getExtincteur()->getZone() !== $user->getZone()) {
+            throw $this->createAccessDeniedException('Accès non autorisé à cette inspection');
+        }
+
+        return $this->render('equipements/extincteurs/inspection_details.html.twig', [
+            'inspection' => $inspection,
+            'criteres' => InspectionExtincteur::CRITERES
+        ]);
+    }
+
     #[Route('/inspection/{id}/supprimer', name: 'app_equipements_inspection_supprimer')]
     #[IsGranted('ROLE_SUPER_ADMIN')]
     public function supprimerInspection(
@@ -744,6 +906,16 @@ class EquipementsController extends AbstractController
         }
 
         return $this->redirectToRoute('app_equipements_inspections');
+    }
+
+    #[Route('/monte-charge-inspection/{id}/details', name: 'app_equipements_monte_charge_inspection_details')]
+    public function voirDetailsInspectionMonteCharge(
+        InspectionMonteCharge $inspection
+    ): Response {
+        return $this->render('equipements/monte_charge/inspection_details.html.twig', [
+            'inspection' => $inspection,
+            'questions' => InspectionMonteCharge::QUESTIONS
+        ]);
     }
 
     #[Route('/monte-charge-inspection/{id}/supprimer', name: 'app_equipements_monte_charge_inspection_supprimer')]
@@ -781,12 +953,12 @@ class EquipementsController extends AbstractController
 
         // Créer les monte-charges par défaut
         $mc1 = new MonteCharge();
-        $mc1->setType('Monte charge 01');
+        $mc1->setType('CHARGE01');
         $mc1->setZone('RDC TISSAGE-RENTRAGE-OURDISSOIR');
         $entityManager->persist($mc1);
 
         $mc2 = new MonteCharge();
-        $mc2->setType('Monte charge 02');
+        $mc2->setType('CHARGE02');
         $mc2->setZone('RDC TISSAGE-MEZZANINE-PRATO');
         $entityManager->persist($mc2);
 
@@ -794,5 +966,218 @@ class EquipementsController extends AbstractController
 
         $this->addFlash('success', 'Monte-charges initialisés avec succès !');
         return $this->redirectToRoute('app_equipements_monte_charge');
+    }
+
+    /**
+     * Export Excel - État des extincteurs
+     */
+    #[Route('/extincteurs/export-excel', name: 'app_equipements_extincteurs_export_excel')]
+    public function exportExtincteursExcel(
+        ExtincteurRepository $extincteurRepository,
+        Request $request
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'valide' => $request->query->get('valide', '')
+        ];
+
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            $searchParams['zone'] = $user->getZone();
+        }
+
+        $extincteurs = $extincteurRepository->searchExtincteurs($searchParams, 1000, 0);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('État Extincteurs');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'N° Extincteur');
+        $sheet->setCellValue('B1', 'Zone');
+        $sheet->setCellValue('C1', 'Emplacement');
+        $sheet->setCellValue('D1', 'Agent');
+        $sheet->setCellValue('E1', 'Type');
+        $sheet->setCellValue('F1', 'Capacité');
+        $sheet->setCellValue('G1', 'Date Fabrication');
+        $sheet->setCellValue('H1', 'Date Épreuve');
+        $sheet->setCellValue('I1', 'Date Fin de Vie');
+        $sheet->setCellValue('J1', 'N° Série');
+        $sheet->setCellValue('K1', 'Validé');
+        $sheet->setCellValue('L1', 'Date Validation');
+        $sheet->setCellValue('M1', 'Validé Par');
+        $sheet->setCellValue('N1', 'Statut Conformité');
+        $sheet->setCellValue('O1', 'Dernière Inspection');
+        $sheet->setCellValue('P1', 'Nb Inspections');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:P1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($extincteurs as $extincteur) {
+            $sheet->setCellValue('A' . $row, $extincteur->getNumerotation());
+            $sheet->setCellValue('B' . $row, $extincteur->getZone());
+            $sheet->setCellValue('C' . $row, $extincteur->getEmplacement() ?? '-');
+            $sheet->setCellValue('D' . $row, $extincteur->getAgentExtincteur() ?? '-');
+            $sheet->setCellValue('E' . $row, $extincteur->getType() ?? '-');
+            $sheet->setCellValue('F' . $row, $extincteur->getCapacite() ?? '-');
+            $sheet->setCellValue('G' . $row, $extincteur->getDateFabrication() ? $extincteur->getDateFabrication()->format('d/m/Y') : '-');
+            $sheet->setCellValue('H' . $row, $extincteur->getDateEpreuve() ? $extincteur->getDateEpreuve()->format('d/m/Y') : '-');
+            $sheet->setCellValue('I' . $row, $extincteur->getDateFinDeVie() ? $extincteur->getDateFinDeVie()->format('d/m/Y') : '-');
+            $sheet->setCellValue('J' . $row, $extincteur->getNumeroSerie() ?? '-');
+            $sheet->setCellValue('K' . $row, $extincteur->isValide() ? 'Oui' : 'Non');
+            $sheet->setCellValue('L' . $row, $extincteur->getDateValidation() ? $extincteur->getDateValidation()->format('d/m/Y') : '-');
+            $sheet->setCellValue('M' . $row, $extincteur->getValidePar() ? $extincteur->getValidePar()->getFullName() : '-');
+            $sheet->setCellValue('N' . $row, $extincteur->getStatutConformite());
+            
+            $derniereInspection = $extincteur->getDerniereInspection();
+            $sheet->setCellValue('O' . $row, $derniereInspection ? $derniereInspection->getDateInspection()->format('d/m/Y') : '-');
+            $sheet->setCellValue('P' . $row, $extincteur->getNombreInspections());
+
+            // Coloration conditionnelle
+            if ($extincteur->getStatutConformite() == 'Conforme') {
+                $sheet->getStyle('N' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } elseif ($extincteur->getStatutConformite() == 'Non conforme') {
+                $sheet->getStyle('N' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'P') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'etat_extincteurs_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export PDF - État des extincteurs
+     */
+    #[Route('/extincteurs/export-pdf', name: 'app_equipements_extincteurs_export_pdf')]
+    public function exportExtincteursPDF(
+        ExtincteurRepository $extincteurRepository,
+        Request $request
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'valide' => $request->query->get('valide', '')
+        ];
+
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            $searchParams['zone'] = $user->getZone();
+        }
+
+        $extincteurs = $extincteurRepository->searchExtincteurs($searchParams, 1000, 0);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/extincteurs/pdf_etat.html.twig', [
+            'extincteurs' => $extincteurs,
+            'search_params' => $searchParams,
+            'date_export' => new \DateTime(),
+            'user' => $user
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="etat_extincteurs_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
+    }
+
+    /**
+     * Export PDF - État des RIA
+     */
+    #[Route('/ria/export-pdf', name: 'app_equipements_ria_export_pdf')]
+    public function exportRIAPDF(
+        RIARepository $riaRepository,
+        Request $request
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'valide' => $request->query->get('valide', '')
+        ];
+
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            $searchParams['zone'] = $user->getZone();
+        }
+
+        $rias = $riaRepository->searchRIA($searchParams, 1000, 0);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/ria/pdf_etat.html.twig', [
+            'rias' => $rias,
+            'search_params' => $searchParams,
+            'date_export' => new \DateTime(),
+            'user' => $user
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="etat_ria_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
     }
 }
