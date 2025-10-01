@@ -71,12 +71,13 @@ class EquipementsController extends AbstractController
         $limit = 50; // Plus de résultats pour la vue État
 
         $searchParams = [
-            'zone' => $request->query->get('zone', ''),
+            'zone' => '',
+            'emplacement' => $request->query->get('emplacement', ''),
             'numerotation' => $request->query->get('numerotation', ''),
             'valide' => $request->query->get('valide', '')
         ];
 
-        // Filtrer par zone pour les non-super-admins
+        // Filtrer par zone pour les non-super-admins (pour les permissions)
         if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
             $searchParams['zone'] = $user->getZone();
         }
@@ -90,12 +91,15 @@ class EquipementsController extends AbstractController
         $totalExtincteurs = $extincteurRepository->countSearchExtincteurs($searchParams);
         $totalPages = ceil($totalExtincteurs / $limit);
 
-        // Zones disponibles
-        $zonesDisponibles = [];
+        // Emplacements disponibles selon la zone de l'utilisateur
+        $emplacementsDisponibles = [];
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            $zonesDisponibles = User::ZONES_DISPONIBLES;
+            $emplacementsDisponibles = array_merge(
+                RapportHSE::ZONES_SIMTIS,
+                RapportHSE::ZONES_SIMTIS_TISSAGE
+            );
         } else {
-            $zonesDisponibles = [$user->getZone() => $user->getZone()];
+            $emplacementsDisponibles = RapportHSE::getZonesForUserZone($user->getZone());
         }
 
         return $this->render('equipements/extincteurs/etat.html.twig', [
@@ -103,7 +107,7 @@ class EquipementsController extends AbstractController
             'current_page' => $page,
             'total_pages' => $totalPages,
             'search_params' => $searchParams,
-            'zones_disponibles' => $zonesDisponibles,
+            'emplacements_disponibles' => $emplacementsDisponibles,
             'user_zone' => $user->getZone(),
             'is_admin' => in_array('ROLE_ADMIN', $user->getRoles()),
         ]);
@@ -120,12 +124,13 @@ class EquipementsController extends AbstractController
         $limit = 20;
 
         $searchParams = [
-            'zone' => $request->query->get('zone', ''),
+            'zone' => '',
+            'emplacement' => $request->query->get('emplacement', ''),
             'numerotation' => $request->query->get('numerotation', ''),
             'valide' => $request->query->get('valide', '')
         ];
 
-        // Filtrer par zone pour les non-super-admins
+        // Filtrer par zone pour les non-super-admins (pour les permissions)
         if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
             $searchParams['zone'] = $user->getZone();
         }
@@ -139,12 +144,17 @@ class EquipementsController extends AbstractController
         $totalExtincteurs = $extincteurRepository->countSearchExtincteurs($searchParams);
         $totalPages = ceil($totalExtincteurs / $limit);
 
-        // Zones disponibles pour le filtre
-        $zonesDisponibles = [];
+        // Emplacements disponibles selon la zone de l'utilisateur
+        $emplacementsDisponibles = [];
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            $zonesDisponibles = User::ZONES_DISPONIBLES;
+            // Super admin voit tous les emplacements (SIMTIS + TISSAGE)
+            $emplacementsDisponibles = array_merge(
+                RapportHSE::ZONES_SIMTIS,
+                RapportHSE::ZONES_SIMTIS_TISSAGE
+            );
         } else {
-            $zonesDisponibles = [$user->getZone() => $user->getZone()];
+            // Admin voit seulement les emplacements de sa zone
+            $emplacementsDisponibles = RapportHSE::getZonesForUserZone($user->getZone());
         }
 
         return $this->render('equipements/extincteurs/liste.html.twig', [
@@ -152,7 +162,7 @@ class EquipementsController extends AbstractController
             'current_page' => $page,
             'total_pages' => $totalPages,
             'search_params' => $searchParams,
-            'zones_disponibles' => $zonesDisponibles,
+            'emplacements_disponibles' => $emplacementsDisponibles,
             'user_zone' => $user->getZone(),
             'is_admin' => in_array('ROLE_ADMIN', $user->getRoles()),
         ]);
@@ -378,11 +388,6 @@ class EquipementsController extends AbstractController
             'valide' => $request->query->get('valide', '')
         ];
 
-        // Filtrer par zone pour les non-super-admins
-        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            $searchParams['zone'] = $user->getZone();
-        }
-
         $rias = $riaRepository->searchRIA(
             $searchParams,
             $limit,
@@ -392,12 +397,8 @@ class EquipementsController extends AbstractController
         $totalRIAs = $riaRepository->countSearchRIA($searchParams);
         $totalPages = ceil($totalRIAs / $limit);
 
-        $zonesDisponibles = [];
-        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            $zonesDisponibles = User::ZONES_DISPONIBLES;
-        } else {
-            $zonesDisponibles = [$user->getZone() => $user->getZone()];
-        }
+        // Les zones RIA sont fixes (pas liées à SIMTIS/TISSAGE)
+        $zonesDisponibles = RIA::ZONES_RIA;
 
         return $this->render('equipements/ria/liste.html.twig', [
             'rias' => $rias,
@@ -449,6 +450,23 @@ class EquipementsController extends AbstractController
             'ria' => $ria,
             'zones_disponibles' => RIA::ZONES_RIA,
             'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
+        ]);
+    }
+
+    #[Route('/ria/{id}/details', name: 'app_equipements_ria_details')]
+    public function detailsRIA(RIA $ria): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Vérifier les permissions (optionnel pour RIA)
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles()) && $ria->getZone() !== $user->getZone()) {
+            // Pour RIA, on peut autoriser tout le monde à voir
+            // throw $this->createAccessDeniedException('Accès non autorisé à ce RIA');
+        }
+
+        return $this->render('equipements/ria/details.html.twig', [
+            'ria' => $ria,
         ]);
     }
 
@@ -980,7 +998,8 @@ class EquipementsController extends AbstractController
         $user = $this->getUser();
 
         $searchParams = [
-            'zone' => $request->query->get('zone', ''),
+            'zone' => '',
+            'emplacement' => $request->query->get('emplacement', ''),
             'numerotation' => $request->query->get('numerotation', ''),
             'valide' => $request->query->get('valide', '')
         ];
@@ -1093,7 +1112,8 @@ class EquipementsController extends AbstractController
         $user = $this->getUser();
 
         $searchParams = [
-            'zone' => $request->query->get('zone', ''),
+            'zone' => '',
+            'emplacement' => $request->query->get('emplacement', ''),
             'numerotation' => $request->query->get('numerotation', ''),
             'valide' => $request->query->get('valide', '')
         ];

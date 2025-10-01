@@ -17,26 +17,35 @@ class ExtincteurRepository extends ServiceEntityRepository
     }
 
     /**
-     * Recherche des extincteurs par zone et filtres
+     * Recherche des extincteurs par emplacement et filtres
      */
     public function searchExtincteurs(array $searchParams, int $limit = 20, int $offset = 0): array
     {
         $qb = $this->createQueryBuilder('e')
-            ->orderBy('e.zone', 'ASC')
+            ->orderBy('e.emplacement', 'ASC')
             ->addOrderBy('e.numerotation', 'ASC')
             ->setMaxResults($limit)
             ->setFirstResult($offset);
 
+        // Filtre par zone (SIMTIS ou SIMTIS TISSAGE) - pour les permissions
         if (!empty($searchParams['zone'])) {
             $qb->andWhere('e.zone = :zone')
                 ->setParameter('zone', $searchParams['zone']);
         }
 
+        // Filtre par emplacement (Administration, Broderie, etc.)
+        if (!empty($searchParams['emplacement'])) {
+            $qb->andWhere('e.emplacement = :emplacement')
+                ->setParameter('emplacement', $searchParams['emplacement']);
+        }
+
+        // Filtre par numérotation
         if (!empty($searchParams['numerotation'])) {
             $qb->andWhere('e.numerotation LIKE :numerotation')
                 ->setParameter('numerotation', '%' . $searchParams['numerotation'] . '%');
         }
 
+        // Filtre par statut de validation
         if (isset($searchParams['valide'])) {
             $qb->andWhere('e.valide = :valide')
                 ->setParameter('valide', $searchParams['valide']);
@@ -50,16 +59,25 @@ class ExtincteurRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('e')
             ->select('COUNT(e.id)');
 
+        // Filtre par zone (SIMTIS ou SIMTIS TISSAGE) - pour les permissions
         if (!empty($searchParams['zone'])) {
             $qb->andWhere('e.zone = :zone')
                 ->setParameter('zone', $searchParams['zone']);
         }
 
+        // Filtre par emplacement (Administration, Broderie, etc.)
+        if (!empty($searchParams['emplacement'])) {
+            $qb->andWhere('e.emplacement = :emplacement')
+                ->setParameter('emplacement', $searchParams['emplacement']);
+        }
+
+        // Filtre par numérotation
         if (!empty($searchParams['numerotation'])) {
             $qb->andWhere('e.numerotation LIKE :numerotation')
                 ->setParameter('numerotation', '%' . $searchParams['numerotation'] . '%');
         }
 
+        // Filtre par statut de validation
         if (isset($searchParams['valide'])) {
             $qb->andWhere('e.valide = :valide')
                 ->setParameter('valide', $searchParams['valide']);

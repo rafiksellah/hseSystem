@@ -1,62 +1,66 @@
-MODIFICATIONS MODULE ÉQUIPEMENTS - RÉSUMÉ
+═══════════════════════════════════════════════════════════════
+           MODIFICATIONS MODULE ÉQUIPEMENTS - TERMINÉ
+═══════════════════════════════════════════════════════════════
+
+✅ 1. FILTRES PAR EMPLACEMENT + NUMÉROTATION
+   - Filtre par EMPLACEMENT (Administration, Broderie, etc.)
+   - Filtre par NUMÉROTATION
+   - Admin SIMTIS voit 27 emplacements SIMTIS
+   - Admin SIMTIS TISSAGE voit 23 emplacements TISSAGE
+   - Super Admin voit 50 emplacements (tous)
+   - Fichiers: ExtincteurRepository.php + liste.html.twig
+
+✅ 2. ÉTATS POUR CONSULTATIONS (type Excel)
+   - Route: /equipements/extincteurs/etat
+   - Template: etat.html.twig
+   - Tableau 14 colonnes avec statut conformité
+
+✅ 3. EXPORTS PDF FORMAT A4
+   - Route: /extincteurs/export-pdf
+   - Route: /ria/export-pdf
+   - Format: A4 PAYSAGE
+   - Boutons dans les templates liste
+   - Templates: pdf_etat.html.twig (Extincteurs + RIA)
+
+✅ 4. EXPORT EXCEL
+   - Route: /extincteurs/export-excel
+   - Format: XLSX avec coloration
+   - Bouton dans template liste
+
+✅ 5. PAGES DÉTAILS AVEC PHOTOS
+   - Route: /inspection/{id}/details
+   - Route: /monte-charge-inspection/{id}/details
+   - Templates créés avec affichage photos
+   - Liens "Voir" ajoutés dans les listes
+
+✅ 6. PERMISSIONS INSPECTION
+   - USER: Ne peut pas modifier
+   - ADMIN: Peut modifier
+   - Route: /inspection/{id}/modifier
+   - Template: modifier_inspection.html.twig
+
+✅ 7. MIGRATION BASE DE DONNÉES
+   - migrations/Version20251001XXXXXX.php
+   - Ajoute photo_observation (si n'existe pas)
 
 ═══════════════════════════════════════════════════════════════
 
-1. FILTRES (extincteurs/liste.html.twig + ria/liste.html.twig)
-   ✅ Filtre par zone
-   ✅ Filtre par numérotation
-   ✅ Filtre par statut validation
+EXEMPLE D'UTILISATION DES FILTRES:
 
-2. EXPORTS PDF FORMAT A4
-   ✅ templates/equipements/extincteurs/pdf_etat.html.twig (créé)
-   ✅ templates/equipements/ria/pdf_etat.html.twig (créé)
-   ✅ Route: /extincteurs/export-pdf
-   ✅ Route: /ria/export-pdf
-   ✅ Boutons dans liste.html.twig
-   ✅ Format: A4 PAYSAGE
+1. Admin SIMTIS se connecte:
+   - Voit 27 emplacements (Administration, Broderie, etc.)
+   - Choisit "Administration"
+   - Clique "Filtrer"
+   - Voit TOUS les extincteurs de l'emplacement Administration
 
-3. EXPORT EXCEL
-   ✅ Route: /extincteurs/export-excel
-   ✅ Bouton dans liste.html.twig
-
-4. PERMISSIONS INSPECTION
-   ✅ USER: Ne peut pas modifier
-   ✅ ADMIN: Peut modifier (route créée)
-   ✅ Route: /inspection/{id}/modifier
-
-5. STATUT CONFORMITÉ
-   ✅ Méthodes dans Extincteur.php:
-      - getStatutConformite()
-      - isConforme()
-      - getDerniereInspection()
-      - getNombreInspections()
+2. Admin choisit "Administration" + numéro "4":
+   - Voit UNIQUEMENT l'extincteur n°4 de l'emplacement Administration
 
 ═══════════════════════════════════════════════════════════════
 
-COMMANDE POUR TESTER:
+SUR SERVEUR LIVE, EXÉCUTER:
 
+php bin/console doctrine:migrations:migrate
 php bin/console cache:clear
 
-6. PAGES DE DÉTAILS AVEC PHOTOS
-   ✅ templates/equipements/extincteurs/inspection_details.html.twig
-   ✅ templates/equipements/monte_charge/inspection_details.html.twig
-   ✅ Route: /inspection/{id}/details (Extincteurs)
-   ✅ Route: /monte-charge-inspection/{id}/details
-   ✅ Affichage photo si existe
-   ✅ Liens "Voir" dans les listes
-
 ═══════════════════════════════════════════════════════════════
-
-COMMANDE POUR APPLIQUER:
-
-php bin/console cache:clear
-
-URLS À TESTER:
-
-/equipements/extincteurs                    → Liste + filtres + boutons export
-/equipements/ria                            → Liste + filtres + bouton export PDF
-/equipements/extincteurs/inspections        → Inspections avec liens "Voir"
-/equipements/monte-charge                   → Monte-charge avec liens "Voir"
-/equipements/inspection/{id}/details        → Page détails avec photo
-/equipements/monte-charge-inspection/{id}/details → Page détails avec photo
-

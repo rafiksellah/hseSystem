@@ -143,35 +143,33 @@
                     {% endif %}
                   </td>
                   <td>
-                    <div class="btn-group-vertical d-flex gap-1" role="group">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <a href="{{ path('app_equipements_ria_details', {'id': ria.id}) }}"
+                        class="btn btn-info" title="Voir détails">
+                        <i class="fas fa-eye"></i> Voir
+                      </a>
+                      
                       {% if not ria.valide %}
-                      <!-- Bouton de validation (prioritaire) -->
                       <a href="{{ path('app_equipements_ria_valider', {'id': ria.id}) }}"
-                        class="btn btn-sm btn-outline-success" title="Valider">
+                        class="btn btn-success" title="Valider">
                         <i class="fas fa-check"></i> Valider
                       </a>
                       {% endif %}
 
                       {% if is_admin %}
-                      <!-- Boutons d'administration -->
-                      <div class="btn-group btn-group-sm" role="group">
-                        <a href="{{ path('app_equipements_ria_modifier', {'id': ria.id}) }}"
-                          class="btn btn-outline-warning" title="Modifier">
-                          <i class="fas fa-edit"></i>
-                        </a>
-                        {% if is_granted('ROLE_SUPER_ADMIN') %}
-                        <a href="{{ path('app_equipements_ria_supprimer', {'id': ria.id}) }}"
-                          class="btn btn-outline-danger"
-                          data-confirm="Êtes-vous sûr de vouloir supprimer le RIA {{ ria.numerotation }} ?"
-                          title="Supprimer">
-                          <i class="fas fa-trash"></i>
-                        </a>
-                        {% endif %}
-                      </div>
+                      <a href="{{ path('app_equipements_ria_modifier', {'id': ria.id}) }}"
+                        class="btn btn-warning" title="Modifier">
+                        <i class="fas fa-edit"></i> Modifier
+                      </a>
                       {% endif %}
-
-                      {% if ria.valide and not is_admin %}
-                      <span class="text-muted small">Validé</span>
+                      
+                      {% if is_granted('ROLE_SUPER_ADMIN') %}
+                      <a href="{{ path('app_equipements_ria_supprimer', {'id': ria.id}) }}"
+                        class="btn btn-danger"
+                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer le RIA {{ ria.numerotation }} ?')"
+                        title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                      </a>
                       {% endif %}
                     </div>
                   </td>

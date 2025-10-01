@@ -43,13 +43,13 @@
         <div class="card-body">
           <!-- Filtres -->
           <form method="GET" class="row g-3 mb-3">
-            <div class="col-md-3">
-              <label for="zone" class="form-label">Zone</label>
-              <select name="zone" id="zone" class="form-select form-select-sm">
-                <option value="">Toutes les zones</option>
-                {% for key, zone in zones_disponibles %}
-                <option value="{{ key }}" {{ search_params.zone==key ? 'selected' : '' }}>
-                  {{ zone }}
+            <div class="col-md-4">
+              <label for="emplacement" class="form-label">Emplacement</label>
+              <select name="emplacement" id="emplacement" class="form-select form-select-sm">
+                <option value="">Tous les emplacements</option>
+                {% for key, empl in emplacements_disponibles %}
+                <option value="{{ empl }}" {{ search_params.emplacement==empl ? 'selected' : '' }}>
+                  {{ empl }}
                 </option>
                 {% endfor %}
               </select>
@@ -57,9 +57,9 @@
             <div class="col-md-3">
               <label for="numerotation" class="form-label">Numéro</label>
               <input type="text" name="numerotation" id="numerotation" class="form-control form-control-sm"
-                value="{{ search_params.numerotation }}" placeholder="Rechercher...">
+                value="{{ search_params.numerotation }}" placeholder="Ex: 4, 133...">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
               <label for="valide" class="form-label">État</label>
               <select name="valide" id="valide" class="form-select form-select-sm">
                 <option value="">Tous</option>
@@ -68,7 +68,7 @@
               </select>
             </div>
             <div class="col-md-3 d-flex align-items-end">
-              <button type="submit" class="btn btn-outline-primary btn-sm me-2">
+              <button type="submit" class="btn btn-primary btn-sm me-2">
                 <i class="fas fa-search"></i> Filtrer
               </button>
               <a href="{{ path('app_equipements_extincteurs') }}" class="btn btn-outline-secondary btn-sm">
@@ -181,7 +181,7 @@
               <li class="page-item {{ page == current_page ? 'active' : '' }}">
                 <a class="page-link" href="{{ path('app_equipements_extincteurs', {
                                     page: page,
-                                    zone: search_params.zone,
+                                    emplacement: search_params.emplacement,
                                     numerotation: search_params.numerotation,
                                     valide: search_params.valide
                                 }) }}">{{ page }}</a>

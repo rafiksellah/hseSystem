@@ -1,0 +1,112 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails RIA{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-tint text-info"></i> Détails RIA
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-tint"></i> RIA {{ ria.numerotation }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Informations principales -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-info border-bottom pb-2">
+                <i class="fas fa-info-circle"></i> Informations principales
+              </h6>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Numérotation:</strong> <span class="badge bg-dark">{{ ria.numerotation }}</span></p>
+              <p><strong>Zone:</strong> <span class="badge bg-info">{{ ria.zone }}</span></p>
+              <p><strong>Agent extincteur:</strong> {{ ria.agentExtincteur ?? 'Non spécifié' }}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Diamètre:</strong> 
+                {% if ria.dimatere %}
+                  {{ ria.dimatere }} mm
+                {% else %}
+                  <span class="text-muted">Non spécifié</span>
+                {% endif %}
+              </p>
+              <p><strong>Longueur:</strong> 
+                {% if ria.longueur %}
+                  {{ ria.longueur }} m
+                {% else %}
+                  <span class="text-muted">Non spécifiée</span>
+                {% endif %}
+              </p>
+              <p><strong>Date création:</strong> {{ ria.dateCreation|date('d/m/Y H:i') }}</p>
+            </div>
+          </div>
+
+          <!-- Statut de validation -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-info border-bottom pb-2">
+                <i class="fas fa-check-circle"></i> Statut de validation
+              </h6>
+            </div>
+            <div class="col-12">
+              {% if ria.valide %}
+              <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <strong>RIA validé</strong><br>
+                <small>
+                  Validé le {{ ria.dateValidation|date('d/m/Y à H:i') }} 
+                  par {{ ria.validePar.fullName }} ({{ ria.validePar.codeAgent }})
+                </small>
+              </div>
+              {% else %}
+              <div class="alert alert-warning">
+                <i class="fas fa-clock"></i>
+                <strong>RIA en attente de validation</strong>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card-footer">
+          <div class="d-flex justify-content-between">
+            <a href="{{ path('app_equipements_ria') }}" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+            <div>
+              {% if not ria.valide %}
+              <a href="{{ path('app_equipements_ria_valider', {id: ria.id}) }}" 
+                 class="btn btn-success">
+                <i class="fas fa-check"></i> Valider le RIA
+              </a>
+              {% endif %}
+              {% if is_granted('ROLE_ADMIN') %}
+              <a href="{{ path('app_equipements_ria_modifier', {id: ria.id}) }}" 
+                 class="btn btn-warning">
+                <i class="fas fa-edit"></i> Modifier
+              </a>
+              {% endif %}
+              {% if is_granted('ROLE_SUPER_ADMIN') %}
+              <a href="{{ path('app_equipements_ria_supprimer', {id: ria.id}) }}" 
+                 class="btn btn-danger"
+                 onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce RIA ?')">
+                <i class="fas fa-trash"></i> Supprimer
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

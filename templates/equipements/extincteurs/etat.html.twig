@@ -27,13 +27,13 @@
 
       <!-- Formulaire de filtres -->
       <form method="GET" class="row g-3 mt-2">
-        <div class="col-md-3">
-          <label for="zone" class="form-label">Zone</label>
-          <select name="zone" id="zone" class="form-select">
-            <option value="">Toutes les zones</option>
-            {% for key, zone_name in zones_disponibles %}
-            <option value="{{ key }}" {{ search_params.zone == key ? 'selected' : '' }}>
-              {{ zone_name }}
+        <div class="col-md-4">
+          <label for="emplacement" class="form-label">Emplacement</label>
+          <select name="emplacement" id="emplacement" class="form-select">
+            <option value="">Tous les emplacements</option>
+            {% for key, empl in emplacements_disponibles %}
+            <option value="{{ empl }}" {{ search_params.emplacement == empl ? 'selected' : '' }}>
+              {{ empl }}
             </option>
             {% endfor %}
           </select>
@@ -44,12 +44,12 @@
                  value="{{ search_params.numerotation }}" 
                  placeholder="Ex: 4, EXT-001">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label for="valide" class="form-label">Statut Validation</label>
           <select name="valide" id="valide" class="form-select">
             <option value="">Tous</option>
-            <option value="oui" {{ search_params.valide == 'oui' ? 'selected' : '' }}>Validés</option>
-            <option value="non" {{ search_params.valide == 'non' ? 'selected' : '' }}>Non validés</option>
+            <option value="0" {{ search_params.valide == '0' ? 'selected' : '' }}>Non validés</option>
+            <option value="1" {{ search_params.valide == '1' ? 'selected' : '' }}>Validés</option>
           </select>
         </div>
         <div class="col-md-3 d-flex align-items-end">
@@ -223,8 +223,12 @@
         <ul class="pagination pagination-sm justify-content-center mb-0">
           {% for i in 1..total_pages %}
           <li class="page-item {{ i == current_page ? 'active' : '' }}">
-            <a class="page-link" href="{{ path('app_equipements_extincteurs_etat', 
-               app.request.query.all|merge({page: i})) }}">{{ i }}</a>
+            <a class="page-link" href="{{ path('app_equipements_extincteurs_etat', {
+               page: i,
+               emplacement: search_params.emplacement,
+               numerotation: search_params.numerotation,
+               valide: search_params.valide
+            }) }}">{{ i }}</a>
           </li>
           {% endfor %}
         </ul>
