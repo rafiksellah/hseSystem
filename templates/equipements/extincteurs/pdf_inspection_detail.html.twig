@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Inspection Extincteur {{ inspection.extincteur.numerotation }}</title>
+    <style>
+        body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 11px; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #dc3545; padding-bottom: 15px; }
+        .header h1 { color: #dc3545; margin: 0; font-size: 24px; }
+        .info-box { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin-bottom: 20px; }
+        .info-row { margin-bottom: 8px; }
+        .label { font-weight: bold; color: #495057; }
+        .section-title { background-color: {{ inspection.valide ? '#28a745' : '#dc3545' }}; color: white; padding: 10px; margin-top: 20px; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
+        .critere-row { padding: 8px; margin-bottom: 5px; border-bottom: 1px solid #dee2e6; }
+        .critere-ok { color: #28a745; font-weight: bold; }
+        .critere-nok { color: #dc3545; font-weight: bold; }
+        .badge { display: inline-block; padding: 4px 8px; background-color: #17a2b8; color: white; border-radius: 3px; font-size: 10px; }
+        .status-badge { padding: 8px 12px; border-radius: 5px; font-weight: bold; text-align: center; margin: 10px 0; }
+        .status-success { background-color: #d4edda; color: #155724; }
+        .status-danger { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔥 INSPECTION EXTINCTEUR</h1>
+        <p style="margin: 5px 0;">{{ inspection.extincteur.numerotation }}</p>
+        <p style="margin: 0; font-size: 10px;">Document généré le {{ date_export|date('d/m/Y à H:i') }}</p>
+    </div>
+
+    <!-- Informations Extincteur -->
+    <div class="info-box">
+        <h3 style="margin-top: 0; color: #dc3545;">📋 Informations Extincteur</h3>
+        <div class="info-row"><span class="label">Numérotation:</span> <span class="badge">{{ inspection.extincteur.numerotation }}</span></div>
+        <div class="info-row"><span class="label">Zone:</span> {{ inspection.extincteur.zone }}</div>
+        <div class="info-row"><span class="label">Emplacement:</span> {{ inspection.extincteur.emplacement ?? 'Non spécifié' }}</div>
+        <div class="info-row"><span class="label">Agent:</span> {{ inspection.extincteur.agentExtincteur ?? 'Non spécifié' }}</div>
+        <div class="info-row"><span class="label">Type:</span> {{ inspection.extincteur.type ?? 'Non spécifié' }}</div>
+        <div class="info-row"><span class="label">Capacité:</span> {{ inspection.extincteur.capacite ?? 'Non spécifiée' }}</div>
+    </div>
+
+    <!-- Résultat Inspection -->
+    <div class="status-badge {{ inspection.valide ? 'status-success' : 'status-danger' }}">
+        {{ inspection.valide ? '✓ INSPECTION CONFORME' : '✗ INSPECTION NON CONFORME' }}
+    </div>
+
+    <div class="info-box">
+        <div class="info-row"><span class="label">Date inspection:</span> {{ inspection.dateInspection|date('d/m/Y à H:i') }}</div>
+        <div class="info-row"><span class="label">Inspecté par:</span> {{ inspection.inspectePar.fullName }} ({{ inspection.inspectePar.codeAgent }})</div>
+    </div>
+
+    <!-- Critères -->
+    <div class="section-title">
+        ✓ CRITÈRES DE CONTRÔLE
+    </div>
+    {% for key, label in criteres %}
+    <div class="critere-row">
+        {% if inspection.criteres[key] is defined and inspection.criteres[key] %}
+            <span class="critere-ok">✓</span> {{ label }}
+        {% else %}
+            <span class="critere-nok">✗</span> <strong>{{ label }}</strong>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- Observations -->
+    {% if inspection.observations %}
+    <div class="section-title">
+        💬 OBSERVATIONS
+    </div>
+    <div style="background-color: #f8f9fa; padding: 10px; border-left: 3px solid #6c757d;">
+        {{ inspection.observations|nl2br }}
+    </div>
+    {% endif %}
+
+    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 9px; color: #6c757d; border-top: 1px solid #dee2e6; padding-top: 10px;">
+        <p>HSE System - Inspection Extincteur {{ inspection.extincteur.numerotation }}</p>
+    </div>
+</body>
+</html>
+

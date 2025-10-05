@@ -38,6 +38,7 @@ class RapportHSE
         'ROTATIVE' => 'Rotative',
         'ROULAGE' => 'Roulage',
         'SIMI' => 'SIMI',
+        'SIMI_CANTINE' => 'SIMI - CANTINE',
         'STATION_LAVAGE' => 'Station lavage',
         'STOCK_DECATHLON' => 'Stock Decathlon',
         'STOCK_PF' => 'Stock PF',

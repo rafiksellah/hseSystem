@@ -1,0 +1,83 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter une Issue de Secours{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-door-open text-success"></i> Ajouter une Issue de Secours
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-plus"></i> Nouvelle Issue de Secours</h5>
+          <a href="{{ path('app_equipements_issues_secours') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="zone" class="form-label">Zone <span class="text-danger">*</span></label>
+                <select class="form-select" id="zone" name="zone" required>
+                  <option value="">Sélectionner une zone</option>
+                  {% for key, zone in zones_disponibles %}
+                    <option value="{{ zone }}">{{ zone }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="numerotation" class="form-label">Numérotation <span class="text-danger">*</span></label>
+                <select class="form-select" id="numerotation" name="numerotation" required>
+                  <option value="">Sélectionner une numérotation</option>
+                  {% for key, num in numerotations_disponibles %}
+                    <option value="{{ num }}">{{ num }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
+                <select class="form-select" id="type" name="type" required>
+                  <option value="">Sélectionner un type</option>
+                  {% for key, type_issue in types_disponibles %}
+                    <option value="{{ type_issue }}">{{ type_issue }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="barre_antipanique" class="form-label">Barre Antipanique</label>
+                <select class="form-select" id="barre_antipanique" name="barre_antipanique">
+                  <option value="">-- Sélectionner --</option>
+                  {% for key, etat in etats_barre %}
+                    <option value="{{ key }}">{{ etat }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle"></i> Les issues de secours sont des voies d'évacuation en cas d'urgence.
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{{ path('app_equipements_issues_secours') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Enregistrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

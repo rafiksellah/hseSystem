@@ -56,11 +56,12 @@
                 value="{{ search_params.numerotation }}" placeholder="Rechercher...">
             </div>
             <div class="col-md-3">
-              <label for="valide" class="form-label">État</label>
-              <select name="valide" id="valide" class="form-select form-select-sm">
+              <label for="conformite" class="form-label">État</label>
+              <select name="conformite" id="conformite" class="form-select form-select-sm">
                 <option value="">Tous</option>
-                <option value="0" {{ search_params.valide=='0' ? 'selected' : '' }}>Non validés</option>
-                <option value="1" {{ search_params.valide=='1' ? 'selected' : '' }}>Validés</option>
+                <option value="conforme" {{ search_params.conformite=='conforme' ? 'selected' : '' }}>Conformes</option>
+                <option value="non_conforme" {{ search_params.conformite=='non_conforme' ? 'selected' : '' }}>Non conformes</option>
+                <option value="non_inspecte" {{ search_params.conformite=='non_inspecte' ? 'selected' : '' }}>Non inspectés</option>
               </select>
             </div>
             <div class="col-md-3 d-flex align-items-end">
@@ -93,13 +94,13 @@
                   <th>Diamètre</th>
                   <th>Longueur</th>
                   <th>État</th>
-                  <th>Validé par</th>
+                  <th>Dernière Inspection</th>
                   <th width="200">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for ria in rias %}
-                <tr class="{{ ria.valide ? 'table-success' : '' }}">
+                <tr>
                   <td><strong>{{ ria.numerotation }}</strong></td>
                   <td>
                     <span class="badge {{ ria.zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
@@ -122,54 +123,62 @@
                     {% endif %}
                   </td>
                   <td>
-                    {% if ria.valide %}
+                    {% set conformite = ria.statutConformite %}
+                    {% if conformite == 'Conforme' %}
                     <span class="badge bg-success">
-                      <i class="fas fa-check-circle"></i> Validé
+                      <i class="fas fa-check-circle"></i> Conforme
+                    </span>
+                    {% elseif conformite == 'Non conforme' %}
+                    <span class="badge bg-danger">
+                      <i class="fas fa-times-circle"></i> Non conforme
                     </span>
                     {% else %}
                     <span class="badge bg-warning">
-                      <i class="fas fa-clock"></i> En attente
+                      <i class="fas fa-clock"></i> Non inspecté
                     </span>
                     {% endif %}
                   </td>
                   <td>
-                    {% if ria.validePar %}
+                    {% set derniere = ria.derniereInspection %}
+                    {% if derniere %}
                     <small>
-                      {{ ria.validePar.nom }} {{ ria.validePar.prenom }}<br>
-                      <span class="text-muted">{{ ria.dateValidation|date('d/m/Y H:i') }}</span>
+                      {{ derniere.dateInspection|date('d/m/Y') }}<br>
+                      <span class="text-muted">par {{ derniere.inspectePar.codeAgent }}</span>
                     </small>
                     {% else %}
                     <span class="text-muted">-</span>
                     {% endif %}
                   </td>
                   <td>
-                    <div class="btn-group btn-group-sm" role="group">
-                      <a href="{{ path('app_equipements_ria_details', {'id': ria.id}) }}"
-                        class="btn btn-info" title="Voir détails">
-                        <i class="fas fa-eye"></i> Voir
-                      </a>
-                      
-                      {% if not ria.valide %}
-                      <a href="{{ path('app_equipements_ria_valider', {'id': ria.id}) }}"
-                        class="btn btn-success" title="Valider">
-                        <i class="fas fa-check"></i> Valider
-                      </a>
+                    <div class="btn-group-vertical d-flex gap-1" role="group">
+                      {% set derniere = ria.derniereInspection %}
+                      {% if derniere %}
+                        <a href="{{ path('app_equipements_ria_details', {id: ria.id}) }}" 
+                           class="btn btn-info btn-sm" title="Voir détails">
+                          <i class="fas fa-eye"></i>
+                        </a>
+                      {% else %}
+                        <a href="{{ path('app_equipements_ria_inspecter', {id: ria.id}) }}" 
+                           class="btn btn-primary btn-sm" title="Inspecter">
+                          <i class="fas fa-clipboard-check"></i> Inspecter
+                        </a>
                       {% endif %}
-
+                      
                       {% if is_admin %}
-                      <a href="{{ path('app_equipements_ria_modifier', {'id': ria.id}) }}"
-                        class="btn btn-warning" title="Modifier">
-                        <i class="fas fa-edit"></i> Modifier
-                      </a>
-                      {% endif %}
-                      
-                      {% if is_granted('ROLE_SUPER_ADMIN') %}
-                      <a href="{{ path('app_equipements_ria_supprimer', {'id': ria.id}) }}"
-                        class="btn btn-danger"
-                        onclick="return confirm('Êtes-vous sûr de vouloir supprimer le RIA {{ ria.numerotation }} ?')"
-                        title="Supprimer">
-                        <i class="fas fa-trash"></i>
-                      </a>
+                      <div class="btn-group btn-group-sm mt-1" role="group">
+                        <a href="{{ path('app_equipements_ria_modifier', {'id': ria.id}) }}"
+                          class="btn btn-outline-secondary btn-sm" title="Modifier">
+                          <i class="fas fa-cog"></i>
+                        </a>
+                        {% if is_granted('ROLE_SUPER_ADMIN') %}
+                        <a href="{{ path('app_equipements_ria_supprimer', {'id': ria.id}) }}"
+                          class="btn btn-outline-danger btn-sm"
+                          onclick="return confirm('Êtes-vous sûr de vouloir supprimer le RIA {{ ria.numerotation }} ?')"
+                          title="Supprimer">
+                          <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                      </div>
                       {% endif %}
                     </div>
                   </td>
@@ -189,7 +198,7 @@
                                     page: page,
                                     zone: search_params.zone,
                                     numerotation: search_params.numerotation,
-                                    valide: search_params.valide
+                                    conformite: search_params.conformite
                                 }) }}">{{ page }}</a>
               </li>
               {% endfor %}

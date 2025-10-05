@@ -2,28 +2,26 @@
 
 namespace App\Entity;
 
-use App\Repository\RIARepository;
+use App\Repository\DesenfumageRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-#[ORM\Entity(repositoryClass: RIARepository::class)]
-#[ORM\Table(name: 'ria')]
-class RIA
+#[ORM\Entity(repositoryClass: DesenfumageRepository::class)]
+#[ORM\Table(name: 'desenfumage')]
+class Desenfumage
 {
-    public const ZONES_RIA = [
-        '1ER ETAGE STARSS' => '1ER ETAGE STARSS',
-        '2EME ETAGE EMBALLAGE' => '2EME ETAGE EMBALLAGE',
-        '3EME ETAGE CHALES ET FOULARDS' => '3EME ETAGE CHALES ET FOULARDS',
-        'BRODERIE' => 'BRODERIE',
-        'BUREAUX D\'ETUDES' => 'BUREAUX D\'ETUDES',
+    public const ZONES_DESENFUMAGE = [
+        'STOCK PF' => 'STOCK PF',
+        'IMPRESSION NUMERIQUE' => 'IMPRESSION NUMERIQUE',
     ];
 
-    public const AGENTS_DISPONIBLES = [
-        'Eau' => 'Eau',
-        'Mousse' => 'Mousse',
+    public const EMPLACEMENTS_DESENFUMAGE = [
+        'LAVAGE A LA CONTINUE' => 'LAVAGE A LA CONTINUE',
+        'Entre Vaporisateur 1 & 2' => 'Entre Vaporisateur 1 & 2',
+        'ROTATIVE' => 'ROTATIVE',
     ];
 
     #[ORM\Id]
@@ -39,28 +37,22 @@ class RIA
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
     private ?string $zone = null;
 
-    #[ORM\Column(length: 50, nullable: true)]
-    private ?string $agentExtincteur = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $emplacement = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?int $dimatere = null;
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $type = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?int $longueur = null;
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $etatCommande = null;
 
-    #[ORM\Column]
-    private bool $valide = false;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $dateValidation = null;
-
-    #[ORM\ManyToOne(inversedBy: 'riasValides')]
-    private ?User $validePar = null;
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $etatSkydome = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $dateCreation = null;
 
-    #[ORM\OneToMany(mappedBy: 'ria', targetEntity: InspectionRIA::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'desenfumage', targetEntity: InspectionDesenfumage::class, orphanRemoval: true)]
     private Collection $inspections;
 
     public function __construct()
@@ -96,69 +88,47 @@ class RIA
         return $this;
     }
 
-    public function getAgentExtincteur(): ?string
+    public function getEmplacement(): ?string
     {
-        return $this->agentExtincteur;
+        return $this->emplacement;
     }
 
-    public function setAgentExtincteur(?string $agentExtincteur): static
+    public function setEmplacement(?string $emplacement): static
     {
-        $this->agentExtincteur = $agentExtincteur;
+        $this->emplacement = $emplacement;
         return $this;
     }
 
-    public function getDimatere(): ?int
+    public function getType(): ?string
     {
-        return $this->dimatere;
+        return $this->type;
     }
 
-    public function setDimatere(?int $dimatere): static
+    public function setType(?string $type): static
     {
-        $this->dimatere = $dimatere;
+        $this->type = $type;
         return $this;
     }
 
-    public function getLongueur(): ?int
+    public function getEtatCommande(): ?string
     {
-        return $this->longueur;
+        return $this->etatCommande;
     }
 
-    public function setLongueur(?int $longueur): static
+    public function setEtatCommande(?string $etatCommande): static
     {
-        $this->longueur = $longueur;
+        $this->etatCommande = $etatCommande;
         return $this;
     }
 
-    public function isValide(): bool
+    public function getEtatSkydome(): ?string
     {
-        return $this->valide;
+        return $this->etatSkydome;
     }
 
-    public function setValide(bool $valide): static
+    public function setEtatSkydome(?string $etatSkydome): static
     {
-        $this->valide = $valide;
-        return $this;
-    }
-
-    public function getDateValidation(): ?\DateTimeInterface
-    {
-        return $this->dateValidation;
-    }
-
-    public function setDateValidation(?\DateTimeInterface $dateValidation): static
-    {
-        $this->dateValidation = $dateValidation;
-        return $this;
-    }
-
-    public function getValidePar(): ?User
-    {
-        return $this->validePar;
-    }
-
-    public function setValidePar(?User $validePar): static
-    {
-        $this->validePar = $validePar;
+        $this->etatSkydome = $etatSkydome;
         return $this;
     }
 
@@ -174,45 +144,39 @@ class RIA
     }
 
     /**
-     * @return Collection<int, InspectionRIA>
+     * @return Collection<int, InspectionDesenfumage>
      */
     public function getInspections(): Collection
     {
         return $this->inspections;
     }
 
-    public function addInspection(InspectionRIA $inspection): static
+    public function addInspection(InspectionDesenfumage $inspection): static
     {
         if (!$this->inspections->contains($inspection)) {
             $this->inspections->add($inspection);
-            $inspection->setRia($this);
+            $inspection->setDesenfumage($this);
         }
         return $this;
     }
 
-    public function removeInspection(InspectionRIA $inspection): static
+    public function removeInspection(InspectionDesenfumage $inspection): static
     {
         if ($this->inspections->removeElement($inspection)) {
-            if ($inspection->getRia() === $this) {
-                $inspection->setRia(null);
+            if ($inspection->getDesenfumage() === $this) {
+                $inspection->setDesenfumage(null);
             }
         }
         return $this;
     }
 
-    /**
-     * Retourne la dernière inspection
-     */
-    public function getDerniereInspection(): ?InspectionRIA
+    public function getDerniereInspection(): ?InspectionDesenfumage
     {
         $inspections = $this->inspections->toArray();
         usort($inspections, fn($a, $b) => $b->getDateInspection() <=> $a->getDateInspection());
         return $inspections[0] ?? null;
     }
 
-    /**
-     * Retourne le statut de conformité basé sur la dernière inspection
-     */
     public function getStatutConformite(): string
     {
         $derniereInspection = $this->getDerniereInspection();
@@ -224,9 +188,6 @@ class RIA
         return $derniereInspection->isValide() ? 'Conforme' : 'Non conforme';
     }
 
-    /**
-     * Vérifie si le RIA est conforme selon la dernière inspection
-     */
     public function isConforme(): ?bool
     {
         $derniereInspection = $this->getDerniereInspection();
@@ -238,11 +199,9 @@ class RIA
         return $derniereInspection->isValide();
     }
 
-    /**
-     * Retourne le nombre total d'inspections
-     */
     public function getNombreInspections(): int
     {
         return $this->inspections->count();
     }
 }
+

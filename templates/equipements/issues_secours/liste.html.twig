@@ -1,0 +1,182 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Issues de Secours - État{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-door-open text-success"></i> Issues de Secours - État
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-list"></i> Liste des Issues de Secours
+          </h5>
+          <div>
+            <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
+              <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
+            <a href="{{ path('app_equipements_issues_secours_nouveau') }}" class="btn btn-primary btn-sm">
+              <i class="fas fa-plus"></i> Ajouter
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="GET" class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label for="zone" class="form-label">Zone</label>
+              <select name="zone" id="zone" class="form-select form-select-sm">
+                <option value="">Toutes les zones</option>
+                {% for key, zone_name in constant('App\\Entity\\IssueSecours::ZONES_ISSUES') %}
+                  <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="numerotation" class="form-label">Numéro</label>
+              <input type="text" name="numerotation" id="numerotation" class="form-control form-control-sm"
+                value="{{ search_params.numerotation }}" placeholder="Ex: IS-001">
+            </div>
+            <div class="col-md-2">
+              <label for="conformite" class="form-label">État</label>
+              <select name="conformite" id="conformite" class="form-select form-select-sm">
+                <option value="">Tous</option>
+                <option value="conforme" {{ search_params.conformite=='conforme' ? 'selected' : '' }}>Conformes</option>
+                <option value="non_conforme" {{ search_params.conformite=='non_conforme' ? 'selected' : '' }}>Non conformes</option>
+                <option value="non_inspecte" {{ search_params.conformite=='non_inspecte' ? 'selected' : '' }}>Non inspectées</option>
+              </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary btn-sm me-2">
+                <i class="fas fa-search"></i> Filtrer
+              </button>
+              <a href="{{ path('app_equipements_issues_secours') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-undo"></i> Reset
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          {% if issues is not empty %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Numéro</th>
+                  <th>Zone</th>
+                  <th>Type</th>
+                  <th>Barre Antipanique</th>
+                  <th>État</th>
+                  <th>Dernière Inspection</th>
+                  <th width="150">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for issue in issues %}
+                <tr>
+                  <td><strong>{{ issue.numerotation }}</strong></td>
+                  <td><span class="badge bg-info">{{ issue.zone }}</span></td>
+                  <td>{{ issue.type ?? '-' }}</td>
+                  <td class="text-center">
+                    {% if issue.barreAntipanique == 'ok' %}
+                      <span class="badge bg-success">OK</span>
+                    {% elseif issue.barreAntipanique == 'Nok' %}
+                      <span class="badge bg-danger">NOK</span>
+                    {% elseif issue.barreAntipanique == 'NA' %}
+                      <span class="badge bg-secondary">N/A</span>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% set conformite = issue.statutConformite %}
+                    {% if conformite == 'Conforme' %}
+                    <span class="badge bg-success">
+                      <i class="fas fa-check-circle"></i> Conforme
+                    </span>
+                    {% elseif conformite == 'Non conforme' %}
+                    <span class="badge bg-danger">
+                      <i class="fas fa-times-circle"></i> Non conforme
+                    </span>
+                    {% else %}
+                    <span class="badge bg-warning">
+                      <i class="fas fa-clock"></i> Non inspecté
+                    </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% set derniere = issue.derniereInspection %}
+                    {% if derniere %}
+                    <small>
+                      {{ derniere.dateInspection|date('d/m/Y') }}<br>
+                      <span class="text-muted">par {{ derniere.inspectePar.codeAgent }}</span>
+                    </small>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                      <a href="{{ path('app_equipements_issue_secours_details', {id: issue.id}) }}" 
+                         class="btn btn-info btn-sm" title="Voir détails">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                      <a href="{{ path('app_equipements_issues_secours_inspecter', {id: issue.id}) }}" 
+                         class="btn btn-success btn-sm" title="Inspecter">
+                        <i class="fas fa-clipboard-check"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% if total_pages > 1 %}
+          <nav>
+            <ul class="pagination justify-content-center">
+              {% for page in 1..total_pages %}
+              <li class="page-item {{ page == current_page ? 'active' : '' }}">
+                <a class="page-link" href="{{ path('app_equipements_issues_secours', {
+                    page: page,
+                    zone: search_params.zone,
+                    numerotation: search_params.numerotation,
+                    conformite: search_params.conformite
+                }) }}">{{ page }}</a>
+              </li>
+              {% endfor %}
+            </ul>
+          </nav>
+          {% endif %}
+
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-door-open fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucune issue de secours trouvée</h5>
+            {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_equipements_issues_secours_nouveau') }}" class="btn btn-primary mt-2">
+              <i class="fas fa-plus"></i> Ajouter la première issue de secours
+            </a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

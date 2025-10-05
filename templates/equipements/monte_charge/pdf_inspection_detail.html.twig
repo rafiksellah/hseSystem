@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Inspection Monte-Charge {{ inspection.monteCharge.type }}</title>
+    <style>
+        body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 11px; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #28a745; padding-bottom: 15px; }
+        .header h1 { color: #28a745; margin: 0; font-size: 24px; }
+        .info-box { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; margin-bottom: 20px; }
+        .section-title { background-color: {{ inspection.valide ? '#28a745' : '#dc3545' }}; color: white; padding: 10px; margin-top: 20px; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
+        .question-row { padding: 10px; margin-bottom: 8px; border-bottom: 1px solid #dee2e6; }
+        .ok { color: #28a745; font-weight: bold; }
+        .nok { color: #dc3545; font-weight: bold; }
+        .badge { display: inline-block; padding: 4px 8px; background-color: #ffc107; color: #000; border-radius: 3px; }
+        .status-badge { padding: 10px 15px; border-radius: 5px; font-weight: bold; text-align: center; margin: 15px 0; }
+        .status-success { background-color: #d4edda; color: #155724; }
+        .status-danger { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏢 INSPECTION MONTE-CHARGE</h1>
+        <p>{{ inspection.monteCharge.type }} - {{ inspection.numeroPorte }}</p>
+        <p style="font-size: 10px;">Document généré le {{ date_export|date('d/m/Y à H:i') }}</p>
+    </div>
+
+    <div class="info-box">
+        <p><strong>Type Monte-Charge:</strong> {{ inspection.monteCharge.type }}</p>
+        <p><strong>Zone:</strong> {{ inspection.monteCharge.zone }}</p>
+        <p><strong>Porte:</strong> <span class="badge">{{ inspection.numeroPorte }}</span></p>
+    </div>
+
+    <div class="status-badge {{ inspection.valide ? 'status-success' : 'status-danger' }}">
+        {{ inspection.valide ? '✓ INSPECTION CONFORME' : '✗ INSPECTION NON CONFORME' }}
+    </div>
+
+    <div class="info-box">
+        <p><strong>Date inspection:</strong> {{ inspection.dateInspection|date('d/m/Y à H:i') }}</p>
+        <p><strong>Inspecté par:</strong> {{ inspection.inspectePar.fullName }} ({{ inspection.inspectePar.codeAgent }})</p>
+    </div>
+
+    <div class="section-title">✓ QUESTIONS DE CONTRÔLE</div>
+    {% for key, question in questions %}
+    <div class="question-row">
+        {% if inspection.reponses[key] is defined and inspection.reponses[key] %}
+            <span class="ok">✓</span> {{ question }}
+        {% else %}
+            <span class="nok">✗</span> <strong>{{ question }}</strong>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if inspection.observations %}
+    <div class="section-title">💬 OBSERVATIONS</div>
+    <div style="background-color: #f8f9fa; padding: 10px; border-left: 3px solid #6c757d;">
+        {{ inspection.observations|nl2br }}
+    </div>
+    {% endif %}
+
+    <div style="position: fixed; bottom: 20px; width: 100%; text-align: center; font-size: 9px; color: #6c757d;">
+        <p>HSE System - Monte-charge {{ inspection.monteCharge.type }} - {{ inspection.numeroPorte }}</p>
+    </div>
+</body>
+</html>
+

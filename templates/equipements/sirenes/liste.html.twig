@@ -1,0 +1,126 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sirènes - État{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-bell text-warning"></i> Sirènes - État
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-list"></i> Liste des Sirènes</h5>
+          <div>
+            <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
+              <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_equipements_sirenes_nouveau') }}" class="btn btn-primary btn-sm">
+              <i class="fas fa-plus"></i> Ajouter
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <form method="GET" class="row g-3 mb-3">
+            <div class="col-md-5">
+              <label for="zone" class="form-label">Zone</label>
+              <select name="zone" id="zone" class="form-select form-select-sm">
+                <option value="">Toutes les zones</option>
+                {% for key, zone_name in constant('App\\Entity\\Sirene::ZONES_SIRENE') %}
+                  <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <input type="text" name="numerotation" class="form-control form-control-sm"
+                value="{{ search_params.numerotation }}" placeholder="Numéro">
+            </div>
+            <div class="col-md-2">
+              <select name="conformite" class="form-select form-select-sm">
+                <option value="">Tous</option>
+                <option value="conforme" {{ search_params.conformite=='conforme' ? 'selected' : '' }}>Conformes</option>
+                <option value="non_conforme" {{ search_params.conformite=='non_conforme' ? 'selected' : '' }}>Non conformes</option>
+                <option value="non_inspecte" {{ search_params.conformite=='non_inspecte' ? 'selected' : '' }}>Non inspectées</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary btn-sm w-100">
+                <i class="fas fa-search"></i> Filtrer
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          {% if sirenes is not empty %}
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Numéro</th>
+                <th>Zone</th>
+                <th>Emplacement</th>
+                <th>Type</th>
+                <th>État</th>
+                <th>Dernière Inspection</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sirene in sirenes %}
+              <tr>
+                <td><strong>{{ sirene.numerotation }}</strong></td>
+                <td><span class="badge bg-warning">{{ sirene.zone }}</span></td>
+                <td>{{ sirene.emplacement ?? '-' }}</td>
+                <td>{{ sirene.type ?? '-' }}</td>
+                <td>
+                  {% if sirene.statutConformite == 'Conforme' %}
+                  <span class="badge bg-success"><i class="fas fa-check"></i> Conforme</span>
+                  {% elseif sirene.statutConformite == 'Non conforme' %}
+                  <span class="badge bg-danger"><i class="fas fa-times"></i> Non conforme</span>
+                  {% else %}
+                  <span class="badge bg-warning"><i class="fas fa-clock"></i> Non inspecté</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% set derniere = sirene.derniereInspection %}
+                  {{ derniere ? derniere.dateInspection|date('d/m/Y') : '-' }}
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <a href="{{ path('app_equipements_sirene_details', {id: sirene.id}) }}" 
+                       class="btn btn-info btn-sm" title="Voir détails">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ path('app_equipements_sirenes_inspecter', {id: sirene.id}) }}" 
+                       class="btn btn-warning btn-sm" title="Inspecter">
+                      <i class="fas fa-clipboard-check"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucune sirène trouvée</h5>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

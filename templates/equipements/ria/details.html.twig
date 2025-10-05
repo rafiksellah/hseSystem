@@ -78,9 +78,15 @@
         <!-- Actions -->
         <div class="card-footer">
           <div class="d-flex justify-content-between">
-            <a href="{{ path('app_equipements_ria') }}" class="btn btn-outline-secondary">
-              <i class="fas fa-arrow-left"></i> Retour à la liste
-            </a>
+            <div>
+              <a href="{{ path('app_equipements_ria') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+              </a>
+              <a href="{{ path('app_equipements_ria_export_detail_pdf', {id: ria.id}) }}" 
+                 class="btn btn-danger" target="_blank">
+                <i class="fas fa-file-pdf"></i> Export PDF
+              </a>
+            </div>
             <div>
               {% if not ria.valide %}
               <a href="{{ path('app_equipements_ria_valider', {id: ria.id}) }}" 
@@ -109,4 +115,6 @@
   </div>
 </div>
 {% endblock %}
+
+
 

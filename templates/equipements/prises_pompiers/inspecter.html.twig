@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inspecter Prise Pompier{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-clipboard-check text-primary"></i> Inspection Prise Pompier
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-fire-hydrant"></i> Inspection de la Prise Pompier
+          </h5>
+          <a href="{{ path('app_equipements_prises_pompiers') }}" class="btn btn-light btn-sm">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+        <div class="card-body">
+          <!-- Informations de la prise -->
+          <div class="alert alert-info">
+            <div class="row">
+              <div class="col-md-6">
+                <strong><i class="fas fa-info-circle"></i> Informations :</strong><br>
+                Zone : <strong>{{ prise.zone }}</strong><br>
+                Emplacement : <strong>{{ prise.emplacement ?? 'Non spécifié' }}</strong><br>
+                Diamètre : <strong>{{ prise.dimatere ?? 'Non spécifié' }}</strong>
+              </div>
+              <div class="col-md-6 text-end">
+                {% set derniere = prise.derniereInspection %}
+                {% if derniere %}
+                  Dernière inspection : {{ derniere.dateInspection|date('d/m/Y') }}<br>
+                  Par : {{ derniere.inspectePar.fullName }}
+                {% else %}
+                  <span class="text-warning">Jamais inspectée</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <form method="POST" enctype="multipart/form-data">
+            <h6 class="text-primary mb-3">
+              <i class="fas fa-tasks"></i> Critères de contrôle
+            </h6>
+
+            <div class="table-responsive">
+              <table class="table table-bordered">
+                <thead class="table-light">
+                  <tr>
+                    <th width="60%">Critère</th>
+                    <th class="text-center" width="20%">Conforme</th>
+                    <th class="text-center" width="20%">Non Conforme</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for key, label in criteres %}
+                  <tr>
+                    <td>{{ label }}</td>
+                    <td class="text-center">
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="critere_{{ key }}" 
+                               id="critere_{{ key }}_oui" value="oui" required>
+                        <label class="form-check-label text-success" for="critere_{{ key }}_oui">
+                          <i class="fas fa-check"></i> OUI
+                        </label>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="critere_{{ key }}" 
+                               id="critere_{{ key }}_non" value="non" required>
+                        <label class="form-check-label text-danger" for="critere_{{ key }}_non">
+                          <i class="fas fa-times"></i> NON
+                        </label>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="row mt-4">
+              <div class="col-md-8 mb-3">
+                <label for="observations" class="form-label">Observations</label>
+                <textarea class="form-control" id="observations" name="observations" 
+                          rows="4" placeholder="Notez ici vos observations..."></textarea>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label for="photo_observation" class="form-label">Photo (optionnelle)</label>
+                <input type="file" class="form-control" id="photo_observation" 
+                       name="photo_observation" accept="image/*">
+                <small class="text-muted">JPG, PNG - Max 5 Mo</small>
+              </div>
+            </div>
+
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i> 
+              L'état de conformité sera automatiquement calculé selon les critères cochés.
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{{ path('app_equipements_prises_pompiers') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+              </a>
+              <button type="submit" class="btn btn-success btn-lg">
+                <i class="fas fa-check"></i> Enregistrer l'inspection
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

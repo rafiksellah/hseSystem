@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RIA {{ ria.numerotation }}</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 11px;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #17a2b8;
+            padding-bottom: 15px;
+        }
+        .header h1 {
+            color: #17a2b8;
+            margin: 0;
+            font-size: 24px;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .info-label {
+            display: table-cell;
+            font-weight: bold;
+            width: 40%;
+            color: #495057;
+        }
+        .info-value {
+            display: table-cell;
+            width: 60%;
+        }
+        .section-title {
+            background-color: #17a2b8;
+            color: white;
+            padding: 10px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status-box {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .status-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .status-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background-color: #17a2b8;
+            color: white;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête -->
+    <div class="header">
+        <h1>🌊 FICHE RIA</h1>
+        <p style="margin: 5px 0; color: #6c757d;">Robinet d'Incendie Armé</p>
+        <p style="margin: 0; font-size: 10px;">Document généré le {{ date_export|date('d/m/Y à H:i') }}</p>
+    </div>
+
+    <!-- Informations principales -->
+    <div class="info-box">
+        <div class="info-row">
+            <div class="info-label">Numérotation:</div>
+            <div class="info-value"><span class="badge">{{ ria.numerotation }}</span></div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Zone:</div>
+            <div class="info-value">{{ ria.zone }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Agent extincteur:</div>
+            <div class="info-value">{{ ria.agentExtincteur ?? 'Non spécifié' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Diamètre:</div>
+            <div class="info-value">{{ ria.dimatere ? ria.dimatere ~ ' mm' : 'Non spécifié' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Longueur:</div>
+            <div class="info-value">{{ ria.longueur ? ria.longueur ~ ' m' : 'Non spécifiée' }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">Date de création:</div>
+            <div class="info-value">{{ ria.dateCreation|date('d/m/Y à H:i') }}</div>
+        </div>
+    </div>
+
+    <!-- Statut de conformité -->
+    <div class="section-title">
+        📊 ÉTAT DE CONFORMITÉ
+    </div>
+    <div class="status-box {{ ria.statutConformite == 'Conforme' ? 'status-success' : 'status-warning' }}">
+        <strong>État actuel:</strong> {{ ria.statutConformite }}
+        {% if ria.derniereInspection %}
+        <br>
+        <small>Dernière inspection le {{ ria.derniereInspection.dateInspection|date('d/m/Y à H:i') }}</small>
+        <br>
+        <small>Par {{ ria.derniereInspection.inspectePar.fullName }} ({{ ria.derniereInspection.inspectePar.codeAgent }})</small>
+        {% endif %}
+    </div>
+
+    <!-- Statut de validation (ancien système) -->
+    {% if ria.valide %}
+    <div class="section-title">
+        ✅ VALIDATION
+    </div>
+    <div class="status-box status-success">
+        <strong>RIA validé</strong><br>
+        <small>Validé le {{ ria.dateValidation|date('d/m/Y à H:i') }} par {{ ria.validePar.fullName }} ({{ ria.validePar.codeAgent }})</small>
+    </div>
+    {% endif %}
+
+    <!-- Historique des inspections -->
+    {% if ria.nombreInspections > 0 %}
+    <div class="section-title">
+        📋 HISTORIQUE DES INSPECTIONS ({{ ria.nombreInspections }} inspection{{ ria.nombreInspections > 1 ? 's' : '' }})
+    </div>
+    <p style="font-size: 10px; color: #6c757d;">Les {{ ria.nombreInspections }} dernières inspections sont enregistrées dans le système.</p>
+    {% endif %}
+
+    <!-- Pied de page -->
+    <div class="footer">
+        <p>HSE System - Gestion des Équipements de Sécurité Incendie</p>
+        <p>RIA {{ ria.numerotation }} - Zone {{ ria.zone }}</p>
+    </div>
+</body>
+</html>
+

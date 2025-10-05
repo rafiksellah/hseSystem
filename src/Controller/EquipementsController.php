@@ -5,15 +5,37 @@ namespace App\Controller;
 use App\Entity\Extincteur;
 use App\Entity\InspectionExtincteur;
 use App\Entity\RIA;
+use App\Entity\InspectionRIA;
 use App\Entity\MonteCharge;
 use App\Entity\InspectionMonteCharge;
+use App\Entity\PrisePompier;
+use App\Entity\InspectionPrisePompier;
+use App\Entity\IssueSecours;
+use App\Entity\InspectionIssueSecours;
+use App\Entity\Sirene;
+use App\Entity\InspectionSirene;
+use App\Entity\Desenfumage;
+use App\Entity\InspectionDesenfumage;
+use App\Entity\ExtinctionLocaliseeRAM;
+use App\Entity\InspectionExtinctionRAM;
 use App\Entity\User;
 use App\Entity\RapportHSE;
 use App\Repository\ExtincteurRepository;
 use App\Repository\RIARepository;
+use App\Repository\InspectionRIARepository;
 use App\Repository\MonteChargeRepository;
 use App\Repository\InspectionExtincteurRepository;
 use App\Repository\InspectionMonteChargeRepository;
+use App\Repository\PrisePompierRepository;
+use App\Repository\InspectionPrisePompierRepository;
+use App\Repository\IssueSecoursRepository;
+use App\Repository\InspectionIssueSecoursRepository;
+use App\Repository\SireneRepository;
+use App\Repository\InspectionSireneRepository;
+use App\Repository\DesenfumageRepository;
+use App\Repository\InspectionDesenfumageRepository;
+use App\Repository\ExtinctionLocaliseeRAMRepository;
+use App\Repository\InspectionExtinctionRAMRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -74,7 +96,7 @@ class EquipementsController extends AbstractController
             'zone' => '',
             'emplacement' => $request->query->get('emplacement', ''),
             'numerotation' => $request->query->get('numerotation', ''),
-            'valide' => $request->query->get('valide', '')
+            'conformite' => $request->query->get('conformite', '')
         ];
 
         // Filtrer par zone pour les non-super-admins (pour les permissions)
@@ -82,14 +104,32 @@ class EquipementsController extends AbstractController
             $searchParams['zone'] = $user->getZone();
         }
 
-        $extincteurs = $extincteurRepository->searchExtincteurs(
-            $searchParams,
-            $limit,
-            ($page - 1) * $limit
+        // Récupérer tous les extincteurs (sans filtre de validation)
+        $allExtincteurs = $extincteurRepository->searchExtincteurs(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000, // Récupérer plus pour filtrer après
+            0
         );
 
-        $totalExtincteurs = $extincteurRepository->countSearchExtincteurs($searchParams);
+        // Filtrer par conformité si nécessaire
+        if (!empty($searchParams['conformite'])) {
+            $allExtincteurs = array_filter($allExtincteurs, function($extincteur) use ($searchParams) {
+                $conformite = $extincteur->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allExtincteurs = array_values($allExtincteurs); // Réindexer le tableau
+        }
+
+        // Pagination manuelle
+        $totalExtincteurs = count($allExtincteurs);
         $totalPages = ceil($totalExtincteurs / $limit);
+        $offset = ($page - 1) * $limit;
+        $extincteurs = array_slice($allExtincteurs, $offset, $limit);
 
         // Emplacements disponibles selon la zone de l'utilisateur
         $emplacementsDisponibles = [];
@@ -127,7 +167,7 @@ class EquipementsController extends AbstractController
             'zone' => '',
             'emplacement' => $request->query->get('emplacement', ''),
             'numerotation' => $request->query->get('numerotation', ''),
-            'valide' => $request->query->get('valide', '')
+            'conformite' => $request->query->get('conformite', '')
         ];
 
         // Filtrer par zone pour les non-super-admins (pour les permissions)
@@ -135,14 +175,32 @@ class EquipementsController extends AbstractController
             $searchParams['zone'] = $user->getZone();
         }
 
-        $extincteurs = $extincteurRepository->searchExtincteurs(
-            $searchParams,
-            $limit,
-            ($page - 1) * $limit
+        // Récupérer tous les extincteurs (sans filtre de validation)
+        $allExtincteurs = $extincteurRepository->searchExtincteurs(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000, // Récupérer plus pour filtrer après
+            0
         );
 
-        $totalExtincteurs = $extincteurRepository->countSearchExtincteurs($searchParams);
+        // Filtrer par conformité si nécessaire
+        if (!empty($searchParams['conformite'])) {
+            $allExtincteurs = array_filter($allExtincteurs, function($extincteur) use ($searchParams) {
+                $conformite = $extincteur->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allExtincteurs = array_values($allExtincteurs); // Réindexer le tableau
+        }
+
+        // Pagination manuelle
+        $totalExtincteurs = count($allExtincteurs);
         $totalPages = ceil($totalExtincteurs / $limit);
+        $offset = ($page - 1) * $limit;
+        $extincteurs = array_slice($allExtincteurs, $offset, $limit);
 
         // Emplacements disponibles selon la zone de l'utilisateur
         $emplacementsDisponibles = [];
@@ -275,10 +333,17 @@ class EquipementsController extends AbstractController
     #[Route('/extincteurs/inspections', name: 'app_equipements_inspections')]
     public function inspections(
         ExtincteurRepository $extincteurRepository,
-        InspectionExtincteurRepository $inspectionRepository
+        InspectionExtincteurRepository $inspectionRepository,
+        Request $request
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
+
+        // Paramètres de recherche
+        $searchParams = [
+            'numerotation' => $request->query->get('numerotation', ''),
+            'conformite' => $request->query->get('conformite', '')
+        ];
 
         // Obtenir les extincteurs disponibles pour inspection
         $extincteurs = [];
@@ -288,6 +353,29 @@ class EquipementsController extends AbstractController
             $extincteurs = $extincteurRepository->findBy(['zone' => $user->getZone()]);
         }
 
+        // Filtrer par numérotation
+        if (!empty($searchParams['numerotation'])) {
+            $extincteurs = array_filter($extincteurs, function($extincteur) use ($searchParams) {
+                return stripos($extincteur->getNumerotation(), $searchParams['numerotation']) !== false;
+            });
+        }
+
+        // Filtrer par conformité
+        if (!empty($searchParams['conformite'])) {
+            $extincteurs = array_filter($extincteurs, function($extincteur) use ($searchParams) {
+                $conformite = $extincteur->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+        }
+
+        // Réindexer le tableau
+        $extincteurs = array_values($extincteurs);
+
         // Obtenir les dernières inspections
         $inspections = $inspectionRepository->getInspectionsAvecDetails();
 
@@ -295,6 +383,7 @@ class EquipementsController extends AbstractController
             'extincteurs' => $extincteurs,
             'inspections' => $inspections,
             'user_zone' => $user->getZone(),
+            'search_params' => $searchParams,
         ]);
     }
 
@@ -385,17 +474,35 @@ class EquipementsController extends AbstractController
         $searchParams = [
             'zone' => $request->query->get('zone', ''),
             'numerotation' => $request->query->get('numerotation', ''),
-            'valide' => $request->query->get('valide', '')
+            'conformite' => $request->query->get('conformite', '')
         ];
 
-        $rias = $riaRepository->searchRIA(
-            $searchParams,
-            $limit,
-            ($page - 1) * $limit
+        // Récupérer tous les RIA
+        $allRias = $riaRepository->searchRIA(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000,
+            0
         );
 
-        $totalRIAs = $riaRepository->countSearchRIA($searchParams);
+        // Filtrer par conformité
+        if (!empty($searchParams['conformite'])) {
+            $allRias = array_filter($allRias, function($ria) use ($searchParams) {
+                $conformite = $ria->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allRias = array_values($allRias);
+        }
+
+        // Pagination
+        $totalRIAs = count($allRias);
         $totalPages = ceil($totalRIAs / $limit);
+        $offset = ($page - 1) * $limit;
+        $rias = array_slice($allRias, $offset, $limit);
 
         // Les zones RIA sont fixes (pas liées à SIMTIS/TISSAGE)
         $zonesDisponibles = RIA::ZONES_RIA;
@@ -504,6 +611,65 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/ria/valider.html.twig', [
             'ria' => $ria,
+        ]);
+    }
+
+    #[Route('/ria/{id}/inspecter', name: 'app_equipements_ria_inspecter')]
+    public function inspecterRIA(
+        RIA $ria,
+        EntityManagerInterface $entityManager,
+        InspectionRIARepository $inspectionRepository,
+        Request $request,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Vérifier s'il y a déjà une inspection récente
+        $derniereInspection = $inspectionRepository->getDerniereInspection($ria->getId());
+        if ($derniereInspection && $derniereInspection->getDateInspection() > new \DateTime('-1 day')) {
+            $this->addFlash('error', 'Ce RIA a déjà été inspecté récemment');
+            return $this->redirectToRoute('app_equipements_ria');
+        }
+
+        if ($request->isMethod('POST')) {
+            $inspection = new InspectionRIA();
+            $inspection->setRia($ria);
+            $inspection->setInspectePar($user);
+
+            $criteres = [];
+            foreach (InspectionRIA::CRITERES as $key => $label) {
+                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
+            }
+
+            $inspection->setCriteres($criteres);
+            $inspection->setObservations($request->request->get('observations'));
+            $inspection->setValide(!in_array(false, $criteres, true));
+
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move($this->getParameter('photos_directory'), $newFilename);
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
+
+            $entityManager->persist($inspection);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Inspection RIA enregistrée avec succès !');
+            return $this->redirectToRoute('app_equipements_ria');
+        }
+
+        return $this->render('equipements/ria/inspecter.html.twig', [
+            'ria' => $ria,
+            'criteres' => InspectionRIA::CRITERES,
         ]);
     }
 
@@ -926,6 +1092,38 @@ class EquipementsController extends AbstractController
         return $this->redirectToRoute('app_equipements_inspections');
     }
 
+    /**
+     * Export PDF - Détail d'une inspection extincteur
+     */
+    #[Route('/inspection/{id}/export-pdf', name: 'app_equipements_inspection_export_pdf')]
+    public function exportInspectionExtincteurPDF(InspectionExtincteur $inspection): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/extincteurs/pdf_inspection_detail.html.twig', [
+            'inspection' => $inspection,
+            'criteres' => InspectionExtincteur::CRITERES,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="inspection_extincteur_' . $inspection->getExtincteur()->getNumerotation() . '_' . date('Y-m-d') . '.pdf"'
+            ]
+        );
+    }
+
     #[Route('/monte-charge-inspection/{id}/details', name: 'app_equipements_monte_charge_inspection_details')]
     public function voirDetailsInspectionMonteCharge(
         InspectionMonteCharge $inspection
@@ -955,6 +1153,38 @@ class EquipementsController extends AbstractController
         }
 
         return $this->redirectToRoute('app_equipements_monte_charge');
+    }
+
+    /**
+     * Export PDF - Détail d'une inspection monte-charge
+     */
+    #[Route('/monte-charge-inspection/{id}/export-pdf', name: 'app_equipements_monte_charge_inspection_export_pdf')]
+    public function exportInspectionMonteChargePDF(InspectionMonteCharge $inspection): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/monte_charge/pdf_inspection_detail.html.twig', [
+            'inspection' => $inspection,
+            'questions' => InspectionMonteCharge::QUESTIONS,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="inspection_monte_charge_' . $inspection->getMonteCharge()->getType() . '_' . $inspection->getNumeroPorte() . '_' . date('Y-m-d') . '.pdf"'
+            ]
+        );
     }
 
     // Méthode utilitaire pour initialiser les monte-charges par défaut
@@ -1199,5 +1429,949 @@ class EquipementsController extends AbstractController
                 'Content-Disposition' => 'attachment; filename="etat_ria_' . date('Y-m-d_His') . '.pdf"'
             ]
         );
+    }
+
+    /**
+     * Export PDF - Détail d'un RIA spécifique
+     */
+    #[Route('/ria/{id}/export-pdf', name: 'app_equipements_ria_export_detail_pdf')]
+    public function exportRIADetailPDF(RIA $ria): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/ria/pdf_detail.html.twig', [
+            'ria' => $ria,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="ria_' . $ria->getNumerotation() . '_' . date('Y-m-d') . '.pdf"'
+            ]
+        );
+    }
+
+    // =============== PRISES POMPIERS - ÉTAT ===============
+
+    #[Route('/prises-pompiers', name: 'app_equipements_prises_pompiers')]
+    public function prisesPompiers(
+        PrisePompierRepository $prisePompierRepository,
+        Request $request
+    ): Response {
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'emplacement' => $request->query->get('emplacement', ''),
+            'conformite' => $request->query->get('conformite', '')
+        ];
+
+        $allPrises = $prisePompierRepository->searchPrisesPompiers(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000,
+            0
+        );
+
+        // Filtrer par conformité
+        if (!empty($searchParams['conformite'])) {
+            $allPrises = array_filter($allPrises, function($prise) use ($searchParams) {
+                $conformite = $prise->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allPrises = array_values($allPrises);
+        }
+
+        $totalPrises = count($allPrises);
+        $totalPages = ceil($totalPrises / $limit);
+        $offset = ($page - 1) * $limit;
+        $prises = array_slice($allPrises, $offset, $limit);
+
+        return $this->render('equipements/prises_pompiers/liste.html.twig', [
+            'prises' => $prises,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'search_params' => $searchParams,
+        ]);
+    }
+
+    #[Route('/prises-pompiers/nouveau', name: 'app_equipements_prises_pompiers_nouveau')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function nouveauPrisePompier(
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $prise = new PrisePompier();
+
+        if ($request->isMethod('POST')) {
+            $prise->setZone($request->request->get('zone'));
+            $prise->setEmplacement($request->request->get('emplacement'));
+            $prise->setDimatere($request->request->get('dimatere'));
+
+            $entityManager->persist($prise);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Prise pompier ajoutée avec succès !');
+            return $this->redirectToRoute('app_equipements_prises_pompiers');
+        }
+
+        return $this->render('equipements/prises_pompiers/nouveau.html.twig', [
+            'prise' => $prise,
+            'zones_disponibles' => PrisePompier::ZONES_PRISES,
+            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES,
+            'diametres_disponibles' => PrisePompier::DIAMETRES_DISPONIBLES,
+        ]);
+    }
+
+    #[Route('/prises-pompiers/{id}/modifier', name: 'app_equipements_prises_pompiers_modifier')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function modifierPrisePompier(
+        PrisePompier $prise,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if ($request->isMethod('POST')) {
+            $prise->setZone($request->request->get('zone'));
+            $prise->setEmplacement($request->request->get('emplacement'));
+            $prise->setDimatere($request->request->get('dimatere'));
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Prise pompier modifiée avec succès !');
+            return $this->redirectToRoute('app_equipements_prises_pompiers');
+        }
+
+        return $this->render('equipements/prises_pompiers/modifier.html.twig', [
+            'prise' => $prise,
+            'zones_disponibles' => PrisePompier::ZONES_PRISES,
+            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES,
+            'diametres_disponibles' => PrisePompier::DIAMETRES_DISPONIBLES,
+        ]);
+    }
+
+    #[Route('/prises-pompiers/{id}/supprimer', name: 'app_equipements_prises_pompiers_supprimer')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    public function supprimerPrisePompier(
+        PrisePompier $prise,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            $identifiant = $prise->getIdentifiant();
+            $entityManager->remove($prise);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'La prise pompier (' . $identifiant . ') a été supprimée avec succès.');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_equipements_prises_pompiers');
+    }
+
+    #[Route('/prises-pompiers/{id}/details', name: 'app_equipements_prise_pompier_details')]
+    public function detailsPrisePompier(PrisePompier $prise): Response
+    {
+        return $this->render('equipements/prises_pompiers/details.html.twig', [
+            'prise' => $prise,
+        ]);
+    }
+
+    #[Route('/prises-pompiers/{id}/export-pdf', name: 'app_equipements_prise_pompier_export_detail_pdf')]
+    public function exportPrisePompierDetailPDF(PrisePompier $prise): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/prises_pompiers/pdf_detail.html.twig', [
+            'prise' => $prise,
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="prise_pompier_' . $prise->getId() . '_' . date('Ymd') . '.pdf"'
+            ]
+        );
+    }
+
+    #[Route('/prises-pompiers/{id}/inspecter', name: 'app_equipements_prises_pompiers_inspecter')]
+    public function inspecterPrisePompier(
+        PrisePompier $prise,
+        EntityManagerInterface $entityManager,
+        InspectionPrisePompierRepository $inspectionRepository,
+        Request $request,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Vérifier s'il y a déjà une inspection récente (optionnel pour prises pompiers)
+        $derniereInspection = $inspectionRepository->getDerniereInspection($prise->getId());
+        if ($derniereInspection && $derniereInspection->getDateInspection() > new \DateTime('-1 day')) {
+            $this->addFlash('warning', 'Cette prise pompier a déjà été inspectée il y a moins de 24h');
+            // On ne bloque pas, on affiche juste un warning
+        }
+
+        if ($request->isMethod('POST')) {
+            $inspection = new InspectionPrisePompier();
+            $inspection->setPrisePompier($prise);
+            $inspection->setInspectePar($user);
+
+            $criteres = [];
+            foreach (InspectionPrisePompier::CRITERES as $key => $label) {
+                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
+            }
+
+            $inspection->setCriteres($criteres);
+            $inspection->setObservations($request->request->get('observations'));
+            $inspection->setValide(!in_array(false, $criteres, true));
+
+            // Gérer l'upload de photo
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move($this->getParameter('photos_directory'), $newFilename);
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
+
+            $entityManager->persist($inspection);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Inspection enregistrée avec succès !');
+            return $this->redirectToRoute('app_equipements_prises_pompiers');
+        }
+
+        return $this->render('equipements/prises_pompiers/inspecter.html.twig', [
+            'prise' => $prise,
+            'criteres' => InspectionPrisePompier::CRITERES,
+        ]);
+    }
+
+    // =============== ISSUES DE SECOURS - ÉTAT ===============
+
+    #[Route('/issues-secours', name: 'app_equipements_issues_secours')]
+    public function issuesSecours(
+        IssueSecoursRepository $issueSecoursRepository,
+        Request $request
+    ): Response {
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'conformite' => $request->query->get('conformite', '')
+        ];
+
+        $allIssues = $issueSecoursRepository->searchIssuesSecours(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000,
+            0
+        );
+
+        if (!empty($searchParams['conformite'])) {
+            $allIssues = array_filter($allIssues, function($issue) use ($searchParams) {
+                $conformite = $issue->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allIssues = array_values($allIssues);
+        }
+
+        $totalIssues = count($allIssues);
+        $totalPages = ceil($totalIssues / $limit);
+        $offset = ($page - 1) * $limit;
+        $issues = array_slice($allIssues, $offset, $limit);
+
+        return $this->render('equipements/issues_secours/liste.html.twig', [
+            'issues' => $issues,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'search_params' => $searchParams,
+        ]);
+    }
+
+    #[Route('/issues-secours/nouveau', name: 'app_equipements_issues_secours_nouveau')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function nouveauIssueSecours(
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $issue = new IssueSecours();
+
+        if ($request->isMethod('POST')) {
+            $issue->setNumerotation($request->request->get('numerotation'));
+            $issue->setZone($request->request->get('zone'));
+            $issue->setType($request->request->get('type'));
+            $issue->setBarreAntipanique($request->request->get('barre_antipanique'));
+
+            $entityManager->persist($issue);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Issue de secours ajoutée avec succès !');
+            return $this->redirectToRoute('app_equipements_issues_secours');
+        }
+
+        return $this->render('equipements/issues_secours/nouveau.html.twig', [
+            'issue' => $issue,
+            'zones_disponibles' => IssueSecours::ZONES_ISSUES,
+            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES,
+            'types_disponibles' => IssueSecours::TYPES_ISSUES,
+            'etats_barre' => IssueSecours::ETAT_BARRE,
+        ]);
+    }
+
+    #[Route('/issues-secours/{id}/modifier', name: 'app_equipements_issues_secours_modifier')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function modifierIssueSecours(
+        IssueSecours $issue,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        if ($request->isMethod('POST')) {
+            $issue->setZone($request->request->get('zone'));
+            $issue->setNumerotation($request->request->get('numerotation'));
+            $issue->setType($request->request->get('type'));
+            $issue->setBarreAntipanique($request->request->get('barre_antipanique'));
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Issue de secours modifiée avec succès !');
+            return $this->redirectToRoute('app_equipements_issues_secours');
+        }
+
+        return $this->render('equipements/issues_secours/modifier.html.twig', [
+            'issue' => $issue,
+            'zones_disponibles' => IssueSecours::ZONES_ISSUES,
+            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES,
+            'types_disponibles' => IssueSecours::TYPES_ISSUES,
+            'etats_barre' => IssueSecours::ETAT_BARRE,
+        ]);
+    }
+
+    #[Route('/issues-secours/{id}/supprimer', name: 'app_equipements_issues_secours_supprimer')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    public function supprimerIssueSecours(
+        IssueSecours $issue,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            $identifiant = $issue->getZone() . ' - ' . $issue->getNumerotation();
+            $entityManager->remove($issue);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'L\'issue de secours (' . $identifiant . ') a été supprimée avec succès.');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_equipements_issues_secours');
+    }
+
+    #[Route('/issues-secours/{id}/details', name: 'app_equipements_issue_secours_details')]
+    public function detailsIssueSecours(IssueSecours $issue): Response
+    {
+        return $this->render('equipements/issues_secours/details.html.twig', [
+            'issue' => $issue,
+        ]);
+    }
+
+    #[Route('/issues-secours/{id}/export-pdf', name: 'app_equipements_issue_secours_export_detail_pdf')]
+    public function exportIssueSecoursDetailPDF(IssueSecours $issue): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/issues_secours/pdf_detail.html.twig', [
+            'issue' => $issue,
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="issue_secours_' . $issue->getId() . '_' . date('Ymd') . '.pdf"'
+            ]
+        );
+    }
+
+    #[Route('/issues-secours/{id}/inspecter', name: 'app_equipements_issues_secours_inspecter')]
+    public function inspecterIssueSecours(
+        IssueSecours $issue,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if ($request->isMethod('POST')) {
+            $inspection = new InspectionIssueSecours();
+            $inspection->setIssueSecours($issue);
+            $inspection->setInspectePar($user);
+
+            $criteres = [];
+            foreach (InspectionIssueSecours::CRITERES as $key => $label) {
+                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
+            }
+
+            $inspection->setCriteres($criteres);
+            $inspection->setObservations($request->request->get('observations'));
+            $inspection->setValide(!in_array(false, $criteres, true));
+
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move($this->getParameter('photos_directory'), $newFilename);
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
+
+            $entityManager->persist($inspection);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Inspection enregistrée avec succès !');
+            return $this->redirectToRoute('app_equipements_issues_secours');
+        }
+
+        return $this->render('equipements/issues_secours/inspecter.html.twig', [
+            'issue' => $issue,
+            'criteres' => InspectionIssueSecours::CRITERES,
+        ]);
+    }
+
+    // =============== SIRENES - ÉTAT ===============
+
+    #[Route('/sirenes', name: 'app_equipements_sirenes')]
+    public function sirenes(
+        SireneRepository $sireneRepository,
+        Request $request
+    ): Response {
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'conformite' => $request->query->get('conformite', '')
+        ];
+
+        $allSirenes = $sireneRepository->searchSirenes(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000,
+            0
+        );
+
+        if (!empty($searchParams['conformite'])) {
+            $allSirenes = array_filter($allSirenes, function($sirene) use ($searchParams) {
+                $conformite = $sirene->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allSirenes = array_values($allSirenes);
+        }
+
+        $totalSirenes = count($allSirenes);
+        $totalPages = ceil($totalSirenes / $limit);
+        $offset = ($page - 1) * $limit;
+        $sirenes = array_slice($allSirenes, $offset, $limit);
+
+        return $this->render('equipements/sirenes/liste.html.twig', [
+            'sirenes' => $sirenes,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'search_params' => $searchParams,
+        ]);
+    }
+
+    #[Route('/sirenes/nouveau', name: 'app_equipements_sirenes_nouveau')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function nouveauSirene(
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $sirene = new Sirene();
+
+        if ($request->isMethod('POST')) {
+            $sirene->setNumerotation($request->request->get('numerotation'));
+            $sirene->setZone($request->request->get('zone'));
+            $sirene->setEmplacement($request->request->get('emplacement'));
+            $sirene->setType($request->request->get('type'));
+
+            $entityManager->persist($sirene);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Sirène ajoutée avec succès !');
+            return $this->redirectToRoute('app_equipements_sirenes');
+        }
+
+        return $this->render('equipements/sirenes/nouveau.html.twig', [
+            'sirene' => $sirene,
+            'zones_disponibles' => Sirene::ZONES_SIRENE,
+            'emplacements_disponibles' => Sirene::EMPLACEMENTS_SIRENE,
+        ]);
+    }
+
+    #[Route('/sirenes/{id}/details', name: 'app_equipements_sirene_details')]
+    public function detailsSirene(Sirene $sirene): Response
+    {
+        return $this->render('equipements/sirenes/details.html.twig', [
+            'sirene' => $sirene,
+        ]);
+    }
+
+    #[Route('/sirenes/{id}/export-pdf', name: 'app_equipements_sirene_export_detail_pdf')]
+    public function exportSireneDetailPDF(Sirene $sirene): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/sirenes/pdf_detail.html.twig', [
+            'sirene' => $sirene,
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="sirene_' . $sirene->getId() . '_' . date('Ymd') . '.pdf"'
+            ]
+        );
+    }
+
+    #[Route('/sirenes/{id}/inspecter', name: 'app_equipements_sirenes_inspecter')]
+    public function inspecterSirene(
+        Sirene $sirene,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if ($request->isMethod('POST')) {
+            $inspection = new InspectionSirene();
+            $inspection->setSirene($sirene);
+            $inspection->setInspectePar($user);
+
+            $criteres = [];
+            foreach (InspectionSirene::CRITERES as $key => $label) {
+                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
+            }
+
+            $inspection->setCriteres($criteres);
+            $inspection->setObservations($request->request->get('observations'));
+            $inspection->setValide(!in_array(false, $criteres, true));
+
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move($this->getParameter('photos_directory'), $newFilename);
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
+
+            $entityManager->persist($inspection);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Inspection enregistrée avec succès !');
+            return $this->redirectToRoute('app_equipements_sirenes');
+        }
+
+        return $this->render('equipements/sirenes/inspecter.html.twig', [
+            'sirene' => $sirene,
+            'criteres' => InspectionSirene::CRITERES,
+        ]);
+    }
+
+    // =============== DÉSENFUMAGE - ÉTAT ===============
+
+    #[Route('/desenfumage', name: 'app_equipements_desenfumage')]
+    public function desenfumage(
+        DesenfumageRepository $desenfumageRepository,
+        Request $request
+    ): Response {
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'conformite' => $request->query->get('conformite', '')
+        ];
+
+        $allDesenfumages = $desenfumageRepository->searchDesenfumages(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000,
+            0
+        );
+
+        if (!empty($searchParams['conformite'])) {
+            $allDesenfumages = array_filter($allDesenfumages, function($desenfumage) use ($searchParams) {
+                $conformite = $desenfumage->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allDesenfumages = array_values($allDesenfumages);
+        }
+
+        $totalDesenfumages = count($allDesenfumages);
+        $totalPages = ceil($totalDesenfumages / $limit);
+        $offset = ($page - 1) * $limit;
+        $desenfumages = array_slice($allDesenfumages, $offset, $limit);
+
+        return $this->render('equipements/desenfumage/liste.html.twig', [
+            'desenfumages' => $desenfumages,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'search_params' => $searchParams,
+        ]);
+    }
+
+    #[Route('/desenfumage/nouveau', name: 'app_equipements_desenfumage_nouveau')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function nouveauDesenfumage(
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $desenfumage = new Desenfumage();
+
+        if ($request->isMethod('POST')) {
+            $desenfumage->setNumerotation($request->request->get('numerotation'));
+            $desenfumage->setZone($request->request->get('zone'));
+            $desenfumage->setEmplacement($request->request->get('emplacement'));
+            $desenfumage->setType($request->request->get('type'));
+            $desenfumage->setEtatCommande($request->request->get('etat_commande'));
+            $desenfumage->setEtatSkydome($request->request->get('etat_skydome'));
+
+            $entityManager->persist($desenfumage);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Désenfumage ajouté avec succès !');
+            return $this->redirectToRoute('app_equipements_desenfumage');
+        }
+
+        return $this->render('equipements/desenfumage/nouveau.html.twig', [
+            'desenfumage' => $desenfumage,
+        ]);
+    }
+
+    #[Route('/desenfumage/{id}/details', name: 'app_equipements_desenfumage_details')]
+    public function detailsDesenfumage(Desenfumage $desenfumage): Response
+    {
+        return $this->render('equipements/desenfumage/details.html.twig', [
+            'desenfumage' => $desenfumage,
+        ]);
+    }
+
+    #[Route('/desenfumage/{id}/export-pdf', name: 'app_equipements_desenfumage_export_detail_pdf')]
+    public function exportDesenfumageDetailPDF(Desenfumage $desenfumage): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/desenfumage/pdf_detail.html.twig', [
+            'desenfumage' => $desenfumage,
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="desenfumage_' . $desenfumage->getId() . '_' . date('Ymd') . '.pdf"'
+            ]
+        );
+    }
+
+    #[Route('/desenfumage/{id}/inspecter', name: 'app_equipements_desenfumage_inspecter')]
+    public function inspecterDesenfumage(
+        Desenfumage $desenfumage,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if ($request->isMethod('POST')) {
+            $inspection = new InspectionDesenfumage();
+            $inspection->setDesenfumage($desenfumage);
+            $inspection->setInspectePar($user);
+
+            $criteres = [];
+            foreach (InspectionDesenfumage::CRITERES as $key => $label) {
+                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
+            }
+
+            $inspection->setCriteres($criteres);
+            $inspection->setObservations($request->request->get('observations'));
+            $inspection->setValide(!in_array(false, $criteres, true));
+
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move($this->getParameter('photos_directory'), $newFilename);
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
+
+            $entityManager->persist($inspection);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Inspection enregistrée avec succès !');
+            return $this->redirectToRoute('app_equipements_desenfumage');
+        }
+
+        return $this->render('equipements/desenfumage/inspecter.html.twig', [
+            'desenfumage' => $desenfumage,
+            'criteres' => InspectionDesenfumage::CRITERES,
+        ]);
+    }
+
+    // =============== EXTINCTION LOCALISÉE RAM ===============
+
+    #[Route('/extinction-ram', name: 'app_equipements_extinction_ram')]
+    public function extinctionRAM(
+        ExtinctionLocaliseeRAMRepository $extinctionRAMRepository,
+        Request $request
+    ): Response {
+        $page = $request->query->getInt('page', 1);
+        $limit = 20;
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'conformite' => $request->query->get('conformite', '')
+        ];
+
+        $allExtinctions = $extinctionRAMRepository->searchExtinctionsRAM(
+            array_diff_key($searchParams, ['conformite' => '']),
+            1000,
+            0
+        );
+
+        if (!empty($searchParams['conformite'])) {
+            $allExtinctions = array_filter($allExtinctions, function($extinction) use ($searchParams) {
+                $conformite = $extinction->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allExtinctions = array_values($allExtinctions);
+        }
+
+        $totalExtinctions = count($allExtinctions);
+        $totalPages = ceil($totalExtinctions / $limit);
+        $offset = ($page - 1) * $limit;
+        $extinctions = array_slice($allExtinctions, $offset, $limit);
+
+        return $this->render('equipements/extinction_ram/liste.html.twig', [
+            'extinctions' => $extinctions,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'search_params' => $searchParams,
+        ]);
+    }
+
+    #[Route('/extinction-ram/nouveau', name: 'app_equipements_extinction_ram_nouveau')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function nouveauExtinctionRAM(
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $extinction = new ExtinctionLocaliseeRAM();
+
+        if ($request->isMethod('POST')) {
+            $extinction->setNumerotation($request->request->get('numerotation'));
+            $extinction->setZone($request->request->get('zone'));
+            $extinction->setEmplacement($request->request->get('emplacement'));
+            $extinction->setType($request->request->get('type'));
+            $extinction->setVanne($request->request->get('vanne'));
+
+            $entityManager->persist($extinction);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Système d\'extinction RAM ajouté avec succès !');
+            return $this->redirectToRoute('app_equipements_extinction_ram');
+        }
+
+        return $this->render('equipements/extinction_ram/nouveau.html.twig', [
+            'extinction' => $extinction,
+        ]);
+    }
+
+    #[Route('/extinction-ram/{id}/details', name: 'app_equipements_extinction_ram_details')]
+    public function detailsExtinctionRAM(ExtinctionLocaliseeRAM $ram): Response
+    {
+        return $this->render('equipements/extinction_ram/details.html.twig', [
+            'ram' => $ram,
+        ]);
+    }
+
+    #[Route('/extinction-ram/{id}/export-pdf', name: 'app_equipements_extinction_ram_export_detail_pdf')]
+    public function exportExtinctionRAMDetailPDF(ExtinctionLocaliseeRAM $ram): Response
+    {
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/extinction_ram/pdf_detail.html.twig', [
+            'ram' => $ram,
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="extinction_ram_' . $ram->getId() . '_' . date('Ymd') . '.pdf"'
+            ]
+        );
+    }
+
+    #[Route('/extinction-ram/{id}/inspecter', name: 'app_equipements_extinction_ram_inspecter')]
+    public function inspecterExtinctionRAM(
+        ExtinctionLocaliseeRAM $extinction,
+        EntityManagerInterface $entityManager,
+        Request $request,
+        SluggerInterface $slugger
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if ($request->isMethod('POST')) {
+            $inspection = new InspectionExtinctionRAM();
+            $inspection->setExtinctionLocaliseeRAM($extinction);
+            $inspection->setInspectePar($user);
+
+            $criteres = [];
+            foreach (InspectionExtinctionRAM::CRITERES as $key => $label) {
+                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
+            }
+
+            $inspection->setCriteres($criteres);
+            $inspection->setObservations($request->request->get('observations'));
+            $inspection->setValide(!in_array(false, $criteres, true));
+
+            $photoFile = $request->files->get('photo_observation');
+            if ($photoFile) {
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $photoFile->guessExtension();
+
+                try {
+                    $photoFile->move($this->getParameter('photos_directory'), $newFilename);
+                    $inspection->setPhotoObservation($newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors du téléchargement de la photo');
+                }
+            }
+
+            $entityManager->persist($inspection);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Inspection enregistrée avec succès !');
+            return $this->redirectToRoute('app_equipements_extinction_ram');
+        }
+
+        return $this->render('equipements/extinction_ram/inspecter.html.twig', [
+            'extinction' => $extinction,
+            'criteres' => InspectionExtinctionRAM::CRITERES,
+        ]);
     }
 }

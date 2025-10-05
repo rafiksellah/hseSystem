@@ -78,9 +78,15 @@
 
       <!-- Actions -->
       <div class="d-flex justify-content-between">
-        <a href="{{ path('app_equipements_monte_charge') }}" class="btn btn-outline-secondary">
-          <i class="fas fa-arrow-left"></i> Retour à la liste
-        </a>
+        <div>
+          <a href="{{ path('app_equipements_monte_charge') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Retour à la liste
+          </a>
+          <a href="{{ path('app_equipements_monte_charge_inspection_export_pdf', {id: inspection.id}) }}" 
+             class="btn btn-danger" target="_blank">
+            <i class="fas fa-file-pdf"></i> Export PDF
+          </a>
+        </div>
         <div>
           {% if is_granted('ROLE_SUPER_ADMIN') %}
           <a href="{{ path('app_equipements_monte_charge_inspection_supprimer', {id: inspection.id}) }}" 

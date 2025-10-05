@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Détails Prise Pompier - {{ prise.identifiant }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #0d6efd;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            color: #0d6efd;
+            margin: 5px 0;
+            font-size: 24px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        .section-title {
+            background-color: #0d6efd;
+            color: white;
+            padding: 8px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        table th {
+            background-color: #f8f9fa;
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+            font-weight: bold;
+            width: 35%;
+        }
+        table td {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .badge-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        .badge-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .badge-primary {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 10px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
+        }
+        .inspections-table {
+            font-size: 10px;
+        }
+        .inspections-table th {
+            background-color: #e9ecef;
+            font-size: 10px;
+        }
+        .inspections-table td {
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>DÉTAILS PRISE POMPIER</h1>
+        <p style="margin: 5px 0; color: #6c757d;">{{ prise.zone }} - {{ prise.emplacement ?? 'Sans emplacement' }}</p>
+        <p style="margin: 5px 0; font-size: 11px;">Édité le {{ "now"|date('d/m/Y à H:i') }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📍 INFORMATIONS GÉNÉRALES</div>
+        <table>
+            <tr>
+                <th>Zone :</th>
+                <td>{{ prise.zone }}</td>
+            </tr>
+            <tr>
+                <th>Emplacement :</th>
+                <td>{{ prise.emplacement ?? '-' }}</td>
+            </tr>
+            <tr>
+                <th>Diamètre :</th>
+                <td><strong>{{ prise.dimatere ?? '-' }}</strong></td>
+            </tr>
+            <tr>
+                <th>Date de création :</th>
+                <td>{{ prise.dateCreation|date('d/m/Y à H:i') }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">📊 ÉTAT ET INSPECTIONS</div>
+        <table>
+            <tr>
+                <th>État actuel :</th>
+                <td>
+                    {% set conformite = prise.statutConformite %}
+                    {% if conformite == 'Conforme' %}
+                        <span class="badge badge-success">✓ CONFORME</span>
+                    {% elseif conformite == 'Non conforme' %}
+                        <span class="badge badge-danger">✗ NON CONFORME</span>
+                    {% else %}
+                        <span class="badge badge-secondary">? NON INSPECTÉ</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Nombre total d'inspections :</th>
+                <td><strong>{{ prise.nombreInspections }}</strong></td>
+            </tr>
+            {% set derniere = prise.derniereInspection %}
+            {% if derniere %}
+            <tr>
+                <th>Dernière inspection :</th>
+                <td>{{ derniere.dateInspection|date('d/m/Y à H:i') }}</td>
+            </tr>
+            <tr>
+                <th>Inspectée par :</th>
+                <td>{{ derniere.inspectePar.fullName }}</td>
+            </tr>
+            <tr>
+                <th>Résultat dernière inspection :</th>
+                <td>
+                    {% if derniere.valide %}
+                        <span class="badge badge-success">✓ CONFORME</span>
+                    {% else %}
+                        <span class="badge badge-danger">✗ NON CONFORME</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    {% if prise.inspections|length > 0 %}
+    <div class="section">
+        <div class="section-title">📋 HISTORIQUE DES INSPECTIONS</div>
+        <table class="inspections-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Inspecteur</th>
+                    <th>Résultat</th>
+                    <th>Critères OK</th>
+                    <th>Observations</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inspection in prise.inspections|sort((a, b) => b.dateInspection <=> a.dateInspection) %}
+                <tr>
+                    <td>{{ inspection.dateInspection|date('d/m/Y H:i') }}</td>
+                    <td>{{ inspection.inspectePar.fullName }}</td>
+                    <td>
+                        {% if inspection.valide %}
+                            <span class="badge badge-success">✓ OK</span>
+                        {% else %}
+                            <span class="badge badge-danger">✗ NOK</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: center;">
+                        {{ inspection.criteres|length }}/{{ constant('App\\Entity\\InspectionPrisePompier::CRITERES')|length }}
+                    </td>
+                    <td>{{ inspection.observations|default('-')|u.truncate(100, '...') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        <p><strong>Document généré automatiquement</strong></p>
+        <p>Prise Pompier - {{ prise.zone }} - {{ prise.emplacement ?? 'Sans emplacement' }}</p>
+        <p>Date d'édition : {{ "now"|date('d/m/Y à H:i') }}</p>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,177 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails Sirène - {{ sirene.zone }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-bell"></i> Détails Sirène
+          </h5>
+          <div>
+            <a href="{{ path('app_equipements_sirene_export_detail_pdf', {id: sirene.id}) }}" 
+               class="btn btn-danger btn-sm me-2" target="_blank">
+              <i class="fas fa-file-pdf"></i> Exporter PDF
+            </a>
+            <a href="{{ path('app_equipements_sirenes') }}" class="btn btn-light btn-sm">
+              <i class="fas fa-arrow-left"></i> Retour
+            </a>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Informations générales -->
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="text-warning border-bottom pb-2">
+                <i class="fas fa-info-circle"></i> Informations Générales
+              </h6>
+              <table class="table table-sm">
+                <tr>
+                  <th width="40%">Zone :</th>
+                  <td><span class="badge bg-warning">{{ sirene.zone }}</span></td>
+                </tr>
+                <tr>
+                  <th>Emplacement :</th>
+                  <td>{{ sirene.emplacement ?? '-' }}</td>
+                </tr>
+                <tr>
+                  <th>Numérotation :</th>
+                  <td><strong>{{ sirene.numerotation }}</strong></td>
+                </tr>
+                <tr>
+                  <th>Type :</th>
+                  <td>{{ sirene.type ?? '-' }}</td>
+                </tr>
+                <tr>
+                  <th>Date de création :</th>
+                  <td>{{ sirene.dateCreation|date('d/m/Y à H:i') }}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div class="col-md-6">
+              <h6 class="text-warning border-bottom pb-2">
+                <i class="fas fa-clipboard-check"></i> État et Inspections
+              </h6>
+              <table class="table table-sm">
+                <tr>
+                  <th width="40%">État actuel :</th>
+                  <td>
+                    {% set conformite = sirene.statutConformite %}
+                    {% if conformite == 'Conforme' %}
+                      <span class="badge bg-success">
+                        <i class="fas fa-check-circle"></i> Conforme
+                      </span>
+                    {% elseif conformite == 'Non conforme' %}
+                      <span class="badge bg-danger">
+                        <i class="fas fa-times-circle"></i> Non conforme
+                      </span>
+                    {% else %}
+                      <span class="badge bg-secondary">
+                        <i class="fas fa-question-circle"></i> Non inspecté
+                      </span>
+                    {% endif %}
+                  </td>
+                </tr>
+                <tr>
+                  <th>Nombre d'inspections :</th>
+                  <td><strong>{{ sirene.nombreInspections }}</strong></td>
+                </tr>
+                {% set derniere = sirene.derniereInspection %}
+                {% if derniere %}
+                <tr>
+                  <th>Dernière inspection :</th>
+                  <td>{{ derniere.dateInspection|date('d/m/Y') }}</td>
+                </tr>
+                <tr>
+                  <th>Inspectée par :</th>
+                  <td>{{ derniere.inspectePar.fullName }}</td>
+                </tr>
+                {% endif %}
+              </table>
+
+              {% if is_granted('ROLE_USER') %}
+              <div class="mt-3">
+                <a href="{{ path('app_equipements_sirenes_inspecter', {id: sirene.id}) }}" 
+                   class="btn btn-warning btn-sm w-100">
+                  <i class="fas fa-clipboard-check"></i> Effectuer une inspection
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Historique des inspections -->
+          <h6 class="text-warning border-bottom pb-2 mb-3">
+            <i class="fas fa-history"></i> Historique des Inspections
+          </h6>
+
+          {% if sirene.inspections|length > 0 %}
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Inspecté par</th>
+                  <th>Résultat</th>
+                  <th>Critères validés</th>
+                  <th>Observations</th>
+                  <th>Photo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inspection in sirene.inspections|sort((a, b) => b.dateInspection <=> a.dateInspection) %}
+                <tr>
+                  <td>{{ inspection.dateInspection|date('d/m/Y à H:i') }}</td>
+                  <td>{{ inspection.inspectePar.fullName }}</td>
+                  <td>
+                    {% if inspection.valide %}
+                      <span class="badge bg-success">
+                        <i class="fas fa-check-circle"></i> Conforme
+                      </span>
+                    {% else %}
+                      <span class="badge bg-danger">
+                        <i class="fas fa-times-circle"></i> Non conforme
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <strong>{{ inspection.criteres|length }}</strong> / {{ constant('App\\Entity\\InspectionSirene::CRITERES')|length }}
+                  </td>
+                  <td>
+                    {% if inspection.observations %}
+                      <small>{{ inspection.observations|u.truncate(50, '...') }}</small>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    {% if inspection.photoObservation %}
+                      <a href="{{ asset('uploads/' ~ inspection.photoObservation) }}" target="_blank" class="btn btn-sm btn-outline-info">
+                        <i class="fas fa-image"></i>
+                      </a>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> Aucune inspection enregistrée pour cette sirène.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

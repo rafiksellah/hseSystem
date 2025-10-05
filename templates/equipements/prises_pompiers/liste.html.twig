@@ -1,11 +1,9 @@
-{# templates/equipements/extincteurs/liste.html.twig - MODIFIÉE #}
 {% extends 'base.html.twig' %}
 
-{% block title %}Extincteurs - État{% endblock %}
+{% block title %}Prises Pompiers - État{% endblock %}
 
 {% block page_title %}
-<i class="fas fa-fire-extinguisher text-danger"></i> Extincteurs - État
-<small class="text-muted">Vérification et validation</small>
+<i class="fas fa-fire-hydrant text-danger"></i> Prises Pompiers - État
 {% endblock %}
 
 {% block body %}
@@ -16,25 +14,14 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
-            <i class="fas fa-list"></i> Liste des Extincteurs
-            {% if not is_granted('ROLE_SUPER_ADMIN') %}
-            - Zone {{ user_zone }}
-            {% endif %}
+            <i class="fas fa-list"></i> Liste des Prises Pompiers
           </h5>
           <div>
             <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
               <i class="fas fa-arrow-left"></i> Retour
             </a>
-            <a href="{{ path('app_equipements_extincteurs_export_excel', app.request.query.all) }}" 
-               class="btn btn-success btn-sm me-2">
-              <i class="fas fa-file-excel"></i> Export Excel
-            </a>
-            <a href="{{ path('app_equipements_extincteurs_export_pdf', app.request.query.all) }}" 
-               class="btn btn-danger btn-sm me-2">
-              <i class="fas fa-file-pdf"></i> Export PDF
-            </a>
             {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
-            <a href="{{ path('app_equipements_extincteurs_nouveau') }}" class="btn btn-primary btn-sm">
+            <a href="{{ path('app_equipements_prises_pompiers_nouveau') }}" class="btn btn-primary btn-sm">
               <i class="fas fa-plus"></i> Ajouter
             </a>
             {% endif %}
@@ -44,20 +31,18 @@
           <!-- Filtres -->
           <form method="GET" class="row g-3 mb-3">
             <div class="col-md-4">
-              <label for="emplacement" class="form-label">Emplacement</label>
-              <select name="emplacement" id="emplacement" class="form-select form-select-sm">
-                <option value="">Tous les emplacements</option>
-                {% for key, empl in emplacements_disponibles %}
-                <option value="{{ empl }}" {{ search_params.emplacement==empl ? 'selected' : '' }}>
-                  {{ empl }}
-                </option>
+              <label for="zone" class="form-label">Zone</label>
+              <select name="zone" id="zone" class="form-select form-select-sm">
+                <option value="">Toutes les zones</option>
+                {% for key, zone_name in constant('App\\Entity\\PrisePompier::ZONES_PRISES') %}
+                  <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>
             </div>
             <div class="col-md-3">
-              <label for="numerotation" class="form-label">Numéro</label>
-              <input type="text" name="numerotation" id="numerotation" class="form-control form-control-sm"
-                value="{{ search_params.numerotation }}" placeholder="Ex: 4, 133...">
+              <label for="emplacement" class="form-label">Emplacement</label>
+              <input type="text" name="emplacement" id="emplacement" class="form-control form-control-sm"
+                value="{{ search_params.emplacement }}" placeholder="Ex: ENTREE GRATTAGE">
             </div>
             <div class="col-md-2">
               <label for="conformite" class="form-label">État</label>
@@ -72,7 +57,7 @@
               <button type="submit" class="btn btn-primary btn-sm me-2">
                 <i class="fas fa-search"></i> Filtrer
               </button>
-              <a href="{{ path('app_equipements_extincteurs') }}" class="btn btn-outline-secondary btn-sm">
+              <a href="{{ path('app_equipements_prises_pompiers') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="fas fa-undo"></i> Reset
               </a>
             </div>
@@ -82,40 +67,32 @@
     </div>
   </div>
 
-  <!-- Liste des extincteurs -->
+  <!-- Liste des prises -->
   <div class="row">
     <div class="col-12">
       <div class="card">
         <div class="card-body">
-          {% if extincteurs is not empty %}
+          {% if prises is not empty %}
           <div class="table-responsive">
             <table class="table table-hover">
               <thead class="table-light">
                 <tr>
-                  <th>Numéro</th>
                   <th>Zone</th>
                   <th>Emplacement</th>
-                  <th>Type</th>
-                  <th>Capacité</th>
+                  <th>Diamètre</th>
                   <th>État</th>
                   <th>Dernière Inspection</th>
-                  <th width="200">Actions</th> {# Largeur fixe pour les actions #}
+                  <th width="200">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {% for extincteur in extincteurs %}
+                {% for prise in prises %}
                 <tr>
-                  <td><strong>{{ extincteur.numerotation }}</strong></td>
+                  <td><span class="badge bg-primary">{{ prise.zone }}</span></td>
+                  <td>{{ prise.emplacement ?? '-' }}</td>
+                  <td class="text-center"><strong>{{ prise.dimatere ?? '-' }}</strong></td>
                   <td>
-                    <span class="badge {{ extincteur.zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
-                      {{ extincteur.zone }}
-                    </span>
-                  </td>
-                  <td>{{ extincteur.emplacement ?? 'Non spécifié' }}</td>
-                  <td>{{ extincteur.type ?? 'Non spécifié' }}</td>
-                  <td>{{ extincteur.capacite ?? 'Non spécifiée' }}</td>
-                  <td>
-                    {% set conformite = extincteur.statutConformite %}
+                    {% set conformite = prise.statutConformite %}
                     {% if conformite == 'Conforme' %}
                     <span class="badge bg-success">
                       <i class="fas fa-check-circle"></i> Conforme
@@ -131,7 +108,7 @@
                     {% endif %}
                   </td>
                   <td>
-                    {% set derniere = extincteur.derniereInspection %}
+                    {% set derniere = prise.derniereInspection %}
                     {% if derniere %}
                     <small>
                       {{ derniere.dateInspection|date('d/m/Y') }}<br>
@@ -143,36 +120,25 @@
                   </td>
                   <td>
                     <div class="btn-group-vertical d-flex gap-1" role="group">
-                      {% set derniere = extincteur.derniereInspection %}
-                      {% if derniere %}
-                        <a href="{{ path('app_equipements_inspection_details', {id: derniere.id}) }}" 
-                           class="btn btn-info btn-sm" title="Voir inspection">
-                          <i class="fas fa-eye"></i>
-                        </a>
-                        {% if is_granted('ROLE_ADMIN') %}
-                          <a href="{{ path('app_equipements_inspection_modifier', {id: derniere.id}) }}" 
-                             class="btn btn-warning btn-sm" title="Modifier inspection">
-                            <i class="fas fa-edit"></i>
-                          </a>
-                        {% endif %}
-                      {% else %}
-                        <a href="{{ path('app_equipements_extincteurs_inspecter', {id: extincteur.id}) }}" 
-                           class="btn btn-primary btn-sm" title="Inspecter">
-                          <i class="fas fa-clipboard-check"></i> Inspecter
-                        </a>
-                      {% endif %}
+                      <a href="{{ path('app_equipements_prise_pompier_details', {id: prise.id}) }}" 
+                         class="btn btn-info btn-sm" title="Voir détails">
+                        <i class="fas fa-eye"></i> Voir détails
+                      </a>
+                      <a href="{{ path('app_equipements_prises_pompiers_inspecter', {id: prise.id}) }}" 
+                         class="btn btn-primary btn-sm" title="Inspecter">
+                        <i class="fas fa-clipboard-check"></i> Inspecter
+                      </a>
                       
                       {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
-                      <!-- Boutons d'administration -->
                       <div class="btn-group btn-group-sm mt-1" role="group">
-                        <a href="{{ path('app_equipements_extincteurs_modifier', {'id': extincteur.id}) }}"
+                        <a href="{{ path('app_equipements_prises_pompiers_modifier', {'id': prise.id}) }}"
                           class="btn btn-outline-secondary" title="Modifier">
                           <i class="fas fa-cog"></i>
                         </a>
                         {% if is_granted('ROLE_SUPER_ADMIN') %}
-                        <a href="{{ path('app_equipements_extincteurs_supprimer', {'id': extincteur.id}) }}"
+                        <a href="{{ path('app_equipements_prises_pompiers_supprimer', {'id': prise.id}) }}"
                           class="btn btn-outline-danger"
-                          data-confirm="Êtes-vous sûr de vouloir supprimer l'extincteur {{ extincteur.numerotation }} ?"
+                          onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette prise pompier ?')"
                           title="Supprimer">
                           <i class="fas fa-trash"></i>
                         </a>
@@ -193,9 +159,9 @@
             <ul class="pagination justify-content-center">
               {% for page in 1..total_pages %}
               <li class="page-item {{ page == current_page ? 'active' : '' }}">
-                <a class="page-link" href="{{ path('app_equipements_extincteurs', {
+                <a class="page-link" href="{{ path('app_equipements_prises_pompiers', {
                                     page: page,
-                                    emplacement: search_params.emplacement,
+                                    zone: search_params.zone,
                                     numerotation: search_params.numerotation,
                                     conformite: search_params.conformite
                                 }) }}">{{ page }}</a>
@@ -207,11 +173,11 @@
 
           {% else %}
           <div class="text-center py-5">
-            <i class="fas fa-fire-extinguisher fa-3x text-muted mb-3"></i>
-            <h5 class="text-muted">Aucun extincteur trouvé</h5>
+            <i class="fas fa-fire-hydrant fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucune prise pompier trouvée</h5>
             {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
-            <a href="{{ path('app_equipements_extincteurs_nouveau') }}" class="btn btn-primary mt-2">
-              <i class="fas fa-plus"></i> Ajouter le premier extincteur
+            <a href="{{ path('app_equipements_prises_pompiers_nouveau') }}" class="btn btn-primary mt-2">
+              <i class="fas fa-plus"></i> Ajouter la première prise pompier
             </a>
             {% endif %}
           </div>
@@ -222,3 +188,4 @@
   </div>
 </div>
 {% endblock %}
+

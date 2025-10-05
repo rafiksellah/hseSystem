@@ -4,7 +4,7 @@
 
 {% block page_title %}
 <i class="fas fa-tools text-primary"></i> Gestion des Équipements
-<small class="text-muted">Extincteurs, RIA et Monte-charge</small>
+<small class="text-muted">8 Équipements de sécurité incendie</small>
 {% endblock %}
 
 {% block body %}
@@ -23,40 +23,80 @@
             <!-- Extincteurs - État -->
             <div class="col-lg-3 col-md-6">
               <a href="{{ path('app_equipements_extincteurs') }}"
-                class="btn btn-outline-danger btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                <i class="fas fa-fire-extinguisher fa-3x mb-3"></i>
-                <h5>Extincteurs - État</h5>
-                <small class="text-muted">Vérification et validation</small>
-              </a>
-            </div>
-
-            <!-- Inspection MLCI -->
-            <div class="col-lg-3 col-md-6">
-              <a href="{{ path('app_equipements_inspections') }}"
-                class="btn btn-outline-warning btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                <i class="fas fa-clipboard-check fa-3x mb-3"></i>
-                <h5>Inspection MLCI</h5>
-                <small class="text-muted">Contrôle de conformité</small>
+                class="btn btn-outline-danger btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-fire-extinguisher fa-2x mb-2"></i>
+                <h6 class="mb-1">Extincteurs</h6>
+                <small class="text-muted">Base de données & Inspections</small>
               </a>
             </div>
 
             <!-- RIA - État -->
             <div class="col-lg-3 col-md-6">
               <a href="{{ path('app_equipements_ria') }}"
-                class="btn btn-outline-info btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                <i class="fas fa-tint fa-3x mb-3"></i>
-                <h5>RIA - État</h5>
+                class="btn btn-outline-info btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-tint fa-2x mb-2"></i>
+                <h6 class="mb-1">RIA</h6>
                 <small class="text-muted">Robinets d'Incendie Armés</small>
+              </a>
+            </div>
+
+            <!-- Prises Pompiers -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_prises_pompiers') }}"
+                class="btn btn-outline-primary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-fire-hydrant fa-2x mb-2"></i>
+                <h6 class="mb-1">Prises Pompiers</h6>
+                <small class="text-muted">Points de raccordement</small>
+              </a>
+            </div>
+
+            <!-- Extinction RAM -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_extinction_ram') }}"
+                class="btn btn-outline-danger btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-spray-can fa-2x mb-2"></i>
+                <h6 class="mb-1">Extinction RAM</h6>
+                <small class="text-muted">Extinction localisée</small>
+              </a>
+            </div>
+
+            <!-- Désenfumage -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_desenfumage') }}"
+                class="btn btn-outline-secondary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-wind fa-2x mb-2"></i>
+                <h6 class="mb-1">Désenfumage</h6>
+                <small class="text-muted">Systèmes de désenfumage</small>
+              </a>
+            </div>
+
+            <!-- Sirènes -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_sirenes') }}"
+                class="btn btn-outline-warning btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-bell fa-2x mb-2"></i>
+                <h6 class="mb-1">Sirènes</h6>
+                <small class="text-muted">Alarmes sonores</small>
+              </a>
+            </div>
+
+            <!-- Issues de Secours -->
+            <div class="col-lg-3 col-md-6">
+              <a href="{{ path('app_equipements_issues_secours') }}"
+                class="btn btn-outline-success btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-door-open fa-2x mb-2"></i>
+                <h6 class="mb-1">Issues de Secours</h6>
+                <small class="text-muted">Voies d'évacuation</small>
               </a>
             </div>
 
             <!-- Monte-charge Tefil -->
             <div class="col-lg-3 col-md-6">
               <a href="{{ path('app_equipements_monte_charge') }}"
-                class="btn btn-outline-success btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
-                <i class="fas fa-elevator fa-3x mb-3"></i>
-                <h5>Monte-charge Tefil</h5>
-                <small class="text-muted">Inspection des portes</small>
+                class="btn btn-outline-dark btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-3">
+                <i class="fas fa-elevator fa-2x mb-2"></i>
+                <h6 class="mb-1">Monte-charge</h6>
+                <small class="text-muted">MLCI - Inspection portes</small>
               </a>
             </div>
           </div>
@@ -209,13 +249,13 @@
 
 <style>
   .btn-lg.w-100.h-100 {
-    min-height: 180px;
+    min-height: 140px;
     transition: all 0.3s ease;
   }
 
   .btn-lg.w-100.h-100:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   }
 
   .card {

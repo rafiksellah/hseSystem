@@ -24,6 +24,33 @@
             <i class="fas fa-arrow-left"></i> Retour
           </a>
         </div>
+        <div class="card-body">
+          <!-- Filtre de recherche -->
+          <form method="GET" class="row g-3">
+            <div class="col-md-4">
+              <label for="numerotation" class="form-label">Rechercher par numéro</label>
+              <input type="text" name="numerotation" id="numerotation" class="form-control form-control-sm"
+                value="{{ search_params.numerotation ?? '' }}" placeholder="Ex: 4, 133...">
+            </div>
+            <div class="col-md-3">
+              <label for="conformite" class="form-label">État</label>
+              <select name="conformite" id="conformite" class="form-select form-select-sm">
+                <option value="">Tous</option>
+                <option value="conforme" {{ (search_params.conformite ?? '') == 'conforme' ? 'selected' : '' }}>Conformes</option>
+                <option value="non_conforme" {{ (search_params.conformite ?? '') == 'non_conforme' ? 'selected' : '' }}>Non conformes</option>
+                <option value="non_inspecte" {{ (search_params.conformite ?? '') == 'non_inspecte' ? 'selected' : '' }}>Non inspectés</option>
+              </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button type="submit" class="btn btn-primary btn-sm me-2">
+                <i class="fas fa-search"></i> Filtrer
+              </button>
+              <a href="{{ path('app_equipements_inspections') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-undo"></i> Reset
+              </a>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

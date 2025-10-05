@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Extinction Localisée RAM - État{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-fire-extinguisher text-danger"></i> Extinction Localisée RAM
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between">
+          <h5><i class="fas fa-list"></i> Systèmes d'Extinction RAM</h5>
+          <div>
+            <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
+              <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_equipements_extinction_ram_nouveau') }}" class="btn btn-primary btn-sm">
+              <i class="fas fa-plus"></i> Ajouter
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Filtres de recherche -->
+          <form method="GET" class="row g-3 mb-3">
+            <div class="col-md-5">
+              <label for="zone" class="form-label">Zone</label>
+              <select name="zone" id="zone" class="form-select form-select-sm">
+                <option value="">Toutes les zones</option>
+                {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES_RAM') %}
+                  <option value="{{ zone_name }}" {{ app.request.get('zone') == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label for="numerotation" class="form-label">Numérotation</label>
+              <input type="text" name="numerotation" id="numerotation" class="form-control form-control-sm"
+                value="{{ app.request.get('numerotation') }}" placeholder="Ex: RAM-001">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">&nbsp;</label>
+              <button type="submit" class="btn btn-primary btn-sm w-100">
+                <i class="fas fa-search"></i> Rechercher
+              </button>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">&nbsp;</label>
+              <a href="{{ path('app_equipements_extinction_ram') }}" class="btn btn-secondary btn-sm w-100">
+                <i class="fas fa-redo"></i> Réinitialiser
+              </a>
+            </div>
+          </form>
+
+          {% if extinctions is not empty %}
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>Numéro</th>
+                <th>Zone</th>
+                <th>Emplacement</th>
+                <th>Type</th>
+                <th>Vanne</th>
+                <th>État</th>
+                <th>Dernière Inspection</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for extinction in extinctions %}
+              <tr>
+                <td><strong>{{ extinction.numerotation }}</strong></td>
+                <td><span class="badge bg-danger">{{ extinction.zone }}</span></td>
+                <td>{{ extinction.emplacement ?? '-' }}</td>
+                <td>{{ extinction.type ?? '-' }}</td>
+                <td>{{ extinction.vanne ?? '-' }}</td>
+                <td>
+                  {% if extinction.statutConformite == 'Conforme' %}
+                  <span class="badge bg-success">Conforme</span>
+                  {% elseif extinction.statutConformite == 'Non conforme' %}
+                  <span class="badge bg-danger">Non conforme</span>
+                  {% else %}
+                  <span class="badge bg-warning">Non inspecté</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% set derniere = extinction.derniereInspection %}
+                  {{ derniere ? derniere.dateInspection|date('d/m/Y') : '-' }}
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <a href="{{ path('app_equipements_extinction_ram_details', {id: extinction.id}) }}" 
+                       class="btn btn-info btn-sm" title="Voir détails">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ path('app_equipements_extinction_ram_inspecter', {id: extinction.id}) }}" 
+                       class="btn btn-danger btn-sm" title="Inspecter">
+                      <i class="fas fa-clipboard-check"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="fas fa-fire-extinguisher fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Aucun système trouvé</h5>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
