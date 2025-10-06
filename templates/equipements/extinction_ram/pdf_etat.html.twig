@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>État des Extinctions Localisées RAM</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 9px;
+            margin: 10px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .header .info {
+            font-size: 10px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 3px;
+            text-align: left;
+        }
+        th {
+            background-color: #4472C4;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .conforme {
+            background-color: #c6efce;
+            color: #006100;
+            font-weight: bold;
+        }
+        .non-conforme {
+            background-color: #ffc7ce;
+            color: #9c0006;
+            font-weight: bold;
+        }
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ÉTAT DES EXTINCTIONS LOCALISÉES RAM</h1>
+        <div class="info">
+            Export généré le {{ date_export|date('d/m/Y à H:i') }} | 
+            Total: {{ extinctions|length }} système(s)
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Zone</th>
+                <th>Emplacement</th>
+                <th>Type</th>
+                <th>Vanne</th>
+                <th>Statut</th>
+                <th>Dernière Insp.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for extinction in extinctions %}
+            <tr>
+                <td style="text-align: center; font-weight: bold;">{{ extinction.numerotation }}</td>
+                <td style="text-align: center;">{{ extinction.zone }}</td>
+                <td>{{ extinction.emplacement ?? '-' }}</td>
+                <td>{{ extinction.type ?? '-' }}</td>
+                <td>{{ extinction.vanne ?? '-' }}</td>
+                <td style="text-align: center;" class="{{ extinction.statutConformite == 'Conforme' ? 'conforme' : (extinction.statutConformite == 'Non conforme' ? 'non-conforme' : '') }}">
+                    {{ extinction.statutConformite }}
+                </td>
+                <td style="text-align: center;">
+                    {% set derniere = extinction.derniereInspection %}
+                    {{ derniere ? derniere.dateInspection|date('d/m/Y') : '-' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Système HSE - État des Extinctions Localisées RAM
+    </div>
+</body>
+</html>
+

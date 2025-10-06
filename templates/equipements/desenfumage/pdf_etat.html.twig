@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>État des Systèmes de Désenfumage</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 9px;
+            margin: 10px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .header .info {
+            font-size: 10px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 3px;
+            text-align: left;
+        }
+        th {
+            background-color: #4472C4;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .conforme {
+            background-color: #c6efce;
+            color: #006100;
+            font-weight: bold;
+        }
+        .non-conforme {
+            background-color: #ffc7ce;
+            color: #9c0006;
+            font-weight: bold;
+        }
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ÉTAT DES SYSTÈMES DE DÉSENFUMAGE</h1>
+        <div class="info">
+            Export généré le {{ date_export|date('d/m/Y à H:i') }} | 
+            Total: {{ desenfumages|length }} système(s)
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Zone</th>
+                <th>Emplacement</th>
+                <th>Type</th>
+                <th>État Commande</th>
+                <th>État Skydome</th>
+                <th>Statut</th>
+                <th>Dernière Insp.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for desenfumage in desenfumages %}
+            <tr>
+                <td style="text-align: center; font-weight: bold;">{{ desenfumage.numerotation }}</td>
+                <td style="text-align: center;">{{ desenfumage.zone }}</td>
+                <td>{{ desenfumage.emplacement ?? '-' }}</td>
+                <td>{{ desenfumage.type ?? '-' }}</td>
+                <td>{{ desenfumage.etatCommande ?? '-' }}</td>
+                <td>{{ desenfumage.etatSkydome ?? '-' }}</td>
+                <td style="text-align: center;" class="{{ desenfumage.statutConformite == 'Conforme' ? 'conforme' : (desenfumage.statutConformite == 'Non conforme' ? 'non-conforme' : '') }}">
+                    {{ desenfumage.statutConformite }}
+                </td>
+                <td style="text-align: center;">
+                    {% set derniere = desenfumage.derniereInspection %}
+                    {{ derniere ? derniere.dateInspection|date('d/m/Y') : '-' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Système HSE - État des Systèmes de Désenfumage
+    </div>
+</body>
+</html>
+

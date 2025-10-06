@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>État des Issues de Secours</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 9px;
+            margin: 10px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .header .info {
+            font-size: 10px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 3px;
+            text-align: left;
+        }
+        th {
+            background-color: #4472C4;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .conforme {
+            background-color: #c6efce;
+            color: #006100;
+            font-weight: bold;
+        }
+        .non-conforme {
+            background-color: #ffc7ce;
+            color: #9c0006;
+            font-weight: bold;
+        }
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ÉTAT DES ISSUES DE SECOURS</h1>
+        <div class="info">
+            Export généré le {{ date_export|date('d/m/Y à H:i') }} | 
+            Total: {{ issues|length }} issue(s)
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Zone</th>
+                <th>Type</th>
+                <th>Barre Antipanique</th>
+                <th>Statut</th>
+                <th>Dernière Insp.</th>
+                <th>Inspecteur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for issue in issues %}
+            <tr>
+                <td style="text-align: center; font-weight: bold;">{{ issue.numerotation }}</td>
+                <td style="text-align: center;">{{ issue.zone }}</td>
+                <td>{{ issue.type ?? '-' }}</td>
+                <td style="text-align: center;">{{ issue.barreAntipanique ?? '-' }}</td>
+                <td style="text-align: center;" class="{{ issue.statutConformite == 'Conforme' ? 'conforme' : (issue.statutConformite == 'Non conforme' ? 'non-conforme' : '') }}">
+                    {{ issue.statutConformite }}
+                </td>
+                <td style="text-align: center;">
+                    {% set derniere = issue.derniereInspection %}
+                    {{ derniere ? derniere.dateInspection|date('d/m/Y') : '-' }}
+                </td>
+                <td style="text-align: center;">
+                    {% set derniere = issue.derniereInspection %}
+                    {{ derniere ? derniere.inspectePar.codeAgent : '-' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Système HSE - État des Issues de Secours
+    </div>
+</body>
+</html>
+

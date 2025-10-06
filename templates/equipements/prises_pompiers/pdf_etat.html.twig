@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>État des Prises Pompiers</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 9px;
+            margin: 10px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .header .info {
+            font-size: 10px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 3px;
+            text-align: left;
+        }
+        th {
+            background-color: #4472C4;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .conforme {
+            background-color: #c6efce;
+            color: #006100;
+            font-weight: bold;
+        }
+        .non-conforme {
+            background-color: #ffc7ce;
+            color: #9c0006;
+            font-weight: bold;
+        }
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ÉTAT DES PRISES POMPIERS</h1>
+        <div class="info">
+            Export généré le {{ date_export|date('d/m/Y à H:i') }} | 
+            Total: {{ prises|length }} prise(s)
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Zone</th>
+                <th>Emplacement</th>
+                <th>Diamètre</th>
+                <th>Statut</th>
+                <th>Dernière Insp.</th>
+                <th>Inspecteur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prise in prises %}
+            <tr>
+                <td style="text-align: center; font-weight: bold;">{{ prise.zone }}</td>
+                <td>{{ prise.emplacement ?? '-' }}</td>
+                <td style="text-align: center;">{{ prise.dimatere ?? '-' }}</td>
+                <td style="text-align: center;" class="{{ prise.statutConformite == 'Conforme' ? 'conforme' : (prise.statutConformite == 'Non conforme' ? 'non-conforme' : '') }}">
+                    {{ prise.statutConformite }}
+                </td>
+                <td style="text-align: center;">
+                    {% set derniere = prise.derniereInspection %}
+                    {{ derniere ? derniere.dateInspection|date('d/m/Y') : '-' }}
+                </td>
+                <td style="text-align: center;">
+                    {% set derniere = prise.derniereInspection %}
+                    {{ derniere ? derniere.inspectePar.codeAgent : '-' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Système HSE - État des Prises Pompiers
+    </div>
+</body>
+</html>
+

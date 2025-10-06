@@ -2374,4 +2374,855 @@ class EquipementsController extends AbstractController
             'criteres' => InspectionExtinctionRAM::CRITERES,
         ]);
     }
+
+    // =============== EXPORTS EXCEL ET PDF ===============
+
+    /**
+     * Export Excel - État des RIA
+     */
+    #[Route('/ria/export-excel', name: 'app_equipements_ria_export_excel')]
+    public function exportRIAExcel(
+        RIARepository $riaRepository,
+        Request $request
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'valide' => $request->query->get('valide', '')
+        ];
+
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
+            $searchParams['zone'] = $user->getZone();
+        }
+
+        $rias = $riaRepository->searchRIA($searchParams, 1000, 0);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('État RIA');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'Numéro');
+        $sheet->setCellValue('B1', 'Zone');
+        $sheet->setCellValue('C1', 'Agent Extincteur');
+        $sheet->setCellValue('D1', 'Diamètre');
+        $sheet->setCellValue('E1', 'Longueur');
+        $sheet->setCellValue('F1', 'Statut');
+        $sheet->setCellValue('G1', 'Dernière Inspection');
+        $sheet->setCellValue('H1', 'Nb Inspections');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:H1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($rias as $ria) {
+            $sheet->setCellValue('A' . $row, $ria->getNumerotation());
+            $sheet->setCellValue('B' . $row, $ria->getZone());
+            $sheet->setCellValue('C' . $row, $ria->getAgentExtincteur() ?? '-');
+            $sheet->setCellValue('D' . $row, $ria->getDimatere() ? $ria->getDimatere() . 'mm' : '-');
+            $sheet->setCellValue('E' . $row, $ria->getLongueur() ? $ria->getLongueur() . 'm' : '-');
+            $sheet->setCellValue('F' . $row, $ria->getStatutConformite());
+            
+            $derniereInspection = $ria->getDerniereInspection();
+            $sheet->setCellValue('G' . $row, $derniereInspection ? $derniereInspection->getDateInspection()->format('d/m/Y') : '-');
+            $sheet->setCellValue('H' . $row, $ria->getNombreInspections());
+
+            // Coloration conditionnelle
+            if ($ria->getStatutConformite() == 'Conforme') {
+                $sheet->getStyle('F' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } elseif ($ria->getStatutConformite() == 'Non conforme') {
+                $sheet->getStyle('F' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'etat_ria_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export Excel - Désenfumage
+     */
+    #[Route('/desenfumage/export-excel', name: 'app_equipements_desenfumage_export_excel')]
+    public function exportDesenfumageExcel(
+        DesenfumageRepository $desenfumageRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $desenfumages = $desenfumageRepository->searchDesenfumages($searchParams, 1000, 0);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Désenfumage');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'Numéro');
+        $sheet->setCellValue('B1', 'Zone');
+        $sheet->setCellValue('C1', 'Emplacement');
+        $sheet->setCellValue('D1', 'Type');
+        $sheet->setCellValue('E1', 'État Commande');
+        $sheet->setCellValue('F1', 'État Skydome');
+        $sheet->setCellValue('G1', 'Statut');
+        $sheet->setCellValue('H1', 'Dernière Inspection');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:H1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($desenfumages as $desenfumage) {
+            $sheet->setCellValue('A' . $row, $desenfumage->getNumerotation());
+            $sheet->setCellValue('B' . $row, $desenfumage->getZone());
+            $sheet->setCellValue('C' . $row, $desenfumage->getEmplacement() ?? '-');
+            $sheet->setCellValue('D' . $row, $desenfumage->getType() ?? '-');
+            $sheet->setCellValue('E' . $row, $desenfumage->getEtatCommande() ?? '-');
+            $sheet->setCellValue('F' . $row, $desenfumage->getEtatSkydome() ?? '-');
+            $sheet->setCellValue('G' . $row, $desenfumage->getStatutConformite());
+            
+            $derniereInspection = $desenfumage->getDerniereInspection();
+            $sheet->setCellValue('H' . $row, $derniereInspection ? $derniereInspection->getDateInspection()->format('d/m/Y') : '-');
+
+            // Coloration conditionnelle
+            if ($desenfumage->getStatutConformite() == 'Conforme') {
+                $sheet->getStyle('G' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } elseif ($desenfumage->getStatutConformite() == 'Non conforme') {
+                $sheet->getStyle('G' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'desenfumage_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export PDF - Désenfumage
+     */
+    #[Route('/desenfumage/export-pdf', name: 'app_equipements_desenfumage_export_pdf')]
+    public function exportDesenfumagePDF(
+        DesenfumageRepository $desenfumageRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $desenfumages = $desenfumageRepository->searchDesenfumages($searchParams, 1000, 0);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/desenfumage/pdf_etat.html.twig', [
+            'desenfumages' => $desenfumages,
+            'search_params' => $searchParams,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="desenfumage_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
+    }
+
+    /**
+     * Export Excel - Extinction RAM
+     */
+    #[Route('/extinction-ram/export-excel', name: 'app_equipements_extinction_ram_export_excel')]
+    public function exportExtinctionRAMExcel(
+        ExtinctionLocaliseeRAMRepository $extinctionRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $extinctions = $extinctionRepository->searchExtinctionsRAM($searchParams, 1000, 0);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Extinction RAM');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'Numéro');
+        $sheet->setCellValue('B1', 'Zone');
+        $sheet->setCellValue('C1', 'Emplacement');
+        $sheet->setCellValue('D1', 'Type');
+        $sheet->setCellValue('E1', 'Vanne');
+        $sheet->setCellValue('F1', 'Statut');
+        $sheet->setCellValue('G1', 'Dernière Inspection');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:G1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($extinctions as $extinction) {
+            $sheet->setCellValue('A' . $row, $extinction->getNumerotation());
+            $sheet->setCellValue('B' . $row, $extinction->getZone());
+            $sheet->setCellValue('C' . $row, $extinction->getEmplacement() ?? '-');
+            $sheet->setCellValue('D' . $row, $extinction->getType() ?? '-');
+            $sheet->setCellValue('E' . $row, $extinction->getVanne() ?? '-');
+            $sheet->setCellValue('F' . $row, $extinction->getStatutConformite());
+            
+            $derniereInspection = $extinction->getDerniereInspection();
+            $sheet->setCellValue('G' . $row, $derniereInspection ? $derniereInspection->getDateInspection()->format('d/m/Y') : '-');
+
+            // Coloration conditionnelle
+            if ($extinction->getStatutConformite() == 'Conforme') {
+                $sheet->getStyle('F' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } elseif ($extinction->getStatutConformite() == 'Non conforme') {
+                $sheet->getStyle('F' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'extinction_ram_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export PDF - Extinction RAM
+     */
+    #[Route('/extinction-ram/export-pdf', name: 'app_equipements_extinction_ram_export_pdf')]
+    public function exportExtinctionRAMPDF(
+        ExtinctionLocaliseeRAMRepository $extinctionRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $extinctions = $extinctionRepository->searchExtinctionsRAM($searchParams, 1000, 0);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/extinction_ram/pdf_etat.html.twig', [
+            'extinctions' => $extinctions,
+            'search_params' => $searchParams,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="extinction_ram_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
+    }
+
+    /**
+     * Export Excel - Issues de Secours
+     */
+    #[Route('/issues-secours/export-excel', name: 'app_equipements_issues_secours_export_excel')]
+    public function exportIssuesSecoursExcel(
+        IssueSecoursRepository $issueRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $issues = $issueRepository->searchIssuesSecours($searchParams, 1000, 0);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Issues de Secours');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'Numéro');
+        $sheet->setCellValue('B1', 'Zone');
+        $sheet->setCellValue('C1', 'Type');
+        $sheet->setCellValue('D1', 'Barre Antipanique');
+        $sheet->setCellValue('E1', 'Statut');
+        $sheet->setCellValue('F1', 'Dernière Inspection');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:F1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($issues as $issue) {
+            $sheet->setCellValue('A' . $row, $issue->getNumerotation());
+            $sheet->setCellValue('B' . $row, $issue->getZone());
+            $sheet->setCellValue('C' . $row, $issue->getType() ?? '-');
+            $sheet->setCellValue('D' . $row, $issue->getBarreAntipanique() ?? '-');
+            $sheet->setCellValue('E' . $row, $issue->getStatutConformite());
+            
+            $derniereInspection = $issue->getDerniereInspection();
+            $sheet->setCellValue('F' . $row, $derniereInspection ? $derniereInspection->getDateInspection()->format('d/m/Y') : '-');
+
+            // Coloration conditionnelle
+            if ($issue->getStatutConformite() == 'Conforme') {
+                $sheet->getStyle('E' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } elseif ($issue->getStatutConformite() == 'Non conforme') {
+                $sheet->getStyle('E' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'issues_secours_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export PDF - Issues de Secours
+     */
+    #[Route('/issues-secours/export-pdf', name: 'app_equipements_issues_secours_export_pdf')]
+    public function exportIssuesSecoursPDF(
+        IssueSecoursRepository $issueRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $issues = $issueRepository->searchIssuesSecours($searchParams, 1000, 0);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/issues_secours/pdf_etat.html.twig', [
+            'issues' => $issues,
+            'search_params' => $searchParams,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="issues_secours_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
+    }
+
+    /**
+     * Export Excel - Monte-charge
+     */
+    #[Route('/monte-charge/export-excel', name: 'app_equipements_monte_charge_export_excel')]
+    public function exportMonteChargeExcel(
+        MonteChargeRepository $monteChargeRepository,
+        InspectionMonteChargeRepository $inspectionRepository
+    ): Response {
+        $monteCharges = $monteChargeRepository->findAll();
+        $inspections = $inspectionRepository->findBy([], ['dateInspection' => 'DESC']);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Monte-charge');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'Type');
+        $sheet->setCellValue('B1', 'Zone');
+        $sheet->setCellValue('C1', 'Numéro Porte');
+        $sheet->setCellValue('D1', 'Date Inspection');
+        $sheet->setCellValue('E1', 'Inspecteur');
+        $sheet->setCellValue('F1', 'Résultat');
+        $sheet->setCellValue('G1', 'Observations');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:G1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($inspections as $inspection) {
+            $sheet->setCellValue('A' . $row, $inspection->getMonteCharge()->getType());
+            $sheet->setCellValue('B' . $row, $inspection->getMonteCharge()->getZone());
+            $sheet->setCellValue('C' . $row, $inspection->getNumeroPorte());
+            $sheet->setCellValue('D' . $row, $inspection->getDateInspection()->format('d/m/Y H:i'));
+            $sheet->setCellValue('E' . $row, $inspection->getInspectePar()->getFullName());
+            $sheet->setCellValue('F' . $row, $inspection->isValide() ? 'Conforme' : 'Non conforme');
+            $sheet->setCellValue('G' . $row, $inspection->getObservations() ?? '-');
+
+            // Coloration conditionnelle
+            if ($inspection->isValide()) {
+                $sheet->getStyle('F' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } else {
+                $sheet->getStyle('F' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'monte_charge_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export PDF - Monte-charge
+     */
+    #[Route('/monte-charge/export-pdf', name: 'app_equipements_monte_charge_export_pdf')]
+    public function exportMonteChargePDF(
+        MonteChargeRepository $monteChargeRepository,
+        InspectionMonteChargeRepository $inspectionRepository
+    ): Response {
+        $monteCharges = $monteChargeRepository->findAll();
+        $inspections = $inspectionRepository->findBy([], ['dateInspection' => 'DESC']);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/monte_charge/pdf_etat.html.twig', [
+            'monte_charges' => $monteCharges,
+            'inspections' => $inspections,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="monte_charge_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
+    }
+
+    /**
+     * Export Excel - Prises Pompiers
+     */
+    #[Route('/prises-pompiers/export-excel', name: 'app_equipements_prises_pompiers_export_excel')]
+    public function exportPrisesPompiersExcel(
+        PrisePompierRepository $prisePompierRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'emplacement' => $request->query->get('emplacement', ''),
+        ];
+
+        $prises = $prisePompierRepository->searchPrisesPompiers($searchParams, 1000, 0);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Prises Pompiers');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'Zone');
+        $sheet->setCellValue('B1', 'Emplacement');
+        $sheet->setCellValue('C1', 'Diamètre');
+        $sheet->setCellValue('D1', 'Statut');
+        $sheet->setCellValue('E1', 'Dernière Inspection');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:E1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($prises as $prise) {
+            $sheet->setCellValue('A' . $row, $prise->getZone());
+            $sheet->setCellValue('B' . $row, $prise->getEmplacement() ?? '-');
+            $sheet->setCellValue('C' . $row, $prise->getDimatere() ?? '-');
+            $sheet->setCellValue('D' . $row, $prise->getStatutConformite());
+            
+            $derniereInspection = $prise->getDerniereInspection();
+            $sheet->setCellValue('E' . $row, $derniereInspection ? $derniereInspection->getDateInspection()->format('d/m/Y') : '-');
+
+            // Coloration conditionnelle
+            if ($prise->getStatutConformite() == 'Conforme') {
+                $sheet->getStyle('D' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } elseif ($prise->getStatutConformite() == 'Non conforme') {
+                $sheet->getStyle('D' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'E') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'prises_pompiers_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export PDF - Prises Pompiers
+     */
+    #[Route('/prises-pompiers/export-pdf', name: 'app_equipements_prises_pompiers_export_pdf')]
+    public function exportPrisesPompiersPDF(
+        PrisePompierRepository $prisePompierRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'emplacement' => $request->query->get('emplacement', ''),
+        ];
+
+        $prises = $prisePompierRepository->searchPrisesPompiers($searchParams, 1000, 0);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/prises_pompiers/pdf_etat.html.twig', [
+            'prises' => $prises,
+            'search_params' => $searchParams,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="prises_pompiers_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
+    }
+
+    /**
+     * Export Excel - Sirènes
+     */
+    #[Route('/sirenes/export-excel', name: 'app_equipements_sirenes_export_excel')]
+    public function exportSirenesExcel(
+        SireneRepository $sireneRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $sirenes = $sireneRepository->searchSirenes($searchParams, 1000, 0);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Sirènes');
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'Numéro');
+        $sheet->setCellValue('B1', 'Zone');
+        $sheet->setCellValue('C1', 'Emplacement');
+        $sheet->setCellValue('D1', 'Type');
+        $sheet->setCellValue('E1', 'Statut');
+        $sheet->setCellValue('F1', 'Dernière Inspection');
+
+        // Style en-têtes
+        $sheet->getStyle('A1:F1')->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4472C4']
+            ]
+        ]);
+
+        // Données
+        $row = 2;
+        foreach ($sirenes as $sirene) {
+            $sheet->setCellValue('A' . $row, $sirene->getNumerotation());
+            $sheet->setCellValue('B' . $row, $sirene->getZone());
+            $sheet->setCellValue('C' . $row, $sirene->getEmplacement() ?? '-');
+            $sheet->setCellValue('D' . $row, $sirene->getType() ?? '-');
+            $sheet->setCellValue('E' . $row, $sirene->getStatutConformite());
+            
+            $derniereInspection = $sirene->getDerniereInspection();
+            $sheet->setCellValue('F' . $row, $derniereInspection ? $derniereInspection->getDateInspection()->format('d/m/Y') : '-');
+
+            // Coloration conditionnelle
+            if ($sirene->getStatutConformite() == 'Conforme') {
+                $sheet->getStyle('E' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'C6EFCE']],
+                    'font' => ['color' => ['rgb' => '006100']]
+                ]);
+            } elseif ($sirene->getStatutConformite() == 'Non conforme') {
+                $sheet->getStyle('E' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'FFC7CE']],
+                    'font' => ['color' => ['rgb' => '9C0006']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Auto-size
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Réponse
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $response = new \Symfony\Component\HttpFoundation\Response();
+        
+        ob_start();
+        $writer->save('php://output');
+        $content = ob_get_clean();
+
+        $filename = 'sirenes_' . date('Y-m-d_His') . '.xlsx';
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+        $response->setContent($content);
+
+        return $response;
+    }
+
+    /**
+     * Export PDF - Sirènes
+     */
+    #[Route('/sirenes/export-pdf', name: 'app_equipements_sirenes_export_pdf')]
+    public function exportSirenesPDF(
+        SireneRepository $sireneRepository,
+        Request $request
+    ): Response {
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+        ];
+
+        $sirenes = $sireneRepository->searchSirenes($searchParams, 1000, 0);
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new \Dompdf\Dompdf($options);
+
+        $html = $this->renderView('equipements/sirenes/pdf_etat.html.twig', [
+            'sirenes' => $sirenes,
+            'search_params' => $searchParams,
+            'date_export' => new \DateTime(),
+        ]);
+
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        return new Response(
+            $dompdf->output(),
+            Response::HTTP_OK,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="sirenes_' . date('Y-m-d_His') . '.pdf"'
+            ]
+        );
+    }
 }
