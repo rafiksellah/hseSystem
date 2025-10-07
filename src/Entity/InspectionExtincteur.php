@@ -44,7 +44,7 @@ class InspectionExtincteur
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $dateInspection = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'inspectionsExtincteurs')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $inspectePar = null;
 
@@ -54,10 +54,20 @@ class InspectionExtincteur
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoObservation = null;
 
+    #[ORM\Column]
+    private bool $isActive = true;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $resetDate = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $resetReason = null;
+
     public function __construct()
     {
         $this->dateInspection = new \DateTime();
         $this->criteres = [];
+        $this->isActive = true;
     }
 
     public function getId(): ?int
@@ -78,7 +88,7 @@ class InspectionExtincteur
 
     public function getCriteres(): array
     {
-        return $this->criteres;
+        return $this->criteres ?? [];
     }
 
     public function setCriteres(array $criteres): static
@@ -139,6 +149,39 @@ class InspectionExtincteur
     public function setPhotoObservation(?string $photoObservation): static
     {
         $this->photoObservation = $photoObservation;
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function getResetDate(): ?\DateTimeInterface
+    {
+        return $this->resetDate;
+    }
+
+    public function setResetDate(?\DateTimeInterface $resetDate): static
+    {
+        $this->resetDate = $resetDate;
+        return $this;
+    }
+
+    public function getResetReason(): ?string
+    {
+        return $this->resetReason;
+    }
+
+    public function setResetReason(?string $resetReason): static
+    {
+        $this->resetReason = $resetReason;
         return $this;
     }
 }

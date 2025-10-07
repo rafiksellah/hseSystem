@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Export Monte-Charges</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #333; margin-bottom: 10px; }
+        .header p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Liste des Monte-Charges</h1>
+        <p>Généré le {{ "now"|date("d/m/Y à H:i") }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Numéro</th>
+                <th>Zone</th>
+                <th>Emplacement</th>
+                <th>Porte</th>
+                <th>Statut</th>
+                <th>Dernière Inspection</th>
+                <th>Inspecteur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for monte_charge in monte_charges %}
+                <tr>
+                    <td>{{ monte_charge.numeroMonteCharge }}</td>
+                    <td>{{ monte_charge.zone }}</td>
+                    <td>{{ monte_charge.emplacement }}</td>
+                    <td>{{ monte_charge.numeroPorte }}</td>
+                    <td>{{ monte_charge.statutConformite }}</td>
+                    <td>
+                        {% if monte_charge.derniereInspection %}
+                            {{ monte_charge.derniereInspection.dateInspection|date('d/m/Y H:i') }}
+                        {% else %}
+                            Jamais inspecté
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if monte_charge.derniereInspection %}
+                            {{ monte_charge.derniereInspection.inspecteur.nom }} {{ monte_charge.derniereInspection.inspecteur.prenom }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

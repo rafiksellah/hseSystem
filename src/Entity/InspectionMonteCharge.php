@@ -11,20 +11,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'inspection_monte_charge')]
 class InspectionMonteCharge
 {
-    public const PORTES = [
-        'PORTE 1' => 'PORTE 1',
-        'PORTE 2' => 'PORTE 2',
-        'PORTE 3' => 'PORTE 3',
-        'PORTE 4' => 'PORTE 4',
-        'PORTE 5' => 'PORTE 5',
-        'PORTE 6' => 'PORTE 6'
+    public const QUESTIONS = [
+        'portes_fermees' => 'Les portes monte-charge sont-elles fermées ?',
+        'consignes_respectees' => 'Les consignes d\'utilisation sont-elles respectées ?',
+        'fins_courses_fonctionnent' => 'Les fins de course fonctionnent correctement ?',
+        'essai_vide_realise' => 'Un essai à vide a été réalisé ?',
     ];
 
-    public const QUESTIONS = [
-        'portes_monte_charge_fermees' => 'LES PORTES MONTE CHARGE SONT-ELLES FERMÉES ?',
-        'consignes_utilisation_respectees' => 'LES CONSIGNES D\'UTILISATION SONT-ELLES RESPECTÉES ?',
-        'fins_courses_fonctionnent' => 'LES FINS COURSES FONCTIONNENT CORRECTEMENT ?',
-        'essai_vide_realise' => 'UN ESSAI À VIDE A ÉTÉ RÉALISÉ ?'
+    public const REPONSES = [
+        'Oui' => 'Oui',
+        'Non' => 'Non',
     ];
 
     #[ORM\Id]
@@ -32,15 +28,36 @@ class InspectionMonteCharge
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'inspections')]
+    #[ORM\ManyToOne(targetEntity: MonteCharge::class, inversedBy: 'inspections')]
     #[ORM\JoinColumn(nullable: false)]
     private ?MonteCharge $monteCharge = null;
 
-    #[ORM\Column(length: 50)]
-    private ?string $numeroPorte = null;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'inspectionsMonteCharge')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $inspecteur = null;
 
-    #[ORM\Column(type: Types::JSON)]
-    private array $reponses = [];
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $dateInspection = null;
+
+    #[ORM\Column(length: 10)]
+    #[Assert\NotBlank(message: 'La conformité ne peut pas être vide')]
+    #[Assert\Choice(choices: self::REPONSES, message: 'Conformité invalide')]
+    private ?string $portesFermees = null;
+
+    #[ORM\Column(length: 10)]
+    #[Assert\NotBlank(message: 'La conformité ne peut pas être vide')]
+    #[Assert\Choice(choices: self::REPONSES, message: 'Conformité invalide')]
+    private ?string $consignesRespectees = null;
+
+    #[ORM\Column(length: 10)]
+    #[Assert\NotBlank(message: 'La conformité ne peut pas être vide')]
+    #[Assert\Choice(choices: self::REPONSES, message: 'Conformité invalide')]
+    private ?string $finsCoursesFonctionnent = null;
+
+    #[ORM\Column(length: 10)]
+    #[Assert\NotBlank(message: 'La conformité ne peut pas être vide')]
+    #[Assert\Choice(choices: self::REPONSES, message: 'Conformité invalide')]
+    private ?string $essaiVideRealise = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $observations = null;
@@ -48,20 +65,19 @@ class InspectionMonteCharge
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoObservation = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $dateInspection = null;
-
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?User $inspectePar = null;
-
     #[ORM\Column]
-    private bool $valide = false;
+    private bool $isActive = true;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $resetDate = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $resetReason = null;
 
     public function __construct()
     {
         $this->dateInspection = new \DateTime();
-        $this->reponses = [];
+        $this->isActive = true;
     }
 
     public function getId(): ?int
@@ -80,25 +96,69 @@ class InspectionMonteCharge
         return $this;
     }
 
-    public function getNumeroPorte(): ?string
+    public function getInspecteur(): ?User
     {
-        return $this->numeroPorte;
+        return $this->inspecteur;
     }
 
-    public function setNumeroPorte(string $numeroPorte): static
+    public function setInspecteur(?User $inspecteur): static
     {
-        $this->numeroPorte = $numeroPorte;
+        $this->inspecteur = $inspecteur;
         return $this;
     }
 
-    public function getReponses(): array
+    public function getDateInspection(): ?\DateTimeInterface
     {
-        return $this->reponses;
+        return $this->dateInspection;
     }
 
-    public function setReponses(array $reponses): static
+    public function setDateInspection(\DateTimeInterface $dateInspection): static
     {
-        $this->reponses = $reponses;
+        $this->dateInspection = $dateInspection;
+        return $this;
+    }
+
+    public function getPortesFermees(): ?string
+    {
+        return $this->portesFermees;
+    }
+
+    public function setPortesFermees(string $portesFermees): static
+    {
+        $this->portesFermees = $portesFermees;
+        return $this;
+    }
+
+    public function getConsignesRespectees(): ?string
+    {
+        return $this->consignesRespectees;
+    }
+
+    public function setConsignesRespectees(string $consignesRespectees): static
+    {
+        $this->consignesRespectees = $consignesRespectees;
+        return $this;
+    }
+
+    public function getFinsCoursesFonctionnent(): ?string
+    {
+        return $this->finsCoursesFonctionnent;
+    }
+
+    public function setFinsCoursesFonctionnent(string $finsCoursesFonctionnent): static
+    {
+        $this->finsCoursesFonctionnent = $finsCoursesFonctionnent;
+        return $this;
+    }
+
+    public function getEssaiVideRealise(): ?string
+    {
+        return $this->essaiVideRealise;
+    }
+
+    public function setEssaiVideRealise(string $essaiVideRealise): static
+    {
+        $this->essaiVideRealise = $essaiVideRealise;
         return $this;
     }
 
@@ -124,36 +184,54 @@ class InspectionMonteCharge
         return $this;
     }
 
-    public function getDateInspection(): ?\DateTimeInterface
+    public function isActive(): bool
     {
-        return $this->dateInspection;
+        return $this->isActive;
     }
 
-    public function setDateInspection(\DateTimeInterface $dateInspection): static
+    public function setIsActive(bool $isActive): static
     {
-        $this->dateInspection = $dateInspection;
+        $this->isActive = $isActive;
         return $this;
     }
 
-    public function getInspectePar(): ?User
+    public function getResetDate(): ?\DateTimeInterface
     {
-        return $this->inspectePar;
+        return $this->resetDate;
     }
 
-    public function setInspectePar(?User $inspectePar): static
+    public function setResetDate(?\DateTimeInterface $resetDate): static
     {
-        $this->inspectePar = $inspectePar;
+        $this->resetDate = $resetDate;
         return $this;
     }
 
-    public function isValide(): bool
+    public function getResetReason(): ?string
     {
-        return $this->valide;
+        return $this->resetReason;
     }
 
-    public function setValide(bool $valide): static
+    public function setResetReason(?string $resetReason): static
     {
-        $this->valide = $valide;
+        $this->resetReason = $resetReason;
         return $this;
+    }
+
+    public function isConforme(): bool
+    {
+        return $this->portesFermees === 'Oui' && 
+               $this->consignesRespectees === 'Oui' && 
+               $this->finsCoursesFonctionnent === 'Oui' && 
+               $this->essaiVideRealise === 'Oui';
+    }
+
+    public function __toString(): string
+    {
+        return sprintf(
+            'Inspection %s - %s (%s)',
+            $this->monteCharge?->getNumeroMonteCharge() ?? 'N/A',
+            $this->conformite ?? 'N/A',
+            $this->dateInspection?->format('d/m/Y H:i') ?? 'N/A'
+        );
     }
 }

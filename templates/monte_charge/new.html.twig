@@ -1,0 +1,113 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau Monte-Charge{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>
+                        Ajouter un nouveau Monte-Charge
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.numeroMonteCharge, 'Numéro Monte-Charge', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.numeroMonteCharge, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.numeroMonteCharge) }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.zone, 'Zone', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.zone, {'attr': {'class': 'form-select', 'id': 'zone'}}) }}
+                                {{ form_errors(form.zone) }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.emplacement, 'Emplacement', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.emplacement, {'attr': {'class': 'form-select', 'id': 'emplacement'}}) }}
+                                {{ form_errors(form.emplacement) }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form_label(form.numeroPorte, 'Numéro de Porte', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.numeroPorte, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_errors(form.numeroPorte) }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('app_monte_charge_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Retour à la liste
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                Enregistrer
+                            </button>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Emplacements pour chaque zone
+const emplacementsSIMTIS = {{ emplacements_simtis|json_encode|raw }};
+const emplacementsSIMTISTISSAGE = {{ emplacements_simtis_tissage|json_encode|raw }};
+
+// Fonction pour charger les emplacements selon la zone
+function chargerEmplacements() {
+    const zoneSelect = document.getElementById('monte_charge_zone');
+    const emplacementSelect = document.getElementById('monte_charge_emplacement');
+    const zone = zoneSelect.value;
+
+    // Réinitialiser le select
+    emplacementSelect.innerHTML = '<option value="">-- Choisir un emplacement --</option>';
+
+    if (!zone) {
+        emplacementSelect.innerHTML = '<option value="">Sélectionnez d\'abord une zone</option>';
+        return;
+    }
+
+    // Choisir les bons emplacements selon la zone
+    const emplacements = zone === 'SIMTIS' ? emplacementsSIMTIS : emplacementsSIMTISTISSAGE;
+
+    // Remplir le select avec les emplacements
+    Object.entries(emplacements).forEach(([key, value]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        emplacementSelect.appendChild(option);
+    });
+
+    // Pré-sélectionner si une valeur existe déjà
+    {% if monte_charge.emplacement %}emplacementSelect.value = "{{ monte_charge.emplacement }}";{% endif %}
+}
+
+// Utiliser les vrais IDs générés par Symfony
+const zoneElement = document.getElementById('monte_charge_zone');
+const emplacementElement = document.getElementById('monte_charge_emplacement');
+
+console.log('Zone element:', zoneElement);
+console.log('Emplacement element:', emplacementElement);
+
+if (zoneElement && emplacementElement) {
+    console.log('Both elements found, adding event listener');
+    // Événement sur le changement de zone
+    zoneElement.addEventListener('change', chargerEmplacements);
+    
+    // Charger les emplacements au chargement de la page si une zone est déjà sélectionnée
+    {% if monte_charge.zone %}chargerEmplacements();{% endif %}
+} else {
+    console.error('Elements not found!');
+}
+</script>
+{% endblock %}

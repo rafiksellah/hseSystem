@@ -96,7 +96,7 @@
                         {% endif %}
                     </td>
                     <td style="text-align: center;">
-                        {{ inspection.criteres|length }}/{{ constant('App\\Entity\\InspectionExtinctionLocaliseeRAM::CRITERES')|length }}
+                        {{ inspection.conformite }}
                     </td>
                     <td>{{ inspection.observations|default('-')|u.truncate(100, '...') }}</td>
                 </tr>

@@ -1,0 +1,162 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Monte-Charges{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-elevator me-2"></i>
+                        Gestion des Monte-Charges
+                    </h3>
+                    <div class="d-flex gap-2">
+                        <a href="{{ path('app_monte_charge_export_excel') }}" class="btn btn-success">
+                            <i class="fas fa-file-excel me-1"></i>
+                            Excel
+                        </a>
+                        <a href="{{ path('app_monte_charge_export_pdf') }}" class="btn btn-danger">
+                            <i class="fas fa-file-pdf me-1"></i>
+                            PDF
+                        </a>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('app_monte_charge_new') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>
+                                Ajouter un Monte-Charge
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Filtres -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <form method="GET" class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="search" class="form-label">Recherche</label>
+                                    <input type="text" class="form-control" id="search" name="search" 
+                                           value="{{ search }}" placeholder="Numéro ou emplacement...">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="zone" class="form-label">Zone</label>
+                                    <select class="form-select" id="zone" name="zone">
+                                        <option value="">Toutes les zones</option>
+                                        <option value="SIMTIS" {% if zone == 'SIMTIS' %}selected{% endif %}>SIMTIS</option>
+                                        <option value="SIMTIS TISSAGE" {% if zone == 'SIMTIS TISSAGE' %}selected{% endif %}>SIMTIS TISSAGE</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="statut" class="form-label">Statut</label>
+                                    <select class="form-select" id="statut" name="statut">
+                                        <option value="">Tous les statuts</option>
+                                        <option value="Conforme" {% if statut == 'Conforme' %}selected{% endif %}>Conforme</option>
+                                        <option value="Non conforme" {% if statut == 'Non conforme' %}selected{% endif %}>Non conforme</option>
+                                        <option value="Non inspecté" {% if statut == 'Non inspecté' %}selected{% endif %}>Non inspecté</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <a href="{{ path('app_monte_charge_index') }}" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {% if monte_charges is empty %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Aucun monte-charge enregistré.
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Numéro</th>
+                                        <th>Zone</th>
+                                        <th>Emplacement</th>
+                                        <th>Porte</th>
+                                        <th>Statut</th>
+                                        <th>Dernière Inspection</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for monte_charge in monte_charges %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ monte_charge.numeroMonteCharge }}</strong>
+                                            </td>
+                                            <td>{{ monte_charge.zone }}</td>
+                                            <td>{{ monte_charge.emplacement }}</td>
+                                            <td>{{ monte_charge.numeroPorte }}</td>
+                                            <td>
+                                                {% set statut = monte_charge.statutConformite %}
+                                                {% if statut == 'Conforme' %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>Conforme
+                                                    </span>
+                                                {% elseif statut == 'Non conforme' %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times me-1"></i>Non conforme
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-question me-1"></i>Non inspecté
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% set derniere_inspection = monte_charge.derniereInspection %}
+                                                {% if derniere_inspection %}
+                                                    {{ derniere_inspection.dateInspection|date('d/m/Y H:i') }}
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        par {{ derniere_inspection.inspecteur.nom }} {{ derniere_inspection.inspecteur.prenom }}
+                                                    </small>
+                                                {% else %}
+                                                    <span class="text-muted">Jamais inspecté</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{{ path('app_monte_charge_show', {'id': monte_charge.id}) }}" 
+                                                       class="btn btn-sm btn-outline-primary" 
+                                                       title="Voir les détails">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ path('app_monte_charge_inspection_new', {'id': monte_charge.id}) }}" 
+                                                       class="btn btn-sm btn-outline-success" 
+                                                       title="Nouvelle inspection">
+                                                        <i class="fas fa-clipboard-check"></i>
+                                                    </a>
+                                                    {% if is_granted('ROLE_ADMIN') %}
+                                                        <a href="{{ path('app_monte_charge_edit', {'id': monte_charge.id}) }}" 
+                                                           class="btn btn-sm btn-outline-warning" 
+                                                           title="Modifier">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

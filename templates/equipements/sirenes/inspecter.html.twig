@@ -5,51 +5,81 @@
 {% block body %}
 <div class="container-fluid">
   <div class="row justify-content-center">
-    <div class="col-md-10">
+    <div class="col-md-8">
       <div class="card">
         <div class="card-header bg-warning text-dark">
           <h5><i class="fas fa-bell"></i> Inspection Sirène {{ sirene.numerotation }}</h5>
         </div>
         <div class="card-body">
           <form method="POST" enctype="multipart/form-data">
-            <table class="table table-bordered">
-              <thead>
-                <tr>
-                  <th>Critère</th>
-                  <th class="text-center">OUI</th>
-                  <th class="text-center">NON</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for key, label in criteres %}
-                <tr>
-                  <td>{{ label }}</td>
-                  <td class="text-center">
-                    <input type="radio" name="critere_{{ key }}" value="oui" required>
-                  </td>
-                  <td class="text-center">
-                    <input type="radio" name="critere_{{ key }}" value="non" required>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+            <!-- Question unique -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-question-circle"></i> Question de contrôle :
+                </h6>
 
-            <div class="row mt-3">
-              <div class="col-md-8">
-                <label>Observations</label>
-                <textarea name="observations" class="form-control" rows="4"></textarea>
-              </div>
-              <div class="col-md-4">
-                <label>Photo</label>
-                <input type="file" name="photo_observation" class="form-control" accept="image/*">
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <div class="row align-items-center">
+                      <div class="col-md-8">
+                        <label class="form-label fw-bold">EST-CE QUE LA SIRÈNE EST CONFORME ?</label>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" name="conformite" id="conformite_oui" value="Oui" required="">
+                          <label class="form-check-label text-success fw-bold" for="conformite_oui">
+                            <i class="fas fa-check-circle"></i> Oui
+                          </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input class="form-check-input" type="radio" name="conformite" id="conformite_non" value="Non">
+                          <label class="form-check-label text-danger fw-bold" for="conformite_non">
+                            <i class="fas fa-times-circle"></i> Non
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="mt-4">
-              <button type="submit" class="btn btn-success">
-                <i class="fas fa-check"></i> Enregistrer
-              </button>
+            <!-- Observations -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <label for="observations" class="form-label">
+                  <i class="fas fa-comment-alt"></i> Observations (optionnel)
+                </label>
+                <textarea name="observations" id="observations" class="form-control" rows="4" placeholder="Décrivez les problèmes constatés, les actions correctives nécessaires..."></textarea>
+              </div>
+            </div>
+
+            <!-- Photo -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <label for="photo_observation" class="form-label">
+                  <i class="fas fa-camera"></i> Photo d'observation (optionnel)
+                </label>
+                <input type="file" name="photo_observation" id="photo_observation" class="form-control" accept="image/*">
+                <div class="form-text">
+                  Formats acceptés : JPG, PNG, GIF. Taille max : 5MB
+                </div>
+              </div>
+            </div>
+
+            <!-- Boutons -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-flex justify-content-between">
+                  <a href="{{ path('app_equipements_sirenes') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Annuler
+                  </a>
+                  <button type="submit" class="btn btn-warning btn-lg">
+                    <i class="fas fa-save"></i> Enregistrer l'inspection
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -58,4 +88,3 @@
   </div>
 </div>
 {% endblock %}
-

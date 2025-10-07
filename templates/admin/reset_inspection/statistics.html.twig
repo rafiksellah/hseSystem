@@ -1,0 +1,315 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques des Réinitialisations{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-chart-bar text-primary"></i>
+                    Statistiques des Réinitialisations
+                </h1>
+                <a href="{{ path('app_reset_inspection_index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <!-- Statistiques générales -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ statistics.total }}</h4>
+                                    <p class="mb-0">Total Réinitialisations</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-history fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ statistics.by_equipment_type|length }}</h4>
+                                    <p class="mb-0">Types d'Équipements</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-cogs fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ statistics.by_reset_type|length }}</h4>
+                                    <p class="mb-0">Types de Reset</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-sync fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">4</h4>
+                                    <p class="mb-0">Équipements Gérés</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-tools fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Répartition par type d'équipement -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-pie-chart text-primary"></i>
+                                Répartition par Type d'Équipement
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if statistics.by_equipment_type is not empty %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Type d'Équipement</th>
+                                                <th>Nombre</th>
+                                                <th>Pourcentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% set total = statistics.total %}
+                                            {% for item in statistics.by_equipment_type %}
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge bg-primary">{{ item.equipmentType|title }}</span>
+                                                    </td>
+                                                    <td><strong>{{ item.count }}</strong></td>
+                                                    <td>
+                                                        <div class="progress" style="height: 20px;">
+                                                            <div class="progress-bar" role="progressbar" 
+                                                                 style="width: {{ (item.count / total * 100)|round(1) }}%"
+                                                                 aria-valuenow="{{ (item.count / total * 100)|round(1) }}" 
+                                                                 aria-valuemin="0" aria-valuemax="100">
+                                                                {{ (item.count / total * 100)|round(1) }}%
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucune donnée disponible</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Répartition par type de reset -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-pie text-success"></i>
+                                Répartition par Type de Reset
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if statistics.by_reset_type is not empty %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Type de Reset</th>
+                                                <th>Nombre</th>
+                                                <th>Pourcentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in statistics.by_reset_type %}
+                                                <tr>
+                                                    <td>
+                                                        {% if item.resetType == 'daily' %}
+                                                            <span class="badge bg-info">Quotidien</span>
+                                                        {% elseif item.resetType == 'monthly' %}
+                                                            <span class="badge bg-success">Mensuel</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning">Manuel</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td><strong>{{ item.count }}</strong></td>
+                                                    <td>
+                                                        <div class="progress" style="height: 20px;">
+                                                            <div class="progress-bar" role="progressbar" 
+                                                                 style="width: {{ (item.count / total * 100)|round(1) }}%"
+                                                                 aria-valuenow="{{ (item.count / total * 100)|round(1) }}" 
+                                                                 aria-valuemin="0" aria-valuemax="100">
+                                                                {{ (item.count / total * 100)|round(1) }}%
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucune donnée disponible</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détail par type et reset -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-table text-info"></i>
+                                Détail par Type d'Équipement et Reset
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if byType is not empty %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Type d'Équipement</th>
+                                                <th>Type de Reset</th>
+                                                <th>Nombre</th>
+                                                <th>Pourcentage</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in byType %}
+                                                <tr>
+                                                    <td>
+                                                        <span class="badge bg-primary">{{ item.equipmentType|title }}</span>
+                                                    </td>
+                                                    <td>
+                                                        {% if item.resetType == 'daily' %}
+                                                            <span class="badge bg-info">Quotidien</span>
+                                                        {% elseif item.resetType == 'monthly' %}
+                                                            <span class="badge bg-success">Mensuel</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning">Manuel</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td><strong>{{ item.count }}</strong></td>
+                                                    <td>
+                                                        <div class="progress" style="height: 20px;">
+                                                            <div class="progress-bar" role="progressbar" 
+                                                                 style="width: {{ (item.count / total * 100)|round(1) }}%"
+                                                                 aria-valuenow="{{ (item.count / total * 100)|round(1) }}" 
+                                                                 aria-valuemin="0" aria-valuemax="100">
+                                                                {{ (item.count / total * 100)|round(1) }}%
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucune donnée disponible</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Évolution dans le temps -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line text-warning"></i>
+                                Évolution dans le Temps (30 derniers jours)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if byDate is not empty %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Nombre de Réinitialisations</th>
+                                                <th>Graphique</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% set maxCount = byDate|first.count %}
+                                            {% for item in byDate %}
+                                                <tr>
+                                                    <td><strong>{{ item.date|date('d/m/Y') }}</strong></td>
+                                                    <td><strong>{{ item.count }}</strong></td>
+                                                    <td>
+                                                        <div class="progress" style="height: 20px;">
+                                                            <div class="progress-bar bg-warning" role="progressbar" 
+                                                                 style="width: {{ (item.count / maxCount * 100)|round(1) }}%"
+                                                                 aria-valuenow="{{ item.count }}" 
+                                                                 aria-valuemin="0" aria-valuemax="{{ maxCount }}">
+                                                                {{ item.count }}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucune donnée disponible</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -84,7 +84,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'inspectePar', targetEntity: InspectionExtincteur::class)]
     private Collection $inspectionsExtincteurs;
 
-    #[ORM\OneToMany(mappedBy: 'inspectePar', targetEntity: InspectionMonteCharge::class)]
+    #[ORM\OneToMany(mappedBy: 'inspecteur', targetEntity: InspectionMonteCharge::class)]
     private Collection $inspectionsMonteCharge;
 
     public function __construct()

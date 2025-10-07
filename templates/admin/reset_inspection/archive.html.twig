@@ -1,0 +1,251 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Archive de Réinitialisation{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-archive text-primary"></i>
+                    Archive de Réinitialisation
+                </h1>
+                <a href="{{ path('app_reset_inspection_index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+
+            <!-- Informations générales -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Informations Générales</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ID Archive:</strong></td>
+                                    <td>{{ resetInspection.id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date de Réinitialisation:</strong></td>
+                                    <td>{{ resetInspection.resetDate|date('d/m/Y H:i:s') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type d'Équipement:</strong></td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ resetInspection.equipmentType|title }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type de Reset:</strong></td>
+                                    <td>
+                                        {% if resetInspection.resetType == 'daily' %}
+                                            <span class="badge bg-info">Quotidien</span>
+                                        {% elseif resetInspection.resetType == 'monthly' %}
+                                            <span class="badge bg-success">Mensuel</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Manuel</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Raison:</strong></td>
+                                    <td>{{ resetInspection.resetReason ?: '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Réinitialisé par:</strong></td>
+                                    <td>{{ resetInspection.resetBy ? resetInspection.resetBy.email : 'Système' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Équipement</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Nom:</strong></td>
+                                    <td>{{ resetInspection.equipmentName }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ID:</strong></td>
+                                    <td>{{ resetInspection.equipmentId }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date de création:</strong></td>
+                                    <td>{{ resetInspection.createdAt|date('d/m/Y H:i:s') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Données de l'inspection archivée -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-database text-info"></i>
+                        Données de l'Inspection Archivée
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set inspectionData = resetInspection.inspectionData %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Informations de Base</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>ID Inspection:</strong></td>
+                                    <td>{{ inspectionData.id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date d'Inspection:</strong></td>
+                                    <td>{{ inspectionData.dateInspection ? inspectionData.dateInspection|date('d/m/Y H:i:s') : '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Inspecté par:</strong></td>
+                                    <td>{{ inspectionData.inspectePar ?: '-' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Valide:</strong></td>
+                                    <td>
+                                        {% if inspectionData.valide is defined %}
+                                            {% if inspectionData.valide %}
+                                                <span class="badge bg-success">Oui</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Non</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Conformité</h6>
+                            {% if inspectionData.conformite is defined %}
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Conformité:</strong></td>
+                                        <td>
+                                            {% if inspectionData.conformite == 'Oui' %}
+                                                <span class="badge bg-success">Oui</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Non</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            {% elseif inspectionData.portesFermees is defined %}
+                                <table class="table table-sm">
+                                    <tr>
+                                        <td><strong>Portes fermées:</strong></td>
+                                        <td>
+                                            {% if inspectionData.portesFermees == 'Oui' %}
+                                                <span class="badge bg-success">Oui</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Non</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Consignes respectées:</strong></td>
+                                        <td>
+                                            {% if inspectionData.consignesRespectees == 'Oui' %}
+                                                <span class="badge bg-success">Oui</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Non</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Fins de course:</strong></td>
+                                        <td>
+                                            {% if inspectionData.finsCoursesFonctionnent == 'Oui' %}
+                                                <span class="badge bg-success">Oui</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Non</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Essai à vide:</strong></td>
+                                        <td>
+                                            {% if inspectionData.essaiVideRealise == 'Oui' %}
+                                                <span class="badge bg-success">Oui</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Non</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if inspectionData.criteres is defined and inspectionData.criteres is not empty %}
+                        <div class="mt-4">
+                            <h6>Critères d'Inspection</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Critère</th>
+                                            <th>Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for critere, statut in inspectionData.criteres %}
+                                            <tr>
+                                                <td>{{ critere|replace({'_': ' '})|title }}</td>
+                                                <td>
+                                                    {% if statut %}
+                                                        <span class="badge bg-success">✓</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">✗</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if inspectionData.observations %}
+                        <div class="mt-4">
+                            <h6>Observations</h6>
+                            <div class="alert alert-info">
+                                {{ inspectionData.observations }}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if inspectionData.photoObservation %}
+                        <div class="mt-4">
+                            <h6>Photo d'Observation</h6>
+                            <div class="text-center">
+                                <img src="{{ asset('uploads/inspections/' ~ inspectionData.photoObservation) }}" 
+                                     alt="Photo d'observation" 
+                                     class="img-thumbnail" 
+                                     style="max-width: 300px;">
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

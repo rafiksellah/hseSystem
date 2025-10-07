@@ -1,0 +1,210 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Réinitialisations{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-history text-primary"></i>
+                    Gestion des Réinitialisations
+                </h1>
+                <div>
+                    <a href="{{ path('app_reset_inspection_statistics') }}" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> Statistiques
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistiques rapides -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ statistics.total }}</h4>
+                                    <p class="mb-0">Total Réinitialisations</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-history fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ statistics.by_equipment_type|length }}</h4>
+                                    <p class="mb-0">Types d'Équipements</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-cogs fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ statistics.by_reset_type|length }}</h4>
+                                    <p class="mb-0">Types de Reset</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-sync fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">4</h4>
+                                    <p class="mb-0">Équipements Gérés</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-tools fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Réinitialisation manuelle -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-sync-alt text-warning"></i>
+                        Réinitialisation Manuelle
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ path('app_reset_inspection_manual') }}" 
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser les inspections ? Cette action est irréversible.')">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="equipment_type" class="form-label">Type d'Équipement</label>
+                                <select name="equipment_type" id="equipment_type" class="form-select" required>
+                                    <option value="">Sélectionner un type</option>
+                                    <option value="extincteur">Extincteurs</option>
+                                    <option value="sirene">Sirènes</option>
+                                    <option value="extinction_ram">Extinction RAM</option>
+                                    <option value="monte_charge">Monte Charge</option>
+                                    <option value="all">Tous les équipements</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="reason" class="form-label">Raison (optionnel)</label>
+                                <input type="text" name="reason" id="reason" class="form-control" 
+                                       placeholder="Raison de la réinitialisation">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="fas fa-sync"></i> Réinitialiser
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Historique des réinitialisations -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-info"></i>
+                        Historique des Réinitialisations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if resetInspections is empty %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Aucune réinitialisation enregistrée</p>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type d'Équipement</th>
+                                        <th>Équipement</th>
+                                        <th>Type de Reset</th>
+                                        <th>Raison</th>
+                                        <th>Utilisateur</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reset in resetInspections %}
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-secondary">
+                                                    {{ reset.resetDate|date('d/m/Y H:i') }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">
+                                                    {{ reset.equipmentType|title }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong>{{ reset.equipmentName }}</strong>
+                                                <br>
+                                                <small class="text-muted">ID: {{ reset.equipmentId }}</small>
+                                            </td>
+                                            <td>
+                                                {% if reset.resetType == 'daily' %}
+                                                    <span class="badge bg-info">Quotidien</span>
+                                                {% elseif reset.resetType == 'monthly' %}
+                                                    <span class="badge bg-success">Mensuel</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Manuel</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if reset.resetReason %}
+                                                    {{ reset.resetReason }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if reset.resetBy %}
+                                                    {{ reset.resetBy.email }}
+                                                {% else %}
+                                                    <span class="text-muted">Système</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ path('app_reset_inspection_archive', {'id': reset.id}) }}" 
+                                                   class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i> Voir
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

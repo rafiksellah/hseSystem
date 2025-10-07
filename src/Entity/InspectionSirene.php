@@ -10,15 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'inspection_sirene')]
 class InspectionSirene
 {
-    public const CRITERES = [
-        'visible_accessible' => 'La sirène est visible et accessible',
-        'solidement_fixee' => 'Elle est solidement fixée',
-        'non_endommagee' => 'La sirène n\'est pas endommagée',
-        'propre' => 'La sirène est propre',
-        'cable_bon_etat' => 'Le câblage est en bon état',
-        'test_sonore_ok' => 'Test sonore effectué et OK',
-        'volume_adequat' => 'Le volume sonore est adéquat',
-        'pas_corrosion' => 'Pas de traces de corrosion',
+    public const CONFORMITE = [
+        'Oui' => 'Oui',
+        'Non' => 'Non',
     ];
 
     #[ORM\Id]
@@ -30,8 +24,8 @@ class InspectionSirene
     #[ORM\JoinColumn(nullable: false)]
     private ?Sirene $sirene = null;
 
-    #[ORM\Column(type: Types::JSON)]
-    private array $criteres = [];
+    #[ORM\Column(length: 10)]
+    private ?string $conformite = null;
 
     #[ORM\Column]
     private bool $valide = false;
@@ -49,10 +43,19 @@ class InspectionSirene
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoObservation = null;
 
+    #[ORM\Column]
+    private bool $isActive = true;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $resetDate = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $resetReason = null;
+
     public function __construct()
     {
         $this->dateInspection = new \DateTime();
-        $this->criteres = [];
+        $this->isActive = true;
     }
 
     public function getId(): ?int
@@ -71,14 +74,14 @@ class InspectionSirene
         return $this;
     }
 
-    public function getCriteres(): array
+    public function getConformite(): ?string
     {
-        return $this->criteres;
+        return $this->conformite;
     }
 
-    public function setCriteres(array $criteres): static
+    public function setConformite(?string $conformite): static
     {
-        $this->criteres = $criteres;
+        $this->conformite = $conformite;
         return $this;
     }
 
@@ -134,6 +137,39 @@ class InspectionSirene
     public function setPhotoObservation(?string $photoObservation): static
     {
         $this->photoObservation = $photoObservation;
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function getResetDate(): ?\DateTimeInterface
+    {
+        return $this->resetDate;
+    }
+
+    public function setResetDate(?\DateTimeInterface $resetDate): static
+    {
+        $this->resetDate = $resetDate;
+        return $this;
+    }
+
+    public function getResetReason(): ?string
+    {
+        return $this->resetReason;
+    }
+
+    public function setResetReason(?string $resetReason): static
+    {
+        $this->resetReason = $resetReason;
         return $this;
     }
 }

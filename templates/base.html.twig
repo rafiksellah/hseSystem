@@ -338,6 +338,15 @@
                             </div>
                         </li>
 
+                        <!-- Gestion des Réinitialisations -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') starts with 'app_reset_inspection' ? 'active' : '' }}"
+                                href="{{ path('app_reset_inspection_index') }}">
+                                <i class="fas fa-history text-warning"></i> Réinitialisations
+                                <small class="ms-1">(Inspections)</small>
+                            </a>
+                        </li>
+
                         <!-- Export global -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {{ app.request.get('_route') starts with 'app_super_admin_export' ? 'active' : '' }}"
@@ -546,6 +555,23 @@
                                 {% else %}
                                 Utilisateurs {{ app.user.zone }}
                                 {% endif %}
+                            </a>
+                        </li>
+
+                        <!-- Séparateur -->
+                        <li class="nav-item">
+                            <hr class="sidebar-divider">
+                            <div class="sidebar-heading">
+                                <small class="text-white-50">OUTILS ADMIN</small>
+                            </div>
+                        </li>
+
+                        <!-- Gestion des Réinitialisations -->
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') starts with 'app_reset_inspection' ? 'active' : '' }}"
+                                href="{{ path('app_reset_inspection_index') }}">
+                                <i class="fas fa-history text-warning"></i> Réinitialisations
+                                <small class="ms-1">(Inspections)</small>
                             </a>
                         </li>
 

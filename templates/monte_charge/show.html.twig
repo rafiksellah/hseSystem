@@ -1,0 +1,186 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails Monte-Charge - {{ monte_charge.numeroMonteCharge }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-elevator me-2"></i>
+                        {{ monte_charge.numeroMonteCharge }}
+                    </h3>
+                    <div>
+                        <a href="{{ path('app_monte_charge_inspection_new', {'id': monte_charge.id}) }}" 
+                           class="btn btn-success me-2">
+                            <i class="fas fa-clipboard-check me-1"></i>
+                            Nouvelle Inspection
+                        </a>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('app_monte_charge_edit', {'id': monte_charge.id}) }}" 
+                               class="btn btn-warning me-2">
+                                <i class="fas fa-edit me-1"></i>
+                                Modifier
+                            </a>
+                        {% endif %}
+                        <a href="{{ path('app_monte_charge_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Retour
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Informations Générales</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Numéro :</strong></td>
+                                    <td>{{ monte_charge.numeroMonteCharge }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Zone :</strong></td>
+                                    <td>{{ monte_charge.zone }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Emplacement :</strong></td>
+                                    <td>{{ monte_charge.emplacement }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Porte :</strong></td>
+                                    <td>{{ monte_charge.numeroPorte }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date de création :</strong></td>
+                                    <td>{{ monte_charge.dateCreation|date('d/m/Y H:i') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Statut Actuel</h5>
+                            <div class="text-center p-4">
+                                {% set statut = monte_charge.statutConformite %}
+                                {% if statut == 'Conforme' %}
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle fa-3x mb-3"></i>
+                                        <h4>Conforme</h4>
+                                        <p class="mb-0">Le monte-charge est en bon état</p>
+                                    </div>
+                                {% elseif statut == 'Non conforme' %}
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                                        <h4>Non Conforme</h4>
+                                        <p class="mb-0">Le monte-charge nécessite une attention</p>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-question-circle fa-3x mb-3"></i>
+                                        <h4>Non Inspecté</h4>
+                                        <p class="mb-0">Aucune inspection effectuée</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h5>Historique des Inspections</h5>
+                    {% if inspections is empty %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Aucune inspection enregistrée pour ce monte-charge.
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Inspecteur</th>
+                                        <th>Portes Fermées</th>
+                                        <th>Consignes Respectées</th>
+                                        <th>Fins de Course</th>
+                                        <th>Essai à Vide</th>
+                                        <th>Photo</th>
+                                        <th>Conformité</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for inspection in inspections %}
+                                        <tr>
+                                            <td>{{ inspection.dateInspection|date('d/m/Y H:i') }}</td>
+                                            <td>{{ inspection.inspecteur.nom }} {{ inspection.inspecteur.prenom }}</td>
+                                            <td>
+                                                {% if inspection.portesFermees == 'Oui' %}
+                                                    <span class="badge bg-success">Oui</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Non</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if inspection.consignesRespectees == 'Oui' %}
+                                                    <span class="badge bg-success">Oui</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Non</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if inspection.finsCoursesFonctionnent == 'Oui' %}
+                                                    <span class="badge bg-success">Oui</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Non</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if inspection.essaiVideRealise == 'Oui' %}
+                                                    <span class="badge bg-success">Oui</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Non</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if inspection.photoObservation %}
+                                                    <a href="{{ asset('uploads/' ~ inspection.photoObservation) }}" 
+                                                       target="_blank" 
+                                                       class="btn btn-sm btn-outline-info" 
+                                                       title="Voir la photo">
+                                                        <i class="fas fa-image"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">Aucune</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if inspection.isConforme() %}
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>Conforme
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times me-1"></i>Non Conforme
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ path('app_monte_charge_inspection_edit', {'id': inspection.id}) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Modifier l'inspection">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

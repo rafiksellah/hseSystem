@@ -74,7 +74,7 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/dashboard.html.twig', [
             'stats_extincteurs' => $statsExtincteurs,
             'stats_ria' => $statsRIA,
-            'stats_monte_charge' => $statsMonteCharge,
+            'stats_monte_charge' => $statsMonteCharge['stats_for_template'] ?? [],
             'user_zone' => $user->getZone(),
             'is_super_admin' => in_array('ROLE_SUPER_ADMIN', $user->getRoles()),
         ]);
@@ -676,18 +676,9 @@ class EquipementsController extends AbstractController
     // =============== MONTE-CHARGE TEFIL ===============
 
     #[Route('/monte-charge', name: 'app_equipements_monte_charge')]
-    public function monteCharge(
-        MonteChargeRepository $monteChargeRepository,
-        InspectionMonteChargeRepository $inspectionRepository
-    ): Response {
-        $monteCharges = $monteChargeRepository->getMonteChargesAvecInspections();
-        $inspections = $inspectionRepository->getInspectionsAvecDetails();
-
-        return $this->render('equipements/monte_charge/liste.html.twig', [
-            'monte_charges' => $monteCharges,
-            'inspections' => $inspections,
-            'portes' => InspectionMonteCharge::PORTES,
-        ]);
+    public function monteCharge(): Response {
+        // Redirection vers le nouveau contrôleur MonteCharge
+        return $this->redirectToRoute('app_monte_charge_index');
     }
 
     #[Route('/monte-charge/{id}/inspecter/{porte}', name: 'app_equipements_monte_charge_inspecter')]
@@ -2016,14 +2007,10 @@ class EquipementsController extends AbstractController
             $inspection->setSirene($sirene);
             $inspection->setInspectePar($user);
 
-            $criteres = [];
-            foreach (InspectionSirene::CRITERES as $key => $label) {
-                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
-            }
-
-            $inspection->setCriteres($criteres);
+            $conformite = $request->request->get('conformite');
+            $inspection->setConformite($conformite);
             $inspection->setObservations($request->request->get('observations'));
-            $inspection->setValide(!in_array(false, $criteres, true));
+            $inspection->setValide($conformite === 'Oui');
 
             $photoFile = $request->files->get('photo_observation');
             if ($photoFile) {
@@ -2048,7 +2035,6 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/sirenes/inspecter.html.twig', [
             'sirene' => $sirene,
-            'criteres' => InspectionSirene::CRITERES,
         ]);
     }
 
@@ -2339,14 +2325,10 @@ class EquipementsController extends AbstractController
             $inspection->setExtinctionLocaliseeRAM($extinction);
             $inspection->setInspectePar($user);
 
-            $criteres = [];
-            foreach (InspectionExtinctionRAM::CRITERES as $key => $label) {
-                $criteres[$key] = $request->request->get('critere_' . $key) === 'oui';
-            }
-
-            $inspection->setCriteres($criteres);
+            $conformite = $request->request->get('conformite');
+            $inspection->setConformite($conformite);
             $inspection->setObservations($request->request->get('observations'));
-            $inspection->setValide(!in_array(false, $criteres, true));
+            $inspection->setValide($conformite === 'Oui');
 
             $photoFile = $request->files->get('photo_observation');
             if ($photoFile) {
@@ -2371,7 +2353,6 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/extinction_ram/inspecter.html.twig', [
             'extinction' => $extinction,
-            'criteres' => InspectionExtinctionRAM::CRITERES,
         ]);
     }
 

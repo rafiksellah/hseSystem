@@ -10,16 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'inspection_extinction_ram')]
 class InspectionExtinctionRAM
 {
-    public const CRITERES = [
-        'systeme_accessible' => 'Le système d\'extinction est accessible',
-        'commande_manuelle_ok' => 'La commande manuelle fonctionne',
-        'detection_ok' => 'Le système de détection fonctionne',
-        'buses_propres' => 'Les buses sont propres et dégagées',
-        'pression_ok' => 'La pression est correcte',
-        'pas_fuite' => 'Pas de fuite visible',
-        'signalisation_presente' => 'La signalisation est présente',
-        'extincteur_present' => 'L\'extincteur associé est présent',
-        'pas_degradation' => 'Pas de dégradation visible du système',
+    public const CONFORMITE = [
+        'Oui' => 'Oui',
+        'Non' => 'Non',
     ];
 
     #[ORM\Id]
@@ -31,8 +24,8 @@ class InspectionExtinctionRAM
     #[ORM\JoinColumn(nullable: false)]
     private ?ExtinctionLocaliseeRAM $extinctionLocaliseeRAM = null;
 
-    #[ORM\Column(type: Types::JSON)]
-    private array $criteres = [];
+    #[ORM\Column(length: 10)]
+    private ?string $conformite = null;
 
     #[ORM\Column]
     private bool $valide = false;
@@ -50,10 +43,19 @@ class InspectionExtinctionRAM
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $photoObservation = null;
 
+    #[ORM\Column]
+    private bool $isActive = true;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $resetDate = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $resetReason = null;
+
     public function __construct()
     {
         $this->dateInspection = new \DateTime();
-        $this->criteres = [];
+        $this->isActive = true;
     }
 
     public function getId(): ?int
@@ -72,14 +74,14 @@ class InspectionExtinctionRAM
         return $this;
     }
 
-    public function getCriteres(): array
+    public function getConformite(): ?string
     {
-        return $this->criteres;
+        return $this->conformite;
     }
 
-    public function setCriteres(array $criteres): static
+    public function setConformite(?string $conformite): static
     {
-        $this->criteres = $criteres;
+        $this->conformite = $conformite;
         return $this;
     }
 
@@ -135,6 +137,39 @@ class InspectionExtinctionRAM
     public function setPhotoObservation(?string $photoObservation): static
     {
         $this->photoObservation = $photoObservation;
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function getResetDate(): ?\DateTimeInterface
+    {
+        return $this->resetDate;
+    }
+
+    public function setResetDate(?\DateTimeInterface $resetDate): static
+    {
+        $this->resetDate = $resetDate;
+        return $this;
+    }
+
+    public function getResetReason(): ?string
+    {
+        return $this->resetReason;
+    }
+
+    public function setResetReason(?string $resetReason): static
+    {
+        $this->resetReason = $resetReason;
         return $this;
     }
 }
