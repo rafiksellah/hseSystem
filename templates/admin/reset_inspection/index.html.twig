@@ -202,6 +202,15 @@
                             </table>
                         </div>
                     {% endif %}
+
+                    <!-- Pagination -->
+                    {% if resetInspections|length > 0 %}
+                    {% include 'components/pagination.html.twig' with {
+                        'pagination': pagination,
+                        'route': 'app_reset_inspection_index',
+                        'routeParams': {}
+                    } %}
+                    {% endif %}
                 </div>
             </div>
         </div>

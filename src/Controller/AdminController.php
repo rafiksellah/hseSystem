@@ -9,6 +9,7 @@ use App\Form\RapportHSEType;
 use App\Service\PdfExportService;
 use App\Repository\UserRepository;
 use App\Service\ExcelExportService;
+use App\Service\PaginationService;
 use App\Repository\RapportHSERepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -561,10 +562,12 @@ class AdminController extends AbstractController
     }
 
     #[Route('/rapports', name: 'app_admin_rapports')]
-    public function listRapports(RapportHSERepository $rapportHSERepository, Request $request): Response
+    public function listRapports(RapportHSERepository $rapportHSERepository, PaginationService $paginationService, Request $request): Response
     {
-        $page = $request->query->getInt('page', 1);
-        $limit = 10;
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
         $currentUser = $this->getUser();
 
         // Paramètres de recherche
@@ -594,6 +597,18 @@ class AdminController extends AbstractController
         $totalRapports = $rapportHSERepository->countSearchRapports($searchParams);
         $totalPages = ceil($totalRapports / $limit);
 
+        // Créer l'objet de pagination
+        $pagination = [
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalItems' => $totalRapports,
+            'itemsPerPage' => $limit,
+            'hasNextPage' => $page < $totalPages,
+            'hasPreviousPage' => $page > 1,
+            'startItem' => ($page - 1) * $limit + 1,
+            'endItem' => min($page * $limit, $totalRapports)
+        ];
+
         // Obtenir les zones disponibles pour les filtres
         $zonesDisponibles = [];
         if (in_array('ROLE_SUPER_ADMIN', $currentUser->getRoles())) {
@@ -604,8 +619,7 @@ class AdminController extends AbstractController
 
         return $this->render('admin/rapports.html.twig', [
             'rapports' => $rapports,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
             'user_zone' => $currentUser->getZone(),
             'zones_disponibles' => $zonesDisponibles,

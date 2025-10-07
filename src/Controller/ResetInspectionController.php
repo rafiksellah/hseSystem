@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\ResetInspection;
 use App\Service\ResetInspectionService;
+use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,20 +18,33 @@ class ResetInspectionController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private ResetInspectionService $resetService
+        private ResetInspectionService $resetService,
+        private PaginationService $paginationService
     ) {}
 
     #[Route('/', name: 'app_reset_inspection_index', methods: ['GET'])]
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $resetInspections = $this->entityManager->getRepository(ResetInspection::class)
-            ->findRecent(50);
+        // Récupérer les paramètres de pagination
+        $paginationParams = $this->paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
+
+        // Récupérer toutes les réinitialisations
+        $allResetInspections = $this->entityManager->getRepository(ResetInspection::class)
+            ->findAll();
+
+        // Utiliser le service de pagination
+        $result = $this->paginationService->paginate($allResetInspections, $page, $limit);
+        $resetInspections = $result['items'];
+        $pagination = $result['pagination'];
 
         $statistics = $this->entityManager->getRepository(ResetInspection::class)
             ->getStatistics();
 
         return $this->render('admin/reset_inspection/index.html.twig', [
             'resetInspections' => $resetInspections,
+            'pagination' => $pagination,
             'statistics' => $statistics,
         ]);
     }

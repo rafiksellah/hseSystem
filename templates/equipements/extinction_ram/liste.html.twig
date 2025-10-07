@@ -114,6 +114,19 @@
               {% endfor %}
             </tbody>
           </table>
+          <!-- Pagination -->
+          {% if extinctions|length > 0 %}
+          {% include 'components/pagination.html.twig' with {
+            'pagination': pagination,
+            'route': 'app_equipements_extinction_ram',
+            'routeParams': {
+              'zone': search_params.zone,
+              'numerotation': search_params.numerotation,
+              'conformite': search_params.conformite
+            }
+          } %}
+          {% endif %}
+
           {% else %}
           <div class="text-center py-5">
             <i class="fas fa-fire-extinguisher fa-3x text-muted mb-3"></i>

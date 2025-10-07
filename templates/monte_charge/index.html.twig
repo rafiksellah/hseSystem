@@ -153,6 +153,19 @@
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Pagination -->
+                        {% if monte_charges|length > 0 %}
+                        {% include 'components/pagination.html.twig' with {
+                            'pagination': pagination,
+                            'route': 'app_monte_charge_index',
+                            'routeParams': {
+                                'search': search,
+                                'zone': zone,
+                                'statut': statut
+                            }
+                        } %}
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>

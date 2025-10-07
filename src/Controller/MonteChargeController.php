@@ -19,6 +19,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use App\Service\ExcelExportService;
 use App\Service\PdfExportService;
+use App\Service\PaginationService;
 
 #[Route('/monte-charge')]
 #[IsGranted('ROLE_USER')]
@@ -30,7 +31,8 @@ class MonteChargeController extends AbstractController
         private InspectionMonteChargeRepository $inspectionRepository,
         private SluggerInterface $slugger,
         private ExcelExportService $excelExportService,
-        private PdfExportService $pdfExportService
+        private PdfExportService $pdfExportService,
+        private PaginationService $paginationService
     ) {}
 
     #[Route('/', name: 'app_monte_charge_index', methods: ['GET'])]
@@ -40,10 +42,22 @@ class MonteChargeController extends AbstractController
         $zone = $request->query->get('zone', '');
         $statut = $request->query->get('statut', '');
 
-        $monteCharges = $this->monteChargeRepository->findWithFilters($search, $zone, $statut);
+        // Récupérer les paramètres de pagination
+        $paginationParams = $this->paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
+
+        // Récupérer tous les monte-charges avec filtres
+        $allMonteCharges = $this->monteChargeRepository->findWithFilters($search, $zone, $statut);
+
+        // Utiliser le service de pagination
+        $result = $this->paginationService->paginate($allMonteCharges, $page, $limit);
+        $monteCharges = $result['items'];
+        $pagination = $result['pagination'];
 
         return $this->render('monte_charge/index.html.twig', [
             'monte_charges' => $monteCharges,
+            'pagination' => $pagination,
             'search' => $search,
             'zone' => $zone,
             'statut' => $statut,

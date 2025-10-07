@@ -119,6 +119,19 @@
               {% endfor %}
             </tbody>
           </table>
+          <!-- Pagination -->
+          {% if sirenes|length > 0 %}
+          {% include 'components/pagination.html.twig' with {
+            'pagination': pagination,
+            'route': 'app_equipements_sirenes',
+            'routeParams': {
+              'zone': search_params.zone,
+              'numerotation': search_params.numerotation,
+              'conformite': search_params.conformite
+            }
+          } %}
+          {% endif %}
+
           {% else %}
           <div class="text-center py-5">
             <i class="fas fa-bell fa-3x text-muted mb-3"></i>

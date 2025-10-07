@@ -498,43 +498,11 @@
 			</div>
 
 			<!-- Pagination -->
-			{% if total_pages > 1 %}
-			<div class="d-flex justify-content-center p-4">
-				<nav aria-label="Pagination des rapports">
-					<ul class="pagination">
-						{% if current_page > 1 %}
-						<li class="page-item">
-							<a class="page-link"
-								href="{{ path('app_admin_rapports', search_params|merge({page: current_page - 1})) }}">
-								<i class="fas fa-chevron-left me-1"></i>Précédent
-							</a>
-						</li>
-						{% endif %}
-
-						{% for page in 1..total_pages %}
-						{% if page == current_page %}
-						<li class="page-item active">
-							<span class="page-link">{{ page }}</span>
-						</li>
-						{% elseif page > current_page - 3 and page < current_page + 3 %} <li class="page-item">
-							<a class="page-link"
-								href="{{ path('app_admin_rapports', search_params|merge({page: page})) }}">{{ page
-								}}</a>
-							</li>
-							{% endif %}
-							{% endfor %}
-
-							{% if current_page < total_pages %} <li class="page-item">
-								<a class="page-link"
-									href="{{ path('app_admin_rapports', search_params|merge({page: current_page + 1})) }}">
-									Suivant<i class="fas fa-chevron-right ms-1"></i>
-								</a>
-								</li>
-								{% endif %}
-					</ul>
-				</nav>
-			</div>
-			{% endif %}
+			{% include 'components/pagination.html.twig' with {
+				'pagination': pagination,
+				'route': 'app_admin_rapports',
+				'routeParams': search_params
+			} %}
 			{% else %}
 			<!-- Message quand aucun rapport -->
 			<div class="text-center py-5">

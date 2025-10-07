@@ -36,6 +36,7 @@ use App\Repository\DesenfumageRepository;
 use App\Repository\InspectionDesenfumageRepository;
 use App\Repository\ExtinctionLocaliseeRAMRepository;
 use App\Repository\InspectionExtinctionRAMRepository;
+use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -156,12 +157,16 @@ class EquipementsController extends AbstractController
     #[Route('/extincteurs', name: 'app_equipements_extincteurs')]
     public function extincteurs(
         ExtincteurRepository $extincteurRepository,
+        PaginationService $paginationService,
         Request $request
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
-        $page = $request->query->getInt('page', 1);
-        $limit = 20;
+        
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
 
         $searchParams = [
             'zone' => '',
@@ -196,11 +201,10 @@ class EquipementsController extends AbstractController
             $allExtincteurs = array_values($allExtincteurs); // Réindexer le tableau
         }
 
-        // Pagination manuelle
-        $totalExtincteurs = count($allExtincteurs);
-        $totalPages = ceil($totalExtincteurs / $limit);
-        $offset = ($page - 1) * $limit;
-        $extincteurs = array_slice($allExtincteurs, $offset, $limit);
+        // Utiliser le service de pagination
+        $result = $paginationService->paginate($allExtincteurs, $page, $limit);
+        $extincteurs = $result['items'];
+        $pagination = $result['pagination'];
 
         // Emplacements disponibles selon la zone de l'utilisateur
         $emplacementsDisponibles = [];
@@ -217,8 +221,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/extincteurs/liste.html.twig', [
             'extincteurs' => $extincteurs,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
             'emplacements_disponibles' => $emplacementsDisponibles,
             'user_zone' => $user->getZone(),
@@ -464,12 +467,16 @@ class EquipementsController extends AbstractController
     #[Route('/ria', name: 'app_equipements_ria')]
     public function ria(
         RIARepository $riaRepository,
+        PaginationService $paginationService,
         Request $request
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
-        $page = $request->query->getInt('page', 1);
-        $limit = 20;
+        
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
 
         $searchParams = [
             'zone' => $request->query->get('zone', ''),
@@ -498,19 +505,17 @@ class EquipementsController extends AbstractController
             $allRias = array_values($allRias);
         }
 
-        // Pagination
-        $totalRIAs = count($allRias);
-        $totalPages = ceil($totalRIAs / $limit);
-        $offset = ($page - 1) * $limit;
-        $rias = array_slice($allRias, $offset, $limit);
+        // Utiliser le service de pagination
+        $result = $paginationService->paginate($allRias, $page, $limit);
+        $rias = $result['items'];
+        $pagination = $result['pagination'];
 
         // Les zones RIA sont fixes (pas liées à SIMTIS/TISSAGE)
         $zonesDisponibles = RIA::ZONES_RIA;
 
         return $this->render('equipements/ria/liste.html.twig', [
             'rias' => $rias,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
             'zones_disponibles' => $zonesDisponibles,
             'user_zone' => $user->getZone(),
@@ -1458,10 +1463,13 @@ class EquipementsController extends AbstractController
     #[Route('/prises-pompiers', name: 'app_equipements_prises_pompiers')]
     public function prisesPompiers(
         PrisePompierRepository $prisePompierRepository,
+        PaginationService $paginationService,
         Request $request
     ): Response {
-        $page = $request->query->getInt('page', 1);
-        $limit = 20;
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
 
         $searchParams = [
             'zone' => $request->query->get('zone', ''),
@@ -1489,15 +1497,14 @@ class EquipementsController extends AbstractController
             $allPrises = array_values($allPrises);
         }
 
-        $totalPrises = count($allPrises);
-        $totalPages = ceil($totalPrises / $limit);
-        $offset = ($page - 1) * $limit;
-        $prises = array_slice($allPrises, $offset, $limit);
+        // Utiliser le service de pagination
+        $result = $paginationService->paginate($allPrises, $page, $limit);
+        $prises = $result['items'];
+        $pagination = $result['pagination'];
 
         return $this->render('equipements/prises_pompiers/liste.html.twig', [
             'prises' => $prises,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
         ]);
     }
@@ -1675,10 +1682,13 @@ class EquipementsController extends AbstractController
     #[Route('/issues-secours', name: 'app_equipements_issues_secours')]
     public function issuesSecours(
         IssueSecoursRepository $issueSecoursRepository,
+        PaginationService $paginationService,
         Request $request
     ): Response {
-        $page = $request->query->getInt('page', 1);
-        $limit = 20;
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
 
         $searchParams = [
             'zone' => $request->query->get('zone', ''),
@@ -1705,15 +1715,14 @@ class EquipementsController extends AbstractController
             $allIssues = array_values($allIssues);
         }
 
-        $totalIssues = count($allIssues);
-        $totalPages = ceil($totalIssues / $limit);
-        $offset = ($page - 1) * $limit;
-        $issues = array_slice($allIssues, $offset, $limit);
+        // Utiliser le service de pagination
+        $result = $paginationService->paginate($allIssues, $page, $limit);
+        $issues = $result['items'];
+        $pagination = $result['pagination'];
 
         return $this->render('equipements/issues_secours/liste.html.twig', [
             'issues' => $issues,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
         ]);
     }
@@ -1886,10 +1895,13 @@ class EquipementsController extends AbstractController
     #[Route('/sirenes', name: 'app_equipements_sirenes')]
     public function sirenes(
         SireneRepository $sireneRepository,
+        PaginationService $paginationService,
         Request $request
     ): Response {
-        $page = $request->query->getInt('page', 1);
-        $limit = 20;
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
 
         $searchParams = [
             'zone' => $request->query->get('zone', ''),
@@ -1916,15 +1928,14 @@ class EquipementsController extends AbstractController
             $allSirenes = array_values($allSirenes);
         }
 
-        $totalSirenes = count($allSirenes);
-        $totalPages = ceil($totalSirenes / $limit);
-        $offset = ($page - 1) * $limit;
-        $sirenes = array_slice($allSirenes, $offset, $limit);
+        // Utiliser le service de pagination
+        $result = $paginationService->paginate($allSirenes, $page, $limit);
+        $sirenes = $result['items'];
+        $pagination = $result['pagination'];
 
         return $this->render('equipements/sirenes/liste.html.twig', [
             'sirenes' => $sirenes,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
         ]);
     }
@@ -2043,10 +2054,13 @@ class EquipementsController extends AbstractController
     #[Route('/desenfumage', name: 'app_equipements_desenfumage')]
     public function desenfumage(
         DesenfumageRepository $desenfumageRepository,
+        PaginationService $paginationService,
         Request $request
     ): Response {
-        $page = $request->query->getInt('page', 1);
-        $limit = 20;
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
 
         $searchParams = [
             'zone' => $request->query->get('zone', ''),
@@ -2073,15 +2087,14 @@ class EquipementsController extends AbstractController
             $allDesenfumages = array_values($allDesenfumages);
         }
 
-        $totalDesenfumages = count($allDesenfumages);
-        $totalPages = ceil($totalDesenfumages / $limit);
-        $offset = ($page - 1) * $limit;
-        $desenfumages = array_slice($allDesenfumages, $offset, $limit);
+        // Utiliser le service de pagination
+        $result = $paginationService->paginate($allDesenfumages, $page, $limit);
+        $desenfumages = $result['items'];
+        $pagination = $result['pagination'];
 
         return $this->render('equipements/desenfumage/liste.html.twig', [
             'desenfumages' => $desenfumages,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
         ]);
     }
@@ -2205,10 +2218,13 @@ class EquipementsController extends AbstractController
     #[Route('/extinction-ram', name: 'app_equipements_extinction_ram')]
     public function extinctionRAM(
         ExtinctionLocaliseeRAMRepository $extinctionRAMRepository,
+        PaginationService $paginationService,
         Request $request
     ): Response {
-        $page = $request->query->getInt('page', 1);
-        $limit = 20;
+        // Récupérer les paramètres de pagination
+        $paginationParams = $paginationService->getPaginationFromRequest($request->query->all());
+        $page = $paginationParams['page'];
+        $limit = $paginationParams['limit'];
 
         $searchParams = [
             'zone' => $request->query->get('zone', ''),
@@ -2235,15 +2251,14 @@ class EquipementsController extends AbstractController
             $allExtinctions = array_values($allExtinctions);
         }
 
-        $totalExtinctions = count($allExtinctions);
-        $totalPages = ceil($totalExtinctions / $limit);
-        $offset = ($page - 1) * $limit;
-        $extinctions = array_slice($allExtinctions, $offset, $limit);
+        // Utiliser le service de pagination
+        $result = $paginationService->paginate($allExtinctions, $page, $limit);
+        $extinctions = $result['items'];
+        $pagination = $result['pagination'];
 
         return $this->render('equipements/extinction_ram/liste.html.twig', [
             'extinctions' => $extinctions,
-            'current_page' => $page,
-            'total_pages' => $totalPages,
+            'pagination' => $pagination,
             'search_params' => $searchParams,
         ]);
     }

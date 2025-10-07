@@ -188,21 +188,16 @@
           </div>
 
           <!-- Pagination -->
-          {% if total_pages > 1 %}
-          <nav aria-label="Navigation pagination">
-            <ul class="pagination justify-content-center">
-              {% for page in 1..total_pages %}
-              <li class="page-item {{ page == current_page ? 'active' : '' }}">
-                <a class="page-link" href="{{ path('app_equipements_extincteurs', {
-                                    page: page,
-                                    emplacement: search_params.emplacement,
-                                    numerotation: search_params.numerotation,
-                                    conformite: search_params.conformite
-                                }) }}">{{ page }}</a>
-              </li>
-              {% endfor %}
-            </ul>
-          </nav>
+          {% if extincteurs|length > 0 %}
+          {% include 'components/pagination.html.twig' with {
+            'pagination': pagination,
+            'route': 'app_equipements_extincteurs',
+            'routeParams': {
+              'emplacement': search_params.emplacement,
+              'numerotation': search_params.numerotation,
+              'conformite': search_params.conformite
+            }
+          } %}
           {% endif %}
 
           {% else %}

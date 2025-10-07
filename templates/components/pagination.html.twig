@@ -1,0 +1,109 @@
+{% set currentPage = pagination.currentPage ?? 1 %}
+{% set totalPages = pagination.totalPages ?? 1 %}
+{% set totalItems = pagination.totalItems ?? 0 %}
+{% set itemsPerPage = pagination.itemsPerPage ?? 10 %}
+{% set route = pagination.route ?? app.request.get('_route') %}
+{% set routeParams = pagination.routeParams ?? {} %}
+
+{# Calculer les pages à afficher #}
+{% set startPage = max(1, currentPage - 2) %}
+{% set endPage = min(totalPages, currentPage + 2) %}
+
+{# Informations sur les éléments affichés #}
+{% set startItem = (currentPage - 1) * itemsPerPage + 1 %}
+{% set endItem = min(currentPage * itemsPerPage, totalItems) %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <!-- Informations sur les éléments -->
+    <div class="text-muted">
+        <small>
+            Affichage de <strong>{{ startItem }}</strong> à <strong>{{ endItem }}</strong> 
+            sur <strong>{{ totalItems }}</strong> éléments
+        </small>
+    </div>
+    
+    <!-- Sélecteur d'éléments par page -->
+    <div class="d-flex align-items-center">
+        <label for="itemsPerPage" class="form-label me-2 mb-0">
+            <small>Éléments par page:</small>
+        </label>
+        <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto;" onchange="changeItemsPerPage(this.value)">
+            <option value="10" {{ itemsPerPage == 10 ? 'selected' : '' }}>10</option>
+            <option value="25" {{ itemsPerPage == 25 ? 'selected' : '' }}>25</option>
+            <option value="50" {{ itemsPerPage == 50 ? 'selected' : '' }}>50</option>
+            <option value="100" {{ itemsPerPage == 100 ? 'selected' : '' }}>100</option>
+        </select>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if totalPages > 1 %}
+<nav aria-label="Pagination">
+    <ul class="pagination justify-content-center">
+        <!-- Bouton Précédent -->
+        <li class="page-item {{ currentPage == 1 ? 'disabled' : '' }}">
+            <a class="page-link" 
+               href="{{ currentPage == 1 ? '#' : path(route, routeParams|merge({page: currentPage - 1})) }}"
+               aria-label="Précédent">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+
+        <!-- Première page -->
+        {% if startPage > 1 %}
+        <li class="page-item">
+            <a class="page-link" href="{{ path(route, routeParams|merge({page: 1})) }}">1</a>
+        </li>
+        {% if startPage > 2 %}
+        <li class="page-item disabled">
+            <span class="page-link">...</span>
+        </li>
+        {% endif %}
+        {% endif %}
+
+        <!-- Pages du milieu -->
+        {% for page in startPage..endPage %}
+        <li class="page-item {{ page == currentPage ? 'active' : '' }}">
+            <a class="page-link" href="{{ path(route, routeParams|merge({page: page})) }}">{{ page }}</a>
+        </li>
+        {% endfor %}
+
+        <!-- Dernière page -->
+        {% if endPage < totalPages %}
+        {% if endPage < totalPages - 1 %}
+        <li class="page-item disabled">
+            <span class="page-link">...</span>
+        </li>
+        {% endif %}
+        <li class="page-item">
+            <a class="page-link" href="{{ path(route, routeParams|merge({page: totalPages})) }}">{{ totalPages }}</a>
+        </li>
+        {% endif %}
+
+        <!-- Bouton Suivant -->
+        <li class="page-item {{ currentPage == totalPages ? 'disabled' : '' }}">
+            <a class="page-link" 
+               href="{{ currentPage == totalPages ? '#' : path(route, routeParams|merge({page: currentPage + 1})) }}"
+               aria-label="Suivant">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+<!-- Informations de pagination -->
+<div class="text-center text-muted">
+    <small>
+        Page <strong>{{ currentPage }}</strong> sur <strong>{{ totalPages }}</strong>
+    </small>
+</div>
+{% endif %}
+
+<script>
+function changeItemsPerPage(itemsPerPage) {
+    const url = new URL(window.location);
+    url.searchParams.set('limit', itemsPerPage);
+    url.searchParams.set('page', '1'); // Retourner à la première page
+    window.location.href = url.toString();
+}
+</script>
