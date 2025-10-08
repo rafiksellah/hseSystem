@@ -13,7 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'issue_secours')]
 class IssueSecours
 {
-    public const ZONES_ISSUES = [
+    // Zones et autres champs en suggestions pour Super Admin
+    public const ZONES_ISSUES_SUGGESTIONS = [
         'GRATTAGE' => 'GRATTAGE',
         'CONFECTION DECATHLON' => 'CONFECTION DECATHLON',
         'STOCK DECATHLON' => 'STOCK DECATHLON',
@@ -34,7 +35,7 @@ class IssueSecours
         'ADMINISTRATION' => 'ADMINISTRATION',
     ];
 
-    public const NUMEROTATIONS_ISSUES = [
+    public const NUMEROTATIONS_ISSUES_SUGGESTIONS = [
         'G01' => 'G01',
         'G02' => 'G02',
         'CF.D 01' => 'CF.D 01',
@@ -76,14 +77,14 @@ class IssueSecours
         'ADM 02' => 'ADM 02',
     ];
 
-    public const TYPES_ISSUES = [
+    public const TYPES_ISSUES_SUGGESTIONS = [
         'Coupe feu' => 'Coupe feu',
         'Issue sans porte' => 'Issue sans porte',
         'Porte normale' => 'Porte normale',
         'Porte de passage transparente' => 'Porte de passage transparente',
     ];
 
-    public const ETAT_BARRE = [
+    public const ETAT_BARRE_SUGGESTIONS = [
         'ok' => 'OK',
         'Nok' => 'NOK',
         'NA' => 'N/A',

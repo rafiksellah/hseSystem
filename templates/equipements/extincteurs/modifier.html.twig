@@ -67,36 +67,21 @@
 									</div>
 									<div class="col-md-6 mb-3">
 										<label for="agent_extincteur" class="form-label">Agent extincteur</label>
-										<select name="agent_extincteur" id="agent_extincteur" class="form-select">
-											<option value="">Sélectionnez un agent</option>
-											{% for key, agent in agents_disponibles %}
-												<option value="{{ key }}" {{ extincteur.agentExtincteur==key ? 'selected' : '' }}>
-													{{ agent }}
-												</option>
-											{% endfor %}
-										</select>
+										<input type="text" name="agent_extincteur" id="agent_extincteur" class="form-control" 
+											   value="{{ extincteur.agentExtincteur }}" placeholder="Ex: CO2, Poudre ABC">
+										<small class="text-muted">Saisie libre</small>
 									</div>
 									<div class="col-md-6 mb-3">
 										<label for="type" class="form-label">Type</label>
-										<select name="type" id="type" class="form-select">
-											<option value="">Sélectionnez un type</option>
-											{% for key, type_name in types_disponibles %}
-												<option value="{{ key }}" {{ extincteur.type==key ? 'selected' : '' }}>
-													{{ type_name }}
-												</option>
-											{% endfor %}
-										</select>
+										<input type="text" name="type" id="type" class="form-control" 
+											   value="{{ extincteur.type }}" placeholder="Ex: Portatif P. permanente">
+										<small class="text-muted">Saisie libre</small>
 									</div>
 									<div class="col-md-6 mb-3">
 										<label for="capacite" class="form-label">Capacité</label>
-										<select name="capacite" id="capacite" class="form-select">
-											<option value="">Sélectionnez une capacité</option>
-											{% for key, cap in capacites_disponibles %}
-												<option value="{{ key }}" {{ extincteur.capacite==key ? 'selected' : '' }}>
-													{{ cap }}
-												</option>
-											{% endfor %}
-										</select>
+										<input type="text" name="capacite" id="capacite" class="form-control" 
+											   value="{{ extincteur.capacite }}" placeholder="Ex: 6L, 9 kg">
+										<small class="text-muted">Saisie libre</small>
 									</div>
 								</div>
 

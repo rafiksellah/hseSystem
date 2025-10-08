@@ -13,7 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'sirene')]
 class Sirene
 {
-    public const ZONES_SIRENE = [
+    // Zones et emplacements en suggestions pour Super Admin
+    public const ZONES_SIRENE_SUGGESTIONS = [
         '1ER ETAGE STARSS' => '1ER ETAGE STARSS',
         '2EME ETAGE EMBALLAGE' => '2EME ETAGE EMBALLAGE',
         '3EME ETAGE CHALES ET FOULARDS' => '3EME ETAGE CHALES ET FOULARDS',
@@ -38,7 +39,7 @@ class Sirene
         'TEINTURE' => 'TEINTURE',
     ];
 
-    public const EMPLACEMENTS_SIRENE = [
+    public const EMPLACEMENTS_SIRENE_SUGGESTIONS = [
         'En face montecharge N°2' => 'En face montecharge N°2',
         'Montecharge N°2' => 'Montecharge N°2',
         'Au milieu' => 'Au milieu',
@@ -81,7 +82,7 @@ class Sirene
         'MACHINE TEINTURE DE SOIE' => 'MACHINE TEINTURE DE SOIE',
     ];
 
-    public const TYPES_SIRENE = [
+    public const TYPES_SIRENE_SUGGESTIONS = [
         'Sirène' => 'Sirène',
         'Diffuseur sonore' => 'Diffuseur sonore',
     ];
@@ -206,7 +207,8 @@ class Sirene
 
     public function getDerniereInspection(): ?InspectionSirene
     {
-        $inspections = $this->inspections->toArray();
+        // Filtrer uniquement les inspections actives
+        $inspections = $this->inspections->filter(fn($inspection) => $inspection->isActive())->toArray();
         usort($inspections, fn($a, $b) => $b->getDateInspection() <=> $a->getDateInspection());
         return $inspections[0] ?? null;
     }

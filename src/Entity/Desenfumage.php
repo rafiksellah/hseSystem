@@ -13,12 +13,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'desenfumage')]
 class Desenfumage
 {
-    public const ZONES_DESENFUMAGE = [
+    // Zones et emplacements en suggestions pour Super Admin
+    public const ZONES_DESENFUMAGE_SUGGESTIONS = [
         'STOCK PF' => 'STOCK PF',
         'IMPRESSION NUMERIQUE' => 'IMPRESSION NUMERIQUE',
     ];
 
-    public const EMPLACEMENTS_DESENFUMAGE = [
+    public const EMPLACEMENTS_DESENFUMAGE_SUGGESTIONS = [
         'LAVAGE A LA CONTINUE' => 'LAVAGE A LA CONTINUE',
         'Entre Vaporisateur 1 & 2' => 'Entre Vaporisateur 1 & 2',
         'ROTATIVE' => 'ROTATIVE',

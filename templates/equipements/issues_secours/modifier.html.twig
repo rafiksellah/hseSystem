@@ -19,6 +19,7 @@
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone <span class="text-danger">*</span></label>
                 <select class="form-select" id="zone" name="zone" required>
+                  <option value="">Sélectionner une zone</option>
                   {% for key, zone_name in zones_disponibles %}
                     <option value="{{ zone_name }}" {{ issue.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                   {% endfor %}
@@ -27,29 +28,23 @@
 
               <div class="col-md-6 mb-3">
                 <label for="numerotation" class="form-label">Numérotation <span class="text-danger">*</span></label>
-                <select class="form-select" id="numerotation" name="numerotation" required>
-                  {% for key, num in numerotations_disponibles %}
-                    <option value="{{ num }}" {{ issue.numerotation == num ? 'selected' : '' }}>{{ num }}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" class="form-control" id="numerotation" name="numerotation" 
+                       value="{{ issue.numerotation }}" placeholder="Ex: G01, BR01, ADM01" required>
+                <small class="text-muted">Saisie libre - Ex: G01, CF.D 01, etc.</small>
               </div>
 
               <div class="col-md-6 mb-3">
-                <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
-                <select class="form-select" id="type" name="type" required>
-                  {% for key, type_name in types_disponibles %}
-                    <option value="{{ type_name }}" {{ issue.type == type_name ? 'selected' : '' }}>{{ type_name }}</option>
-                  {% endfor %}
-                </select>
+                <label for="type" class="form-label">Type</label>
+                <input type="text" name="type" id="type" class="form-control" 
+                       value="{{ issue.type }}" placeholder="Ex: Coupe feu, Issue sans porte">
+                <small class="text-muted">Saisie libre</small>
               </div>
 
               <div class="col-md-6 mb-3">
-                <label for="barre_antipanique" class="form-label">Barre antipanique <span class="text-danger">*</span></label>
-                <select class="form-select" id="barre_antipanique" name="barre_antipanique" required>
-                  {% for key, etat in etats_barre %}
-                    <option value="{{ etat }}" {{ issue.barreAntipanique == etat ? 'selected' : '' }}>{{ etat }}</option>
-                  {% endfor %}
-                </select>
+                <label for="barre_antipanique" class="form-label">Barre antipanique</label>
+                <input type="text" name="barre_antipanique" id="barre_antipanique" class="form-control" 
+                       value="{{ issue.barreAntipanique }}" placeholder="Ex: OK, NOK, N/A">
+                <small class="text-muted">Saisie libre</small>
               </div>
             </div>
 

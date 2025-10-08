@@ -17,6 +17,10 @@
             <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
               <i class="fas fa-arrow-left"></i> Retour
             </a>
+            <a href="{{ path('app_equipements_sirenes_recapitulatif', app.request.query.all) }}" 
+               class="btn btn-info btn-sm me-2">
+              <i class="fas fa-table"></i> Récapitulatif
+            </a>
             <a href="{{ path('app_equipements_sirenes_export_excel', app.request.query.all) }}" 
                class="btn btn-success btn-sm me-2">
               <i class="fas fa-file-excel"></i> Export Excel
@@ -38,7 +42,7 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
-                {% for key, zone_name in constant('App\\Entity\\Sirene::ZONES_SIRENE') %}
+                {% for key, zone_name in constant('App\\Entity\\Sirene::ZONES_SIRENE_SUGGESTIONS') %}
                   <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>

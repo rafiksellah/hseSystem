@@ -61,21 +61,49 @@ class ResetInspectionController extends AbstractController
         }
 
         try {
-            $results = $this->resetService->resetInspectionsByType(
-                $equipmentType,
-                'manual',
-                $this->getUser(),
-                $reason
-            );
+            // Si "all" est sélectionné, utiliser resetAllInspections
+            if ($equipmentType === 'all') {
+                $allResults = $this->resetService->resetAllInspections(
+                    'manual',
+                    $this->getUser(),
+                    $reason
+                );
+                
+                // Calculer les totaux
+                $totalArchived = array_sum(array_column($allResults, 'archived'));
+                $totalReset = array_sum(array_column($allResults, 'reset'));
+                $allErrors = [];
+                foreach ($allResults as $typeResults) {
+                    $allErrors = array_merge($allErrors, $typeResults['errors']);
+                }
 
-            $this->addFlash('success', sprintf(
-                'Réinitialisation terminée: %d archivées, %d réinitialisées',
-                $results['archived'],
-                $results['reset']
-            ));
+                $this->addFlash('success', sprintf(
+                    'Réinitialisation de tous les équipements terminée: %d archivées, %d réinitialisées',
+                    $totalArchived,
+                    $totalReset
+                ));
 
-            if (!empty($results['errors'])) {
-                $this->addFlash('warning', 'Certaines erreurs ont été rencontrées');
+                if (!empty($allErrors)) {
+                    $this->addFlash('warning', 'Certaines erreurs ont été rencontrées: ' . implode(', ', $allErrors));
+                }
+            } else {
+                // Réinitialisation d'un seul type
+                $results = $this->resetService->resetInspectionsByType(
+                    $equipmentType,
+                    'manual',
+                    $this->getUser(),
+                    $reason
+                );
+
+                $this->addFlash('success', sprintf(
+                    'Réinitialisation terminée: %d archivées, %d réinitialisées',
+                    $results['archived'],
+                    $results['reset']
+                ));
+
+                if (!empty($results['errors'])) {
+                    $this->addFlash('warning', 'Certaines erreurs ont été rencontrées');
+                }
             }
 
         } catch (\Exception $e) {

@@ -42,7 +42,7 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
-                {% for key, zone_name in constant('App\\Entity\\PrisePompier::ZONES_PRISES') %}
+                {% for key, zone_name in constant('App\\Entity\\PrisePompier::ZONES_PRISES_SUGGESTIONS') %}
                   <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>

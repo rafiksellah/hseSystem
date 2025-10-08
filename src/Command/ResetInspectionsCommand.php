@@ -26,7 +26,7 @@ class ResetInspectionsCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('type', InputArgument::OPTIONAL, 'Type d\'équipement (extincteur, sirene, extinction_ram, monte_charge, all)', 'all')
+            ->addArgument('type', InputArgument::OPTIONAL, 'Type d\'équipement (extincteur, sirene, extinction_ram, monte_charge, desenfumage, ria, issue_secours, prise_pompier, all)', 'all')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forcer la réinitialisation même si pas nécessaire')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Simuler sans effectuer les changements')
             ->addOption('reason', 'r', InputOption::VALUE_REQUIRED, 'Raison de la réinitialisation', 'Réinitialisation automatique');
@@ -47,7 +47,7 @@ class ResetInspectionsCommand extends Command
         }
 
         $equipmentTypes = $type === 'all' 
-            ? ['extincteur', 'sirene', 'extinction_ram', 'monte_charge']
+            ? ['extincteur', 'sirene', 'extinction_ram', 'monte_charge', 'desenfumage', 'ria', 'issue_secours', 'prise_pompier']
             : [$type];
 
         $totalResults = [

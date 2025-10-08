@@ -12,18 +12,22 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ExtincteurRepository::class)]
 class Extincteur
 {
-    public const AGENTS_EXTINCTEUR = [
+    // Les agents, types et capacités ne sont plus en liste déroulante fixe
+    // Ils peuvent être saisis librement pour les Super Admin
+    // Pour les autres utilisateurs, des suggestions seront affichées
+    
+    public const AGENTS_EXTINCTEUR_SUGGESTIONS = [
         'CO2' => 'CO2',
         'Poudre ABC' => 'Poudre ABC',
         'EAU PULVIRISEE AVEC ADDITIF' => 'EAU PULVIRISEE AVEC ADDITIF',
     ];
 
-    public const TYPES_DISPONIBLES = [
+    public const TYPES_SUGGESTIONS = [
         'Portatif P. permanente' => 'Portatif P. permanente',
         'Portatif auxiliaire' => 'Portatif auxiliaire',
     ];
 
-    public const CAPACITES_DISPONIBLES = [
+    public const CAPACITES_SUGGESTIONS = [
         '2KG' => '2KG',
         '5KG' => '5KG',
         '9 kg' => '9 kg',
@@ -303,11 +307,12 @@ class Extincteur
     }
 
     /**
-     * Retourne la dernière inspection
+     * Retourne la dernière inspection ACTIVE
      */
     public function getDerniereInspection(): ?InspectionExtincteur
     {
-        $inspections = $this->inspections->toArray();
+        // Filtrer uniquement les inspections actives
+        $inspections = $this->inspections->filter(fn($inspection) => $inspection->isActive())->toArray();
         usort($inspections, fn($a, $b) => $b->getDateInspection() <=> $a->getDateInspection());
         return $inspections[0] ?? null;
     }

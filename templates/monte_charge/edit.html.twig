@@ -18,12 +18,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ form_label(form.numeroMonteCharge, 'Numéro Monte-Charge', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.numeroMonteCharge, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_widget(form.numeroMonteCharge) }}
                                 {{ form_errors(form.numeroMonteCharge) }}
+                                <small class="text-muted">Ce numéro doit être unique</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 {{ form_label(form.zone, 'Zone', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.zone, {'attr': {'class': 'form-select', 'id': 'zone'}}) }}
+                                {{ form_widget(form.zone) }}
                                 {{ form_errors(form.zone) }}
                             </div>
                         </div>
@@ -31,12 +32,20 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ form_label(form.emplacement, 'Emplacement', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.emplacement, {'attr': {'class': 'form-select', 'id': 'emplacement'}}) }}
+                                {{ form_widget(form.emplacement) }}
                                 {{ form_errors(form.emplacement) }}
                             </div>
                             <div class="col-md-6 mb-3">
+                                {{ form_label(form.nombrePortes, 'Nombre de Portes', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nombrePortes) }}
+                                {{ form_errors(form.nombrePortes) }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
                                 {{ form_label(form.numeroPorte, 'Numéro de Porte', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.numeroPorte, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_widget(form.numeroPorte) }}
                                 {{ form_errors(form.numeroPorte) }}
                             </div>
                         </div>

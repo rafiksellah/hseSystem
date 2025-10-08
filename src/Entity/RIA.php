@@ -13,7 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'ria')]
 class RIA
 {
-    public const ZONES_RIA = [
+    // Zones et agents en suggestions pour Super Admin
+    public const ZONES_RIA_SUGGESTIONS = [
         '1ER ETAGE STARSS' => '1ER ETAGE STARSS',
         '2EME ETAGE EMBALLAGE' => '2EME ETAGE EMBALLAGE',
         '3EME ETAGE CHALES ET FOULARDS' => '3EME ETAGE CHALES ET FOULARDS',
@@ -21,7 +22,7 @@ class RIA
         'BUREAUX D\'ETUDES' => 'BUREAUX D\'ETUDES',
     ];
 
-    public const AGENTS_DISPONIBLES = [
+    public const AGENTS_SUGGESTIONS = [
         'Eau' => 'Eau',
         'Mousse' => 'Mousse',
     ];

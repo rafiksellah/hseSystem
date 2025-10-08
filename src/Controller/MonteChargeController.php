@@ -73,6 +73,21 @@ class MonteChargeController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Vérifier si le numéro de monte-charge existe déjà
+            $existingMonteCharge = $this->monteChargeRepository->findOneBy([
+                'numeroMonteCharge' => $monteCharge->getNumeroMonteCharge()
+            ]);
+
+            if ($existingMonteCharge) {
+                $this->addFlash('error', 'Un monte-charge avec ce numéro existe déjà. Veuillez choisir un autre numéro.');
+                return $this->render('monte_charge/new.html.twig', [
+                    'monte_charge' => $monteCharge,
+                    'form' => $form,
+                    'emplacements_simtis' => MonteCharge::EMPLACEMENTS_SIMTIS,
+                    'emplacements_simtis_tissage' => MonteCharge::EMPLACEMENTS_TISSAGE,
+                ]);
+            }
+
             $this->entityManager->persist($monteCharge);
             $this->entityManager->flush();
 
@@ -103,10 +118,28 @@ class MonteChargeController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function edit(Request $request, MonteCharge $monteCharge): Response
     {
+        $originalNumero = $monteCharge->getNumeroMonteCharge();
         $form = $this->createForm(MonteChargeType::class, $monteCharge);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Vérifier si le numéro a été modifié et s'il existe déjà
+            if ($monteCharge->getNumeroMonteCharge() !== $originalNumero) {
+                $existingMonteCharge = $this->monteChargeRepository->findOneBy([
+                    'numeroMonteCharge' => $monteCharge->getNumeroMonteCharge()
+                ]);
+
+                if ($existingMonteCharge && $existingMonteCharge->getId() !== $monteCharge->getId()) {
+                    $this->addFlash('error', 'Un monte-charge avec ce numéro existe déjà. Veuillez choisir un autre numéro.');
+                    return $this->render('monte_charge/edit.html.twig', [
+                        'monte_charge' => $monteCharge,
+                        'form' => $form,
+                        'emplacements_simtis' => MonteCharge::EMPLACEMENTS_SIMTIS,
+                        'emplacements_simtis_tissage' => MonteCharge::EMPLACEMENTS_TISSAGE,
+                    ]);
+                }
+            }
+
             $this->entityManager->flush();
 
             $this->addFlash('success', 'Monte-charge modifié avec succès.');

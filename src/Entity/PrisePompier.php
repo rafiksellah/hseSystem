@@ -13,7 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'prise_pompier')]
 class PrisePompier
 {
-    public const ZONES_PRISES = [
+    // Zones, emplacements et diamètres en suggestions pour Super Admin
+    public const ZONES_PRISES_SUGGESTIONS = [
         'RAMS-DEGRAISSAGE-DETORTIONNEUSES' => 'RAMS-DEGRAISSAGE-DETORTIONNEUSES',
         'ROULAGE-CALANDRE-ROTATIVE-RAMS SUR DALLES-LAVAGE' => 'ROULAGE-CALANDRE-ROTATIVE-RAMS SUR DALLES-LAVAGE',
         'LIVRAISON' => 'LIVRAISON',
@@ -25,7 +26,7 @@ class PrisePompier
         'RDC STOCK DECATHLON' => 'RDC STOCK DECATHLON',
     ];
 
-    public const EMPLACEMENTS_PRISES = [
+    public const EMPLACEMENTS_PRISES_SUGGESTIONS = [
         'PORTE TRANSFERT ENTRE RAM ET SIMI 6 COTE RAM' => 'PORTE TRANSFERT ENTRE RAM ET SIMI 6 COTE RAM',
         'BUREAUX MAINTENANCE' => 'BUREAUX MAINTENANCE',
         'RAM 2 - ENTREE SOUS DALE' => 'RAM 2 - ENTREE SOUS DALE',
@@ -40,7 +41,7 @@ class PrisePompier
         'PORTE DE CHARGEMENT' => 'PORTE DE CHARGEMENT',
     ];
 
-    public const DIAMETRES_DISPONIBLES = [
+    public const DIAMETRES_SUGGESTIONS = [
         '2*45 MM' => '2*45 MM',
         '70 MM' => '70 MM',
     ];

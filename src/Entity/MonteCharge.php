@@ -13,18 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'monte_charge')]
 class MonteCharge
 {
-    public const NUMEROS_MONTE_CHARGE = [
-        'MONTE CHARGE 01' => 'MONTE CHARGE 01',
-        'MONTE CHARGE 02' => 'MONTE CHARGE 02',
-        'MONTE CHARGE 03' => 'MONTE CHARGE 03',
-        'MONTE CHARGE 04' => 'MONTE CHARGE 04',
-        'MONTE CHARGE 05' => 'MONTE CHARGE 05',
-        'MONTE CHARGE 06' => 'MONTE CHARGE 06',
-        'MONTE CHARGE 07' => 'MONTE CHARGE 07',
-        'MONTE CHARGE 08' => 'MONTE CHARGE 08',
-        'MONTE CHARGE 09' => 'MONTE CHARGE 09',
-        'MONTE CHARGE 10' => 'MONTE CHARGE 10',
-    ];
+    // Les numéros de monte-charge ne sont plus en liste déroulante
+    // Ils sont saisis librement (sauf pour les admins normaux)
 
     public const ZONES = [
         'SIMTIS' => 'SIMTIS',
@@ -57,21 +47,16 @@ class MonteCharge
         };
     }
 
-    public const NUMEROS_PORTE = [
-        'PORTE 01' => 'PORTE 01',
-        'PORTE 02' => 'PORTE 02',
-        'PORTE 03' => 'PORTE 03',
-        'PORTE 04' => 'PORTE 04',
-    ];
+    // Les numéros de porte ne sont plus en liste déroulante
+    // Le nombre de portes sera défini lors de la création
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 50, unique: true)]
     #[Assert\NotBlank(message: 'Le numéro de monte-charge ne peut pas être vide')]
-    #[Assert\Choice(choices: self::NUMEROS_MONTE_CHARGE, message: 'Numéro de monte-charge invalide')]
     private ?string $numeroMonteCharge = null;
 
     #[ORM\Column(length: 50)]
@@ -85,8 +70,10 @@ class MonteCharge
 
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: 'Le numéro de porte ne peut pas être vide')]
-    #[Assert\Choice(choices: self::NUMEROS_PORTE, message: 'Numéro de porte invalide')]
     private ?string $numeroPorte = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $nombrePortes = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $dateCreation = null;
@@ -189,7 +176,8 @@ class MonteCharge
 
     public function getDerniereInspection(): ?InspectionMonteCharge
     {
-        $inspections = $this->inspections->toArray();
+        // Filtrer uniquement les inspections actives
+        $inspections = $this->inspections->filter(fn($inspection) => $inspection->isActive())->toArray();
         usort($inspections, fn($a, $b) => $b->getDateInspection() <=> $a->getDateInspection());
         return $inspections[0] ?? null;
     }
@@ -219,6 +207,17 @@ class MonteCharge
     public function getNombreInspections(): int
     {
         return $this->inspections->count();
+    }
+
+    public function getNombrePortes(): ?int
+    {
+        return $this->nombrePortes;
+    }
+
+    public function setNombrePortes(?int $nombrePortes): static
+    {
+        $this->nombrePortes = $nombrePortes;
+        return $this;
     }
 
     public function __toString(): string

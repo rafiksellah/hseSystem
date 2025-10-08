@@ -42,12 +42,9 @@
 
               <div class="col-md-6 mb-3">
                 <label for="dimatere" class="form-label">Diamètre <span class="text-danger">*</span></label>
-                <select class="form-select" id="dimatere" name="dimatere" required>
-                  <option value="">Sélectionner un diamètre</option>
-                  {% for key, diam in diametres_disponibles %}
-                    <option value="{{ diam }}">{{ diam }}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" name="dimatere" id="dimatere" class="form-control" 
+                       value="{{ prise.dimatere }}" placeholder="Ex: 2*45 MM, 70 MM" required>
+                <small class="text-muted">Saisie libre</small>
               </div>
             </div>
 

@@ -54,14 +54,9 @@
               </div>
               <div class="col-md-4 mb-3">
                 <label for="agent_extincteur" class="form-label">Agent extincteur</label>
-                <select name="agent_extincteur" id="agent_extincteur" class="form-select">
-                  <option value="">Sélectionnez un agent</option>
-                  {% for key, agent in agents_disponibles %}
-                  <option value="{{ key }}" {{ ria.agentExtincteur==key ? 'selected' : '' }}>
-                    {{ agent }}
-                  </option>
-                  {% endfor %}
-                </select>
+                <input type="text" name="agent_extincteur" id="agent_extincteur" class="form-control" 
+                       value="{{ ria.agentExtincteur }}" placeholder="Ex: Eau, Mousse">
+                <small class="text-muted">Saisie libre</small>
               </div>
               <!-- Diamètre -->
               <div class="col-md-4 mb-3">

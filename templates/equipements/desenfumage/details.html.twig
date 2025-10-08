@@ -86,6 +86,9 @@
               <thead class="table-light">
                 <tr>
                   <th>Date</th><th>Inspecté par</th><th>Résultat</th><th>Critères validés</th><th>Observations</th><th>Photo</th>
+                  {% if is_granted('ROLE_ADMIN') %}
+                  <th>Actions</th>
+                  {% endif %}
                 </tr>
               </thead>
               <tbody>
@@ -119,6 +122,17 @@
                       <span class="text-muted">-</span>
                     {% endif %}
                   </td>
+                  {% if is_granted('ROLE_ADMIN') %}
+                  <td class="text-center">
+                    <form method="post" action="{{ path('app_equipements_inspection_desenfumage_supprimer', {id: inspection.id}) }}" 
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?');" style="display: inline;">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ inspection.id) }}">
+                      <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                  {% endif %}
                 </tr>
                 {% endfor %}
               </tbody>

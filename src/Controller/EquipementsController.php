@@ -280,9 +280,9 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/extincteurs/nouveau.html.twig', [
             'extincteur' => $extincteur,
             'zones_disponibles' => Extincteur::getZonesForUser($user),
-            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR,
-            'types_disponibles' => Extincteur::TYPES_DISPONIBLES,
-            'capacites_disponibles' => Extincteur::CAPACITES_DISPONIBLES,
+            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR_SUGGESTIONS,
+            'types_disponibles' => Extincteur::TYPES_SUGGESTIONS,
+            'capacites_disponibles' => Extincteur::CAPACITES_SUGGESTIONS,
             'emplacements_simtis' => RapportHSE::ZONES_SIMTIS,
             'emplacements_simtis_tissage' => RapportHSE::ZONES_SIMTIS_TISSAGE,
         ]);
@@ -511,7 +511,7 @@ class EquipementsController extends AbstractController
         $pagination = $result['pagination'];
 
         // Les zones RIA sont fixes (pas liées à SIMTIS/TISSAGE)
-        $zonesDisponibles = RIA::ZONES_RIA;
+        $zonesDisponibles = RIA::ZONES_RIA_SUGGESTIONS;
 
         return $this->render('equipements/ria/liste.html.twig', [
             'rias' => $rias,
@@ -560,8 +560,8 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/ria/nouveau.html.twig', [
             'ria' => $ria,
-            'zones_disponibles' => RIA::ZONES_RIA,
-            'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
+            'zones_disponibles' => RIA::ZONES_RIA_SUGGESTIONS,
+            'agents_disponibles' => RIA::AGENTS_SUGGESTIONS,
         ]);
     }
 
@@ -818,9 +818,9 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/extincteurs/modifier.html.twig', [
             'extincteur' => $extincteur,
             'zones_disponibles' => $zonesDisponibles,
-            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR,
-            'types_disponibles' => Extincteur::TYPES_DISPONIBLES,
-            'capacites_disponibles' => Extincteur::CAPACITES_DISPONIBLES,
+            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR_SUGGESTIONS,
+            'types_disponibles' => Extincteur::TYPES_SUGGESTIONS,
+            'capacites_disponibles' => Extincteur::CAPACITES_SUGGESTIONS,
             'emplacements_simtis' => RapportHSE::ZONES_SIMTIS,
             'emplacements_simtis_tissage' => RapportHSE::ZONES_SIMTIS_TISSAGE,
         ]);
@@ -883,8 +883,8 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/ria/modifier.html.twig', [
             'ria' => $ria,
-            'zones_disponibles' => RIA::ZONES_RIA,
-            'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
+            'zones_disponibles' => RIA::ZONES_RIA_SUGGESTIONS,
+            'agents_disponibles' => RIA::AGENTS_SUGGESTIONS,
         ]);
     }
 
@@ -1531,9 +1531,9 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/prises_pompiers/nouveau.html.twig', [
             'prise' => $prise,
-            'zones_disponibles' => PrisePompier::ZONES_PRISES,
-            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES,
-            'diametres_disponibles' => PrisePompier::DIAMETRES_DISPONIBLES,
+            'zones_disponibles' => PrisePompier::ZONES_PRISES_SUGGESTIONS,
+            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES_SUGGESTIONS,
+            'diametres_disponibles' => PrisePompier::DIAMETRES_SUGGESTIONS,
         ]);
     }
 
@@ -1557,9 +1557,9 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/prises_pompiers/modifier.html.twig', [
             'prise' => $prise,
-            'zones_disponibles' => PrisePompier::ZONES_PRISES,
-            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES,
-            'diametres_disponibles' => PrisePompier::DIAMETRES_DISPONIBLES,
+            'zones_disponibles' => PrisePompier::ZONES_PRISES_SUGGESTIONS,
+            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES_SUGGESTIONS,
+            'diametres_disponibles' => PrisePompier::DIAMETRES_SUGGESTIONS,
         ]);
     }
 
@@ -1750,10 +1750,10 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/issues_secours/nouveau.html.twig', [
             'issue' => $issue,
-            'zones_disponibles' => IssueSecours::ZONES_ISSUES,
-            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES,
-            'types_disponibles' => IssueSecours::TYPES_ISSUES,
-            'etats_barre' => IssueSecours::ETAT_BARRE,
+            'zones_disponibles' => IssueSecours::ZONES_ISSUES_SUGGESTIONS,
+            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES_SUGGESTIONS,
+            'types_disponibles' => IssueSecours::TYPES_ISSUES_SUGGESTIONS,
+            'etats_barre' => IssueSecours::ETAT_BARRE_SUGGESTIONS,
         ]);
     }
 
@@ -1778,10 +1778,10 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/issues_secours/modifier.html.twig', [
             'issue' => $issue,
-            'zones_disponibles' => IssueSecours::ZONES_ISSUES,
-            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES,
-            'types_disponibles' => IssueSecours::TYPES_ISSUES,
-            'etats_barre' => IssueSecours::ETAT_BARRE,
+            'zones_disponibles' => IssueSecours::ZONES_ISSUES_SUGGESTIONS,
+            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES_SUGGESTIONS,
+            'types_disponibles' => IssueSecours::TYPES_ISSUES_SUGGESTIONS,
+            'etats_barre' => IssueSecours::ETAT_BARRE_SUGGESTIONS,
         ]);
     }
 
@@ -1963,8 +1963,8 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/sirenes/nouveau.html.twig', [
             'sirene' => $sirene,
-            'zones_disponibles' => Sirene::ZONES_SIRENE,
-            'emplacements_disponibles' => Sirene::EMPLACEMENTS_SIRENE,
+            'zones_disponibles' => Sirene::ZONES_SIRENE_SUGGESTIONS,
+            'emplacements_disponibles' => Sirene::EMPLACEMENTS_SIRENE_SUGGESTIONS,
         ]);
     }
 
@@ -3220,5 +3220,197 @@ class EquipementsController extends AbstractController
                 'Content-Disposition' => 'attachment; filename="sirenes_' . date('Y-m-d_His') . '.pdf"'
             ]
         );
+    }
+
+    // =============== SUPPRESSION DES INSPECTIONS ===============
+
+    #[Route('/inspection-ram/{id}/supprimer', name: 'app_equipements_inspection_ram_supprimer', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionRAM(
+        Request $request,
+        InspectionExtinctionRAM $inspection,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $ramId = $inspection->getExtinctionLocaliseeRAM()->getId();
+        
+        if ($this->isCsrfTokenValid('delete' . $inspection->getId(), $request->request->get('_token'))) {
+            try {
+                $ram = $inspection->getExtinctionLocaliseeRAM()->getNumerotation();
+
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'L\'inspection de RAM ' . $ram . ' a été supprimée avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
+        }
+
+        return $this->redirectToRoute('app_equipements_extinction_ram_details', ['id' => $ramId]);
+    }
+
+    #[Route('/inspection-sirene/{id}/supprimer', name: 'app_equipements_inspection_sirene_supprimer', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionSirene(
+        Request $request,
+        InspectionSirene $inspection,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $sireneId = $inspection->getSirene()->getId();
+        
+        if ($this->isCsrfTokenValid('delete' . $inspection->getId(), $request->request->get('_token'))) {
+            try {
+                $sirene = $inspection->getSirene()->getNumerotation();
+
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'L\'inspection de sirène ' . $sirene . ' a été supprimée avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
+        }
+
+        return $this->redirectToRoute('app_equipements_sirene_details', ['id' => $sireneId]);
+    }
+
+    #[Route('/inspection-desenfumage/{id}/supprimer', name: 'app_equipements_inspection_desenfumage_supprimer', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionDesenfumage(
+        Request $request,
+        InspectionDesenfumage $inspection,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $desenfumageId = $inspection->getDesenfumage()->getId();
+        
+        if ($this->isCsrfTokenValid('delete' . $inspection->getId(), $request->request->get('_token'))) {
+            try {
+                $desenfumage = $inspection->getDesenfumage()->getNumerotation();
+
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'L\'inspection de désenfumage ' . $desenfumage . ' a été supprimée avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
+        }
+
+        return $this->redirectToRoute('app_equipements_desenfumage_details', ['id' => $desenfumageId]);
+    }
+
+    #[Route('/inspection-issue-secours/{id}/supprimer', name: 'app_equipements_inspection_issue_secours_supprimer', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionIssueSecours(
+        Request $request,
+        InspectionIssueSecours $inspection,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $issueId = $inspection->getIssueSecours()->getId();
+        
+        if ($this->isCsrfTokenValid('delete' . $inspection->getId(), $request->request->get('_token'))) {
+            try {
+                $issue = $inspection->getIssueSecours()->getNumerotation();
+
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'L\'inspection d\'issue de secours ' . $issue . ' a été supprimée avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
+        }
+
+        return $this->redirectToRoute('app_equipements_issue_secours_details', ['id' => $issueId]);
+    }
+
+    // =============== TABLEAUX RÉCAPITULATIFS ===============
+
+    #[Route('/extinction-ram/recapitulatif', name: 'app_equipements_extinction_ram_recapitulatif')]
+    public function recapitulatifExtinctionRAM(
+        ExtinctionLocaliseeRAMRepository $extinctionRepository,
+        Request $request
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'conformite' => $request->query->get('conformite', ''),
+        ];
+
+        // Récupérer tous les systèmes RAM
+        $allRAM = $extinctionRepository->searchExtinctionsRAM([
+            'zone' => $searchParams['zone'],
+            'numerotation' => $searchParams['numerotation']
+        ], 1000, 0);
+
+        // Filtrer par conformité si nécessaire
+        if (!empty($searchParams['conformite'])) {
+            $allRAM = array_filter($allRAM, function($ram) use ($searchParams) {
+                $conformite = $ram->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allRAM = array_values($allRAM);
+        }
+
+        return $this->render('equipements/extinction_ram/recapitulatif.html.twig', [
+            'rams' => $allRAM,
+            'search_params' => $searchParams,
+        ]);
+    }
+
+    #[Route('/sirenes/recapitulatif', name: 'app_equipements_sirenes_recapitulatif')]
+    public function recapitulatifSirenes(
+        SireneRepository $sireneRepository,
+        Request $request
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $searchParams = [
+            'zone' => $request->query->get('zone', ''),
+            'numerotation' => $request->query->get('numerotation', ''),
+            'conformite' => $request->query->get('conformite', ''),
+        ];
+
+        // Récupérer toutes les sirènes
+        $allSirenes = $sireneRepository->searchSirenes([
+            'zone' => $searchParams['zone'],
+            'numerotation' => $searchParams['numerotation']
+        ], 1000, 0);
+
+        // Filtrer par conformité si nécessaire
+        if (!empty($searchParams['conformite'])) {
+            $allSirenes = array_filter($allSirenes, function($sirene) use ($searchParams) {
+                $conformite = $sirene->getStatutConformite();
+                return match($searchParams['conformite']) {
+                    'conforme' => $conformite === 'Conforme',
+                    'non_conforme' => $conformite === 'Non conforme',
+                    'non_inspecte' => $conformite === 'Non inspecté',
+                    default => true
+                };
+            });
+            $allSirenes = array_values($allSirenes);
+        }
+
+        return $this->render('equipements/sirenes/recapitulatif.html.twig', [
+            'sirenes' => $allSirenes,
+            'search_params' => $searchParams,
+        ]);
     }
 }

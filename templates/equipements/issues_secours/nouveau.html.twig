@@ -32,32 +32,23 @@
 
               <div class="col-md-6 mb-3">
                 <label for="numerotation" class="form-label">Numérotation <span class="text-danger">*</span></label>
-                <select class="form-select" id="numerotation" name="numerotation" required>
-                  <option value="">Sélectionner une numérotation</option>
-                  {% for key, num in numerotations_disponibles %}
-                    <option value="{{ num }}">{{ num }}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" class="form-control" id="numerotation" name="numerotation" 
+                       placeholder="Ex: G01, BR01, ADM01" required>
+                <small class="text-muted">Saisie libre - Ex: G01, CF.D 01, etc.</small>
               </div>
 
               <div class="col-md-6 mb-3">
-                <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
-                <select class="form-select" id="type" name="type" required>
-                  <option value="">Sélectionner un type</option>
-                  {% for key, type_issue in types_disponibles %}
-                    <option value="{{ type_issue }}">{{ type_issue }}</option>
-                  {% endfor %}
-                </select>
+                <label for="type" class="form-label">Type</label>
+                <input type="text" name="type" id="type" class="form-control" 
+                       value="{{ issue.type }}" placeholder="Ex: Coupe feu, Issue sans porte">
+                <small class="text-muted">Saisie libre</small>
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="barre_antipanique" class="form-label">Barre Antipanique</label>
-                <select class="form-select" id="barre_antipanique" name="barre_antipanique">
-                  <option value="">-- Sélectionner --</option>
-                  {% for key, etat in etats_barre %}
-                    <option value="{{ key }}">{{ etat }}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" name="barre_antipanique" id="barre_antipanique" class="form-control" 
+                       value="{{ issue.barreAntipanique }}" placeholder="Ex: OK, NOK, N/A">
+                <small class="text-muted">Saisie libre</small>
               </div>
             </div>
 
