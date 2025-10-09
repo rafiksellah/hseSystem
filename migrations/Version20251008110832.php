@@ -25,6 +25,16 @@ final class Version20251008110832 extends AbstractMigration
         $this->addSql('ALTER TABLE inspection_monte_charge CHANGE is_active is_active TINYINT(1) NOT NULL');
         $this->addSql('ALTER TABLE inspection_sirene CHANGE is_active is_active TINYINT(1) NOT NULL');
         $this->addSql('ALTER TABLE monte_charge ADD nombre_portes INT DEFAULT NULL');
+        
+        // Nettoyer les doublons avant d'ajouter la contrainte unique
+        // Garder uniquement le premier enregistrement pour chaque numéro
+        $this->addSql('
+            DELETE mc1 FROM monte_charge mc1
+            INNER JOIN monte_charge mc2 
+            WHERE mc1.id > mc2.id 
+            AND mc1.numero_monte_charge = mc2.numero_monte_charge
+        ');
+        
         $this->addSql('CREATE UNIQUE INDEX UNIQ_C55A5D7BCECE3D55 ON monte_charge (numero_monte_charge)');
     }
 
