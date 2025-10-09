@@ -13,10 +13,29 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'extinction_localisee_ram')]
 class ExtinctionLocaliseeRAM
 {
+<<<<<<< HEAD
     public const ZONES = [
         'RAM' => 'RAM',
     ];
 
+=======
+    // Zones et emplacements en suggestions pour Super Admin
+    public const ZONES_RAM_SUGGESTIONS = [
+        'RAM' => 'RAM',
+    ];
+
+    public const EMPLACEMENTS_RAM_SUGGESTIONS = [
+        'RAM 1' => 'RAM 1',
+        'RAM 2' => 'RAM 2',
+        'RAM 3' => 'RAM 3',
+        'RAM 4' => 'RAM 4',
+        'RAM 5' => 'RAM 5',
+        'RAM 6' => 'RAM 6',
+        'RAM 7' => 'RAM 7',
+        'RAM 8' => 'RAM 8',
+    ];
+
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -152,7 +171,8 @@ class ExtinctionLocaliseeRAM
 
     public function getDerniereInspection(): ?InspectionExtinctionRAM
     {
-        $inspections = $this->inspections->toArray();
+        // Filtrer uniquement les inspections actives
+        $inspections = $this->inspections->filter(fn($inspection) => $inspection->isActive())->toArray();
         usort($inspections, fn($a, $b) => $b->getDateInspection() <=> $a->getDateInspection());
         return $inspections[0] ?? null;
     }

@@ -7,9 +7,15 @@ use App\Entity\InspectionExtincteur;
 use App\Entity\InspectionSirene;
 use App\Entity\InspectionExtinctionRAM;
 use App\Entity\InspectionMonteCharge;
+<<<<<<< HEAD
 use App\Entity\InspectionRIA;
 use App\Entity\InspectionDesenfumage;
 use App\Entity\InspectionIssueSecours;
+=======
+use App\Entity\InspectionDesenfumage;
+use App\Entity\InspectionIssueSecours;
+use App\Entity\InspectionRIA;
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
 use App\Entity\InspectionPrisePompier;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -46,12 +52,21 @@ class ResetInspectionService
                 case 'monte_charge':
                     $results = $this->resetMonteChargeInspections($resetType, $resetBy, $reason);
                     break;
+<<<<<<< HEAD
                 case 'ria':
                     $results = $this->resetRIAInspections($resetType, $resetBy, $reason);
                     break;
                 case 'desenfumage':
                     $results = $this->resetDesenfumageInspections($resetType, $resetBy, $reason);
                     break;
+=======
+                case 'desenfumage':
+                    $results = $this->resetDesenfumageInspections($resetType, $resetBy, $reason);
+                    break;
+                case 'ria':
+                    $results = $this->resetRIAInspections($resetType, $resetBy, $reason);
+                    break;
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
                 case 'issue_secours':
                     $results = $this->resetIssueSecoursInspections($resetType, $resetBy, $reason);
                     break;
@@ -84,8 +99,13 @@ class ResetInspectionService
             'sirene', 
             'extinction_ram', 
             'monte_charge',
+<<<<<<< HEAD
             'ria',
             'desenfumage',
+=======
+            'desenfumage',
+            'ria',
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
             'issue_secours',
             'prise_pompier'
         ];
@@ -114,12 +134,23 @@ class ResetInspectionService
 
         foreach ($inspections as $inspection) {
             try {
+<<<<<<< HEAD
                 // Archiver l'inspection avant suppression
                 $this->archiveInspection($inspection, 'extincteur', $resetType, $resetBy, $reason);
                 
                 // Supprimer physiquement l'inspection
                 $this->entityManager->remove($inspection);
                 $results['deleted']++;
+=======
+                // Archiver l'inspection avant de la supprimer
+                $this->archiveInspection($inspection, 'extincteur', $resetType, $resetBy, $reason);
+                $results['archived']++;
+
+                // SUPPRIMER l'inspection au lieu de la marquer comme inactive
+                // Cela permet de remettre complètement à zéro l'état
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
 
             } catch (\Exception $e) {
                 $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
@@ -146,8 +177,16 @@ class ResetInspectionService
         foreach ($inspections as $inspection) {
             try {
                 $this->archiveInspection($inspection, 'sirene', $resetType, $resetBy, $reason);
+<<<<<<< HEAD
                 $this->entityManager->remove($inspection);
                 $results['deleted']++;
+=======
+                $results['archived']++;
+
+                // SUPPRIMER l'inspection au lieu de la marquer comme inactive
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
 
             } catch (\Exception $e) {
                 $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
@@ -174,8 +213,16 @@ class ResetInspectionService
         foreach ($inspections as $inspection) {
             try {
                 $this->archiveInspection($inspection, 'extinction_ram', $resetType, $resetBy, $reason);
+<<<<<<< HEAD
                 $this->entityManager->remove($inspection);
                 $results['deleted']++;
+=======
+                $results['archived']++;
+
+                // SUPPRIMER l'inspection au lieu de la marquer comme inactive
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
 
             } catch (\Exception $e) {
                 $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
@@ -202,8 +249,120 @@ class ResetInspectionService
         foreach ($inspections as $inspection) {
             try {
                 $this->archiveInspection($inspection, 'monte_charge', $resetType, $resetBy, $reason);
+<<<<<<< HEAD
                 $this->entityManager->remove($inspection);
                 $results['deleted']++;
+=======
+                $results['archived']++;
+
+                // SUPPRIMER l'inspection au lieu de la marquer comme inactive
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+
+            } catch (\Exception $e) {
+                $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Réinitialise les inspections de désenfumage
+     */
+    private function resetDesenfumageInspections(string $resetType, ?User $resetBy, ?string $reason): array
+    {
+        $results = ['archived' => 0, 'reset' => 0, 'errors' => []];
+
+        $inspections = $this->entityManager->getRepository(InspectionDesenfumage::class)
+            ->findAll(); // Pas de champ isActive
+
+        foreach ($inspections as $inspection) {
+            try {
+                $this->archiveInspection($inspection, 'desenfumage', $resetType, $resetBy, $reason);
+                $results['archived']++;
+
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+
+            } catch (\Exception $e) {
+                $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Réinitialise les inspections de RIA
+     */
+    private function resetRIAInspections(string $resetType, ?User $resetBy, ?string $reason): array
+    {
+        $results = ['archived' => 0, 'reset' => 0, 'errors' => []];
+
+        $inspections = $this->entityManager->getRepository(InspectionRIA::class)
+            ->findAll(); // Pas de champ isActive
+
+        foreach ($inspections as $inspection) {
+            try {
+                $this->archiveInspection($inspection, 'ria', $resetType, $resetBy, $reason);
+                $results['archived']++;
+
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+
+            } catch (\Exception $e) {
+                $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Réinitialise les inspections d'issues de secours
+     */
+    private function resetIssueSecoursInspections(string $resetType, ?User $resetBy, ?string $reason): array
+    {
+        $results = ['archived' => 0, 'reset' => 0, 'errors' => []];
+
+        $inspections = $this->entityManager->getRepository(InspectionIssueSecours::class)
+            ->findAll(); // Pas de champ isActive
+
+        foreach ($inspections as $inspection) {
+            try {
+                $this->archiveInspection($inspection, 'issue_secours', $resetType, $resetBy, $reason);
+                $results['archived']++;
+
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+
+            } catch (\Exception $e) {
+                $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Réinitialise les inspections de prises pompiers
+     */
+    private function resetPrisePompierInspections(string $resetType, ?User $resetBy, ?string $reason): array
+    {
+        $results = ['archived' => 0, 'reset' => 0, 'errors' => []];
+
+        $inspections = $this->entityManager->getRepository(InspectionPrisePompier::class)
+            ->findAll(); // Pas de champ isActive
+
+        foreach ($inspections as $inspection) {
+            try {
+                $this->archiveInspection($inspection, 'prise_pompier', $resetType, $resetBy, $reason);
+                $results['archived']++;
+
+                $this->entityManager->remove($inspection);
+                $results['reset']++;
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
 
             } catch (\Exception $e) {
                 $results['errors'][] = "Erreur inspection ID {$inspection->getId()}: " . $e->getMessage();
@@ -347,6 +506,7 @@ class ResetInspectionService
                 $equipmentName = $equipment ? $equipment->getNumeroMonteCharge() : 'N/A';
                 $equipmentId = $equipment ? $equipment->getId() : 0;
                 break;
+<<<<<<< HEAD
             case 'ria':
                 $equipment = $inspection->getRia();
                 $equipmentName = $equipment ? $equipment->getNumerotation() : 'N/A';
@@ -354,6 +514,15 @@ class ResetInspectionService
                 break;
             case 'desenfumage':
                 $equipment = $inspection->getDesenfumage();
+=======
+            case 'desenfumage':
+                $equipment = $inspection->getDesenfumage();
+                $equipmentName = $equipment ? $equipment->getNumerotation() : 'N/A';
+                $equipmentId = $equipment ? $equipment->getId() : 0;
+                break;
+            case 'ria':
+                $equipment = $inspection->getRia();
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
                 $equipmentName = $equipment ? $equipment->getNumerotation() : 'N/A';
                 $equipmentId = $equipment ? $equipment->getId() : 0;
                 break;
@@ -364,7 +533,11 @@ class ResetInspectionService
                 break;
             case 'prise_pompier':
                 $equipment = $inspection->getPrisePompier();
+<<<<<<< HEAD
                 $equipmentName = $equipment ? 'Prise ' . $equipment->getId() : 'N/A';
+=======
+                $equipmentName = $equipment ? ($equipment->getZone() . ' - ' . $equipment->getEmplacement()) : 'N/A';
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
                 $equipmentId = $equipment ? $equipment->getId() : 0;
                 break;
         }
@@ -405,8 +578,31 @@ class ResetInspectionService
      */
     public function needsReset(string $equipmentType): bool
     {
+<<<<<<< HEAD
         $firstDayOfMonth = new \DateTime('first day of this month 00:00:00');
 
+=======
+        $now = new \DateTime();
+        
+        // Pour monte-charge : réinitialisation quotidienne
+        if ($equipmentType === 'monte_charge') {
+            $count = $this->entityManager->getRepository(ResetInspection::class)
+                ->createQueryBuilder('r')
+                ->select('COUNT(r.id)')
+                ->where('r.equipmentType = :type')
+                ->andWhere('r.resetType = :resetType')
+                ->andWhere('r.resetDate >= :yesterday')
+                ->setParameter('type', $equipmentType)
+                ->setParameter('resetType', 'daily')
+                ->setParameter('yesterday', (clone $now)->modify('-1 day'))
+                ->getQuery()
+                ->getSingleScalarResult();
+
+            return $count == 0;
+        }
+        
+        // Pour autres équipements : réinitialisation mensuelle
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
         $count = $this->entityManager->getRepository(ResetInspection::class)
             ->createQueryBuilder('r')
             ->select('COUNT(r.id)')
@@ -414,6 +610,7 @@ class ResetInspectionService
             ->andWhere('r.resetDate >= :startDate')
             ->andWhere('r.resetType = :resetType')
             ->setParameter('type', $equipmentType)
+<<<<<<< HEAD
             ->setParameter('startDate', $firstDayOfMonth)
             ->setParameter('resetType', 'automatic')
             ->getQuery()
@@ -451,5 +648,13 @@ class ResetInspectionService
             default:
                 return 0;
         }
+=======
+            ->setParameter('resetType', 'monthly')
+            ->setParameter('lastMonth', (clone $now)->modify('-1 month'))
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $count == 0;
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
     }
 }

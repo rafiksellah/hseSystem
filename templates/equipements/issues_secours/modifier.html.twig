@@ -20,6 +20,7 @@
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone <span class="text-danger">*</span></label>
                 <select class="form-select" id="zone" name="zone" required>
+                  <option value="">Sélectionner une zone</option>
                   {% for key, zone_name in zones_disponibles %}
                     <option value="{{ zone_name }}" {{ issue.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                   {% endfor %}
@@ -34,19 +35,31 @@
               </div>
 
               <div class="col-md-6 mb-3">
+<<<<<<< HEAD
                 <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
                 <input type="text" name="type" id="type" class="form-control" 
                        value="{{ issue.type }}" list="type-issues-options" 
                        placeholder="Saisir ou sélectionner un type" required>
                 <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
+=======
+                <label for="type" class="form-label">Type</label>
+                <input type="text" name="type" id="type" class="form-control" 
+                       value="{{ issue.type }}" placeholder="Ex: Coupe feu, Issue sans porte">
+                <small class="text-muted">Saisie libre</small>
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="barre_antipanique" class="form-label">Barre antipanique</label>
                 <input type="text" name="barre_antipanique" id="barre_antipanique" class="form-control" 
+<<<<<<< HEAD
                        value="{{ issue.barreAntipanique }}" list="barre-antipanique-options"
                        placeholder="Saisir ou sélectionner un état">
                 <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
+=======
+                       value="{{ issue.barreAntipanique }}" placeholder="Ex: OK, NOK, N/A">
+                <small class="text-muted">Saisie libre</small>
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
               </div>
             </div>
 

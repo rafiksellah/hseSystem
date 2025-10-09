@@ -24,6 +24,7 @@
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone <span class="text-danger">*</span></label>
                 <select class="form-select" id="zone" name="zone" required>
+                  <option value="">Sélectionner une zone</option>
                   {% for key, zone_name in zones_disponibles %}
                     <option value="{{ zone_name }}" {{ prise.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                   {% endfor %}
@@ -32,10 +33,19 @@
 
               <div class="col-md-6 mb-3">
                 <label for="emplacement" class="form-label">Emplacement <span class="text-danger">*</span></label>
+<<<<<<< HEAD
                 <input type="text" class="form-control" id="emplacement" name="emplacement" 
                        value="{{ prise.emplacement }}"
                        list="emplacement-prises-options" placeholder="Saisir ou sélectionner un emplacement" required>
                 <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
+=======
+                <select class="form-select" id="emplacement" name="emplacement" required>
+                  <option value="">Sélectionner un emplacement</option>
+                  {% for key, empl in emplacements_disponibles %}
+                    <option value="{{ empl }}" {{ prise.emplacement == empl ? 'selected' : '' }}>{{ empl }}</option>
+                  {% endfor %}
+                </select>
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
               </div>
 
               <div class="col-md-6 mb-3">

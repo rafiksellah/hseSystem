@@ -17,6 +17,10 @@
             <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary btn-sm me-2">
               <i class="fas fa-arrow-left"></i> Retour
             </a>
+            <a href="{{ path('app_equipements_extinction_ram_recapitulatif', app.request.query.all) }}" 
+               class="btn btn-info btn-sm me-2">
+              <i class="fas fa-table"></i> Récapitulatif
+            </a>
             <a href="{{ path('app_equipements_extinction_ram_export_excel', app.request.query.all) }}" 
                class="btn btn-success btn-sm me-2">
               <i class="fas fa-file-excel"></i> Export Excel
@@ -39,7 +43,11 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
+<<<<<<< HEAD
                 {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES') %}
+=======
+                {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES_RAM_SUGGESTIONS') %}
+>>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
                   <option value="{{ zone_name }}" {{ app.request.get('zone') == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>
