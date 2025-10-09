@@ -54,12 +54,6 @@ class MonteCharge
         };
     }
 
-<<<<<<< HEAD
-=======
-    // Les numéros de porte ne sont plus en liste déroulante
-    // Le nombre de portes sera défini lors de la création
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

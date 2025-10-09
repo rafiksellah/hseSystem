@@ -14,7 +14,6 @@ class MonteChargeType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-<<<<<<< HEAD
         $builder
             ->add('numeroMonteCharge', ChoiceType::class, [
                 'label' => 'Numéro Monte-Charge',
@@ -50,63 +49,6 @@ class MonteChargeType extends AbstractType
                     'class' => 'form-select'
                 ]
             ]);
-=======
-        // Champ numéro de monte-charge - saisie libre pour tous
-        $builder->add('numeroMonteCharge', TextType::class, [
-            'label' => 'Numéro Monte-Charge',
-            'attr' => [
-                'class' => 'form-control',
-                'placeholder' => 'Ex: MONTE CHARGE 01'
-            ]
-        ]);
-
-        // Zone - liste déroulante pour tous
-        $builder->add('zone', ChoiceType::class, [
-            'label' => 'Zone',
-            'choices' => array_flip(MonteCharge::ZONES),
-            'placeholder' => 'Sélectionnez une zone',
-            'attr' => [
-                'class' => 'form-control',
-                'id' => 'zone'
-            ]
-        ]);
-
-        // Emplacement - liste déroulante pour tous
-        $builder->add('emplacement', ChoiceType::class, [
-            'label' => 'Emplacement',
-            'choices' => array_merge(
-                array_flip(MonteCharge::EMPLACEMENTS_SIMTIS),
-                array_flip(MonteCharge::EMPLACEMENTS_TISSAGE)
-            ),
-            'placeholder' => 'Sélectionnez d\'abord une zone',
-            'attr' => [
-                'class' => 'form-select',
-                'id' => 'emplacement'
-            ]
-        ]);
-
-        // Nombre de portes - nouveau champ
-        $builder->add('nombrePortes', IntegerType::class, [
-            'label' => 'Nombre de Portes',
-            'required' => false,
-            'attr' => [
-                'class' => 'form-control',
-                'min' => 1,
-                'max' => 10,
-                'placeholder' => 'Ex: 2'
-            ],
-            'help' => 'Nombre total de portes du monte-charge'
-        ]);
-
-        // Numéro de porte - saisissable pour tous
-        $builder->add('numeroPorte', TextType::class, [
-            'label' => 'Numéro de Porte',
-            'attr' => [
-                'class' => 'form-control',
-                'placeholder' => 'Ex: PORTE 01'
-            ]
-        ]);
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
     }
 
     public function configureOptions(OptionsResolver $resolver): void

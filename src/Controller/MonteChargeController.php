@@ -74,7 +74,6 @@ class MonteChargeController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             // Vérifier si le numéro de monte-charge existe déjà
-<<<<<<< HEAD
             $existing = $this->monteChargeRepository->findOneBy(['numeroMonteCharge' => $monteCharge->getNumeroMonteCharge()]);
             if ($existing) {
                 $this->addFlash('error', 'Le numéro "' . $monteCharge->getNumeroMonteCharge() . '" est déjà utilisé. Veuillez en choisir un autre.');
@@ -84,22 +83,6 @@ class MonteChargeController extends AbstractController
                 ]);
             }
             
-=======
-            $existingMonteCharge = $this->monteChargeRepository->findOneBy([
-                'numeroMonteCharge' => $monteCharge->getNumeroMonteCharge()
-            ]);
-
-            if ($existingMonteCharge) {
-                $this->addFlash('error', 'Un monte-charge avec ce numéro existe déjà. Veuillez choisir un autre numéro.');
-                return $this->render('monte_charge/new.html.twig', [
-                    'monte_charge' => $monteCharge,
-                    'form' => $form,
-                    'emplacements_simtis' => MonteCharge::EMPLACEMENTS_SIMTIS,
-                    'emplacements_simtis_tissage' => MonteCharge::EMPLACEMENTS_TISSAGE,
-                ]);
-            }
-
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
             $this->entityManager->persist($monteCharge);
             $this->entityManager->flush();
 

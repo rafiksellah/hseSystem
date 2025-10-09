@@ -13,12 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'issue_secours')]
 class IssueSecours
 {
-<<<<<<< HEAD
     public const ZONES = [
-=======
-    // Zones et autres champs en suggestions pour Super Admin
-    public const ZONES_ISSUES_SUGGESTIONS = [
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
         'GRATTAGE' => 'GRATTAGE',
         'CONFECTION DECATHLON' => 'CONFECTION DECATHLON',
         'STOCK DECATHLON' => 'STOCK DECATHLON',

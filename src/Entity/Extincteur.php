@@ -12,7 +12,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ExtincteurRepository::class)]
 class Extincteur
 {
-<<<<<<< HEAD
     public const ZONES = [
         'SIMTIS' => 'SIMTIS',
         'SIMTIS TISSAGE' => 'SIMTIS TISSAGE'
@@ -35,29 +34,6 @@ class Extincteur
         '9 kg',
         '6L',
         '9L',
-=======
-    // Les agents, types et capacités ne sont plus en liste déroulante fixe
-    // Ils peuvent être saisis librement pour les Super Admin
-    // Pour les autres utilisateurs, des suggestions seront affichées
-    
-    public const AGENTS_EXTINCTEUR_SUGGESTIONS = [
-        'CO2' => 'CO2',
-        'Poudre ABC' => 'Poudre ABC',
-        'EAU PULVIRISEE AVEC ADDITIF' => 'EAU PULVIRISEE AVEC ADDITIF',
-    ];
-
-    public const TYPES_SUGGESTIONS = [
-        'Portatif P. permanente' => 'Portatif P. permanente',
-        'Portatif auxiliaire' => 'Portatif auxiliaire',
-    ];
-
-    public const CAPACITES_SUGGESTIONS = [
-        '2KG' => '2KG',
-        '5KG' => '5KG',
-        '9 kg' => '9 kg',
-        '6L' => '6L',
-        '9L' => '9L',
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
     ];
 
 
@@ -318,12 +294,7 @@ class Extincteur
     }
 
     /**
-<<<<<<< HEAD
-     * Retourne la dernière inspection (seulement les inspections actives)
-=======
-     * Retourne la dernière inspection ACTIVE
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-     */
+     * Retourne la dernière inspection (seulement les inspections actives)     */
     public function getDerniereInspection(): ?InspectionExtincteur
     {
         // Filtrer uniquement les inspections actives

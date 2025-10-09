@@ -26,12 +26,7 @@ class ResetInspectionsCommand extends Command
     protected function configure(): void
     {
         $this
-<<<<<<< HEAD
-            ->addArgument('type', InputArgument::OPTIONAL, 'Type d\'équipement (extincteur, sirene, extinction_ram, monte_charge, ria, desenfumage, issue_secours, prise_pompier, all)', 'all')
-=======
-            ->addArgument('type', InputArgument::OPTIONAL, 'Type d\'équipement (extincteur, sirene, extinction_ram, monte_charge, desenfumage, ria, issue_secours, prise_pompier, all)', 'all')
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forcer la réinitialisation même si pas nécessaire')
+            ->addArgument('type', InputArgument::OPTIONAL, 'Type d\'équipement (extincteur, sirene, extinction_ram, monte_charge, ria, desenfumage, issue_secours, prise_pompier, all)', 'all')            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forcer la réinitialisation même si pas nécessaire')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Simuler sans effectuer les changements')
             ->addOption('reason', 'r', InputOption::VALUE_REQUIRED, 'Raison de la réinitialisation', 'Réinitialisation automatique');
     }
@@ -51,12 +46,7 @@ class ResetInspectionsCommand extends Command
         }
 
         $equipmentTypes = $type === 'all' 
-<<<<<<< HEAD
-            ? ['extincteur', 'sirene', 'extinction_ram', 'monte_charge', 'ria', 'desenfumage', 'issue_secours', 'prise_pompier']
-=======
-            ? ['extincteur', 'sirene', 'extinction_ram', 'monte_charge', 'desenfumage', 'ria', 'issue_secours', 'prise_pompier']
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-            : [$type];
+            ? ['extincteur', 'sirene', 'extinction_ram', 'monte_charge', 'ria', 'desenfumage', 'issue_secours', 'prise_pompier']            : [$type];
 
         $totalResults = [
             'deleted' => 0,
