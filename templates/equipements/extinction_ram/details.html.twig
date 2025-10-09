@@ -84,15 +84,7 @@
             <table class="table table-bordered table-hover">
               <thead class="table-light">
                 <tr>
-<<<<<<< HEAD
-                  <th>Date</th><th>Inspecté par</th><th>Résultat</th><th>Critères validés</th><th>Observations</th><th>Photo</th><th>Actions</th>
-=======
-                  <th>Date</th><th>Inspecté par</th><th>Résultat</th><th>Critères validés</th><th>Observations</th><th>Photo</th>
-                  {% if is_granted('ROLE_ADMIN') %}
-                  <th>Actions</th>
-                  {% endif %}
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-                </tr>
+                  <th>Date</th><th>Inspecté par</th><th>Résultat</th><th>Critères validés</th><th>Observations</th><th>Photo</th><th>Actions</th>                </tr>
               </thead>
               <tbody>
                 {% for inspection in ram.inspections|sort((a, b) => b.dateInspection <=> a.dateInspection) %}
@@ -125,7 +117,6 @@
                       <span class="text-muted">-</span>
                     {% endif %}
                   </td>
-<<<<<<< HEAD
                   <td>
                     {% if is_granted('ROLE_ADMIN') %}
                     <form method="POST" action="{{ path('app_equipements_supprimer_inspection_ram', {'id': inspection.id}) }}" 
@@ -136,21 +127,7 @@
                       </button>
                     </form>
                     {% endif %}
-                  </td>
-=======
-                  {% if is_granted('ROLE_ADMIN') %}
-                  <td class="text-center">
-                    <form method="post" action="{{ path('app_equipements_inspection_ram_supprimer', {id: inspection.id}) }}" 
-                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?');" style="display: inline;">
-                      <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ inspection.id) }}">
-                      <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </form>
-                  </td>
-                  {% endif %}
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-                </tr>
+                  </td>                </tr>
                 {% endfor %}
               </tbody>
             </table>

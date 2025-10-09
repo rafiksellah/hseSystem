@@ -40,12 +40,7 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
-<<<<<<< HEAD
-                {% for key, zone_name in constant('App\\Entity\\IssueSecours::ZONES') %}
-=======
-                {% for key, zone_name in constant('App\\Entity\\IssueSecours::ZONES_ISSUES_SUGGESTIONS') %}
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-                  <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
+                {% for key, zone_name in constant('App\\Entity\\IssueSecours::ZONES') %}                  <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>
             </div>

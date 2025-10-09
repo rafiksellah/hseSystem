@@ -43,12 +43,7 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
-<<<<<<< HEAD
-                {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES') %}
-=======
-                {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES_RAM_SUGGESTIONS') %}
->>>>>>> 0ae0fcd2966c39ffb2310a5f9f5295022dc200be
-                  <option value="{{ zone_name }}" {{ app.request.get('zone') == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
+                {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES') %}                  <option value="{{ zone_name }}" {{ app.request.get('zone') == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>
             </div>
