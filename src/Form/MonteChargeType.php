@@ -19,7 +19,7 @@ class MonteChargeType extends AbstractType
                 'choices' => array_flip(MonteCharge::NUMEROS_MONTE_CHARGE),
                 'placeholder' => 'Sélectionnez un numéro',
                 'attr' => [
-                    'class' => 'form-control'
+                    'class' => 'form-select'
                 ]
             ])
             ->add('zone', ChoiceType::class, [
@@ -27,28 +27,25 @@ class MonteChargeType extends AbstractType
                 'choices' => array_flip(MonteCharge::ZONES),
                 'placeholder' => 'Sélectionnez une zone',
                 'attr' => [
-                    'class' => 'form-control',
-                    'id' => 'zone'
+                    'class' => 'form-select',
+                    'id' => 'monte_charge_zone'
                 ]
             ])
-            ->add('emplacement', ChoiceType::class, [
+            ->add('emplacement', TextType::class, [
                 'label' => 'Emplacement',
-                'choices' => array_merge(
-                    array_flip(MonteCharge::EMPLACEMENTS_SIMTIS),
-                    array_flip(MonteCharge::EMPLACEMENTS_TISSAGE)
-                ),
-                'placeholder' => 'Sélectionnez d\'abord une zone',
                 'attr' => [
-                    'class' => 'form-select',
-                    'id' => 'emplacement'
+                    'class' => 'form-control',
+                    'list' => 'emplacement-monte-charge-options',
+                    'id' => 'monte_charge_emplacement',
+                    'placeholder' => 'Sélectionner un emplacement'
                 ]
             ])
             ->add('numeroPorte', ChoiceType::class, [
                 'label' => 'Numéro de Porte',
                 'choices' => array_flip(MonteCharge::NUMEROS_PORTE),
-                'placeholder' => 'Sélectionnez un numéro de porte',
+                'placeholder' => 'Sélectionnez une porte',
                 'attr' => [
-                    'class' => 'form-control'
+                    'class' => 'form-select'
                 ]
             ]);
     }

@@ -1,0 +1,110 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Récapitulatif Sirènes{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-table text-primary"></i> Récapitulatif Sirènes
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell"></i>
+                        Récapitulatif Sirènes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Numérotation</th>
+                                    <th>Zone</th>
+                                    <th>Emplacement</th>
+                                    <th>Type</th>
+                                    <th>Dernière Inspection</th>
+                                    <th>Conforme / Non conforme</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sirene in sirenes %}
+                                <tr>
+                                    <td><strong>{{ sirene.numerotation }}</strong></td>
+                                    <td>
+                                        <span class="badge {{ sirene.zone == 'SIMTIS' ? 'bg-info' : 'bg-success' }}">
+                                            {{ sirene.zone }}
+                                        </span>
+                                    </td>
+                                    <td>{{ sirene.emplacement ?? 'Non spécifié' }}</td>
+                                    <td>{{ sirene.type ?? 'Non spécifié' }}</td>
+                                    <td>
+                                        {% set derniere = sirene.derniereInspection %}
+                                        {% if derniere %}
+                                        <small>
+                                            {{ derniere.dateInspection|date('d/m/Y') }}<br>
+                                            <span class="text-muted">par {{ derniere.inspectePar.codeAgent }}</span>
+                                        </small>
+                                        {% else %}
+                                        <span class="text-muted">Non inspecté</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set derniere = sirene.derniereInspection %}
+                                        {% if derniere %}
+                                            {% if derniere.valide %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Conforme
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times"></i> Non conforme
+                                            </span>
+                                            {% endif %}
+                                        {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock"></i> Non inspecté
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical d-flex gap-1" role="group">
+                                            {% if derniere %}
+                                                <a href="{{ path('app_equipements_inspection_details', {id: derniere.id}) }}" 
+                                                   class="btn btn-info btn-sm" title="Voir inspection">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if is_granted('ROLE_ADMIN') %}
+                                                <a href="{{ path('app_equipements_inspection_modifier', {id: derniere.id}) }}" 
+                                                   class="btn btn-warning btn-sm" title="Modifier inspection">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% endif %}
+                                            {% else %}
+                                                <a href="{{ path('app_equipements_sirenes_inspecter', {id: sirene.id}) }}" 
+                                                   class="btn btn-primary btn-sm" title="Inspecter">
+                                                    <i class="fas fa-clipboard-check"></i> Inspecter
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ path('app_equipements_sirenes') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour à la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

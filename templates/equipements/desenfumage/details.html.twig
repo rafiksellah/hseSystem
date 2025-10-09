@@ -85,7 +85,7 @@
             <table class="table table-bordered table-hover">
               <thead class="table-light">
                 <tr>
-                  <th>Date</th><th>Inspecté par</th><th>Résultat</th><th>Critères validés</th><th>Observations</th><th>Photo</th>
+                  <th>Date</th><th>Inspecté par</th><th>Résultat</th><th>Critères validés</th><th>Observations</th><th>Photo</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -117,6 +117,17 @@
                       </a>
                     {% else %}
                       <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <form method="POST" action="{{ path('app_equipements_supprimer_inspection_desenfumage', {'id': inspection.id}) }}" 
+                          style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?')">
+                      <input type="hidden" name="_token" value="{{ csrf_token('delete_inspection_desenfumage') }}">
+                      <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer l'inspection">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </form>
                     {% endif %}
                   </td>
                 </tr>

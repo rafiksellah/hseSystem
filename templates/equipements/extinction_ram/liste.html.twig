@@ -39,7 +39,7 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
-                {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES_RAM') %}
+                {% for key, zone_name in constant('App\\Entity\\ExtinctionLocaliseeRAM::ZONES') %}
                   <option value="{{ zone_name }}" {{ app.request.get('zone') == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>
@@ -59,6 +59,12 @@
               <label class="form-label">&nbsp;</label>
               <a href="{{ path('app_equipements_extinction_ram') }}" class="btn btn-secondary btn-sm w-100">
                 <i class="fas fa-redo"></i> Réinitialiser
+              </a>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label">&nbsp;</label>
+              <a href="{{ path('app_equipements_recapitulatif_extinction_ram') }}" class="btn btn-info btn-sm w-100">
+                <i class="fas fa-table"></i> Récapitulatif
               </a>
             </div>
           </form>

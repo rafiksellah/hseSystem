@@ -13,7 +13,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/admin/reset-inspections')]
-#[IsGranted('ROLE_ADMIN')]
+#[IsGranted('ROLE_SUPER_ADMIN')]
 class ResetInspectionController extends AbstractController
 {
     public function __construct(
@@ -61,21 +61,49 @@ class ResetInspectionController extends AbstractController
         }
 
         try {
-            $results = $this->resetService->resetInspectionsByType(
-                $equipmentType,
-                'manual',
-                $this->getUser(),
-                $reason
-            );
+            // Si "all" est sélectionné, réinitialiser tous les équipements
+            if ($equipmentType === 'all') {
+                $allResults = $this->resetService->resetAllInspections(
+                    'manual',
+                    $this->getUser(),
+                    $reason
+                );
+                
+                $totalDeleted = 0;
+                $allErrors = [];
+                
+                foreach ($allResults as $type => $results) {
+                    $totalDeleted += $results['deleted'] ?? 0;
+                    if (!empty($results['errors'])) {
+                        $allErrors = array_merge($allErrors, $results['errors']);
+                    }
+                }
+                
+                $this->addFlash('success', sprintf(
+                    'Réinitialisation de tous les équipements terminée: %d inspections supprimées',
+                    $totalDeleted
+                ));
 
-            $this->addFlash('success', sprintf(
-                'Réinitialisation terminée: %d archivées, %d réinitialisées',
-                $results['archived'],
-                $results['reset']
-            ));
+                if (!empty($allErrors)) {
+                    $this->addFlash('warning', 'Certaines erreurs ont été rencontrées: ' . implode(', ', $allErrors));
+                }
+            } else {
+                // Réinitialisation d'un seul type
+                $results = $this->resetService->resetInspectionsByType(
+                    $equipmentType,
+                    'manual',
+                    $this->getUser(),
+                    $reason
+                );
 
-            if (!empty($results['errors'])) {
-                $this->addFlash('warning', 'Certaines erreurs ont été rencontrées');
+                $this->addFlash('success', sprintf(
+                    'Réinitialisation terminée: %d inspections supprimées',
+                    $results['deleted']
+                ));
+
+                if (!empty($results['errors'])) {
+                    $this->addFlash('warning', 'Certaines erreurs ont été rencontrées: ' . implode(', ', $results['errors']));
+                }
             }
 
         } catch (\Exception $e) {

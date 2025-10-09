@@ -4,6 +4,22 @@
 
 {% block body %}
 <div class="container">
+<script>
+console.log('Template Monte-Charge chargé');
+// Debug: afficher les champs du formulaire avant soumission
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            console.log('Formulaire en cours de soumission');
+            const formData = new FormData(form);
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ':', value);
+            }
+        });
+    }
+});
+</script>
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
@@ -18,8 +34,9 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ form_label(form.numeroMonteCharge, 'Numéro Monte-Charge', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.numeroMonteCharge, {'attr': {'class': 'form-select'}}) }}
+                                {{ form_widget(form.numeroMonteCharge) }}
                                 {{ form_errors(form.numeroMonteCharge) }}
+                                <small class="text-muted">Ce numéro doit être unique</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 {{ form_label(form.zone, 'Zone', {'label_attr': {'class': 'form-label'}}) }}
@@ -31,8 +48,9 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ form_label(form.emplacement, 'Emplacement', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.emplacement, {'attr': {'class': 'form-select', 'id': 'emplacement'}}) }}
+                                {{ form_widget(form.emplacement) }}
                                 {{ form_errors(form.emplacement) }}
+                                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 {{ form_label(form.numeroPorte, 'Numéro de Porte', {'label_attr': {'class': 'form-label'}}) }}
@@ -58,56 +76,5 @@
     </div>
 </div>
 
-<script>
-// Emplacements pour chaque zone
-const emplacementsSIMTIS = {{ emplacements_simtis|json_encode|raw }};
-const emplacementsSIMTISTISSAGE = {{ emplacements_simtis_tissage|json_encode|raw }};
-
-// Fonction pour charger les emplacements selon la zone
-function chargerEmplacements() {
-    const zoneSelect = document.getElementById('monte_charge_zone');
-    const emplacementSelect = document.getElementById('monte_charge_emplacement');
-    const zone = zoneSelect.value;
-
-    // Réinitialiser le select
-    emplacementSelect.innerHTML = '<option value="">-- Choisir un emplacement --</option>';
-
-    if (!zone) {
-        emplacementSelect.innerHTML = '<option value="">Sélectionnez d\'abord une zone</option>';
-        return;
-    }
-
-    // Choisir les bons emplacements selon la zone
-    const emplacements = zone === 'SIMTIS' ? emplacementsSIMTIS : emplacementsSIMTISTISSAGE;
-
-    // Remplir le select avec les emplacements
-    Object.entries(emplacements).forEach(([key, value]) => {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
-        emplacementSelect.appendChild(option);
-    });
-
-    // Pré-sélectionner si une valeur existe déjà
-    {% if monte_charge.emplacement %}emplacementSelect.value = "{{ monte_charge.emplacement }}";{% endif %}
-}
-
-// Utiliser les vrais IDs générés par Symfony
-const zoneElement = document.getElementById('monte_charge_zone');
-const emplacementElement = document.getElementById('monte_charge_emplacement');
-
-console.log('Zone element:', zoneElement);
-console.log('Emplacement element:', emplacementElement);
-
-if (zoneElement && emplacementElement) {
-    console.log('Both elements found, adding event listener');
-    // Événement sur le changement de zone
-    zoneElement.addEventListener('change', chargerEmplacements);
-    
-    // Charger les emplacements au chargement de la page si une zone est déjà sélectionnée
-    {% if monte_charge.zone %}chargerEmplacements();{% endif %}
-} else {
-    console.error('Elements not found!');
-}
-</script>
+{% include '_partials/datalists.html.twig' %}
 {% endblock %}

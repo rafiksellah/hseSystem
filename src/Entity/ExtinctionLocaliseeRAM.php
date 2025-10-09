@@ -13,19 +13,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'extinction_localisee_ram')]
 class ExtinctionLocaliseeRAM
 {
-    public const ZONES_RAM = [
+    public const ZONES = [
         'RAM' => 'RAM',
-    ];
-
-    public const EMPLACEMENTS_RAM = [
-        'RAM 1' => 'RAM 1',
-        'RAM 2' => 'RAM 2',
-        'RAM 3' => 'RAM 3',
-        'RAM 4' => 'RAM 4',
-        'RAM 5' => 'RAM 5',
-        'RAM 6' => 'RAM 6',
-        'RAM 7' => 'RAM 7',
-        'RAM 8' => 'RAM 8',
     ];
 
     #[ORM\Id]
@@ -39,6 +28,7 @@ class ExtinctionLocaliseeRAM
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
     #[ORM\Column(length: 255, nullable: true)]

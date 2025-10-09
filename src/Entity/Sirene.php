@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'sirene')]
 class Sirene
 {
-    public const ZONES_SIRENE = [
+    public const ZONES = [
         '1ER ETAGE STARSS' => '1ER ETAGE STARSS',
         '2EME ETAGE EMBALLAGE' => '2EME ETAGE EMBALLAGE',
         '3EME ETAGE CHALES ET FOULARDS' => '3EME ETAGE CHALES ET FOULARDS',
@@ -38,54 +38,6 @@ class Sirene
         'TEINTURE' => 'TEINTURE',
     ];
 
-    public const EMPLACEMENTS_SIRENE = [
-        'En face montecharge N°2' => 'En face montecharge N°2',
-        'Montecharge N°2' => 'Montecharge N°2',
-        'Au milieu' => 'Au milieu',
-        'CANTINE FEMME' => 'CANTINE FEMME',
-        'Au fond entre issue de secours et monte charge auxiliaire' => 'Au fond entre issue de secours et monte charge auxiliaire',
-        'Au dessus de l\'issue de secours BED2' => 'Au dessus de l\'issue de secours BED2',
-        'Issue de secours T4' => 'Issue de secours T4',
-        'Issue de secours T5' => 'Issue de secours T5',
-        'A coté de l\'issue de secours T6' => 'A coté de l\'issue de secours T6',
-        'Atelier mécanique' => 'Atelier mécanique',
-        'Montecharge N°5' => 'Montecharge N°5',
-        'En face chaine Serviette' => 'En face chaine Serviette',
-        'En face de table de lancement' => 'En face de table de lancement',
-        'Issue de secours ST.D 02' => 'Issue de secours ST.D 02',
-        'Au dessus de table de coupe' => 'Au dessus de table de coupe',
-        'Porte Montecharge N°5' => 'Porte Montecharge N°5',
-        'Porte Montecharge N°6' => 'Porte Montecharge N°6',
-        'ISSUE DE SECOURS ( cote escalier)' => 'ISSUE DE SECOURS ( cote escalier)',
-        'Entre les machine sde rasage 1 et 2' => 'Entre les machine sde rasage 1 et 2',
-        'Au milieu de mur de séparation avec DIMANTINE' => 'Au milieu de mur de séparation avec DIMANTINE',
-        'A coté W.C' => 'A coté W.C',
-        'SORTIE RAM SUR DALLE' => 'SORTIE RAM SUR DALLE',
-        'SORTIE RAM' => 'SORTIE RAM',
-        'Au dessus machine biancalani' => 'Au dessus machine biancalani',
-        'RAM 3' => 'RAM 3',
-        'RAM 2 SUR DALLE' => 'RAM 2 SUR DALLE',
-        'A l\'entrée cuisine rotative' => 'A l\'entrée cuisine rotative',
-        'AU DESSUS DES ADOUCISSEURS' => 'AU DESSUS DES ADOUCISSEURS',
-        'DMS1' => 'DMS1',
-        'MACHINES TG' => 'MACHINES TG',
-        'MACHINE SCV' => 'MACHINE SCV',
-        'CUISINE COLORANT' => 'CUISINE COLORANT',
-        'A COTE LABO' => 'A COTE LABO',
-        'CANTINE HOMME' => 'CANTINE HOMME',
-        'Monte charge N°5' => 'Monte charge N°5',
-        'En face porte sectionneur N°1' => 'En face porte sectionneur N°1',
-        'Au milieu du stock' => 'Au milieu du stock',
-        'A coté Magasin PDR' => 'A coté Magasin PDR',
-        'A coté Monte charge auxiliaire' => 'A coté Monte charge auxiliaire',
-        'MACHINE TEINTURE DE SOIE' => 'MACHINE TEINTURE DE SOIE',
-    ];
-
-    public const TYPES_SIRENE = [
-        'Sirène' => 'Sirène',
-        'Diffuseur sonore' => 'Diffuseur sonore',
-    ];
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -97,6 +49,7 @@ class Sirene
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
     #[ORM\Column(length: 255, nullable: true)]

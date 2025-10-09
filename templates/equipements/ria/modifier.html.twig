@@ -36,6 +36,7 @@
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone *</label>
                 <select name="zone" id="zone" class="form-select" required>
+                  <option value="">Sélectionnez une zone</option>
                   {% for key, zone_name in zones_disponibles %}
                   <option value="{{ key }}" {{ ria.zone==key ? 'selected' : '' }}>
                     {{ zone_name }}
@@ -54,14 +55,10 @@
               </div>
               <div class="col-md-4 mb-3">
                 <label for="agent_extincteur" class="form-label">Agent extincteur</label>
-                <select name="agent_extincteur" id="agent_extincteur" class="form-select">
-                  <option value="">Sélectionnez un agent</option>
-                  {% for key, agent in agents_disponibles %}
-                  <option value="{{ key }}" {{ ria.agentExtincteur==key ? 'selected' : '' }}>
-                    {{ agent }}
-                  </option>
-                  {% endfor %}
-                </select>
+                <input type="text" name="agent_extincteur" id="agent_extincteur" class="form-control" 
+                       value="{{ ria.agentExtincteur }}" 
+                       placeholder="Ex: Eau, Mousse">
+                <small class="text-muted">Type d'agent extincteur</small>
               </div>
               <div class="col-md-4 mb-3">
                 <label for="dimatere" class="form-label">Diamètre (mm)</label>

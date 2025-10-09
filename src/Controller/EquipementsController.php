@@ -245,7 +245,19 @@ class EquipementsController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $extincteur->setNumerotation($request->request->get('numerotation'));
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation existe déjà
+            $existing = $entityManager->getRepository(Extincteur::class)->findOneBy(['numerotation' => $numerotation]);
+            if ($existing) {
+                $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                return $this->render('equipements/extincteurs/nouveau.html.twig', [
+                    'extincteur' => $extincteur,
+                    'zones_disponibles' => Extincteur::getZonesForUser($user),
+                ]);
+            }
+            
+            $extincteur->setNumerotation($numerotation);
             $extincteur->setZone($request->request->get('zone'));
             $extincteur->setEmplacement($request->request->get('emplacement'));
             $extincteur->setAgentExtincteur($request->request->get('agent_extincteur'));
@@ -280,11 +292,6 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/extincteurs/nouveau.html.twig', [
             'extincteur' => $extincteur,
             'zones_disponibles' => Extincteur::getZonesForUser($user),
-            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR,
-            'types_disponibles' => Extincteur::TYPES_DISPONIBLES,
-            'capacites_disponibles' => Extincteur::CAPACITES_DISPONIBLES,
-            'emplacements_simtis' => RapportHSE::ZONES_SIMTIS,
-            'emplacements_simtis_tissage' => RapportHSE::ZONES_SIMTIS_TISSAGE,
         ]);
     }
 
@@ -406,10 +413,10 @@ class EquipementsController extends AbstractController
             throw $this->createAccessDeniedException('Accès non autorisé à cet extincteur');
         }
 
-        // Vérifier s'il y a déjà une inspection récente (dans les 24h)
-        $derniereInspection = $inspectionRepository->getDerniereInspection($extincteur->getId());
-        if ($derniereInspection && $derniereInspection->getDateInspection() > new \DateTime('-1 day')) {
-            $this->addFlash('error', 'Cet extincteur a déjà été inspecté récemment');
+        // Vérifier s'il existe déjà une inspection pour cet extincteur
+        $derniereInspection = $extincteur->getDerniereInspection();
+        if ($derniereInspection && $derniereInspection->isActive()) {
+            $this->addFlash('error', 'Cet extincteur a déjà une inspection. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
             return $this->redirectToRoute('app_equipements_inspections');
         }
 
@@ -511,7 +518,7 @@ class EquipementsController extends AbstractController
         $pagination = $result['pagination'];
 
         // Les zones RIA sont fixes (pas liées à SIMTIS/TISSAGE)
-        $zonesDisponibles = RIA::ZONES_RIA;
+        $zonesDisponibles = RIA::ZONES;
 
         return $this->render('equipements/ria/liste.html.twig', [
             'rias' => $rias,
@@ -538,7 +545,19 @@ class EquipementsController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $ria->setNumerotation($request->request->get('numerotation'));
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation existe déjà
+            $existing = $entityManager->getRepository(RIA::class)->findOneBy(['numerotation' => $numerotation]);
+            if ($existing) {
+                $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                return $this->render('equipements/ria/nouveau.html.twig', [
+                    'ria' => $ria,
+                    'zones_disponibles' => RIA::ZONES,
+                ]);
+            }
+            
+            $ria->setNumerotation($numerotation);
             $ria->setZone($request->request->get('zone'));
             $ria->setAgentExtincteur($request->request->get('agent_extincteur'));
             $ria->setDimatere($request->request->get('dimatere') ? (int)$request->request->get('dimatere') : null);
@@ -560,8 +579,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/ria/nouveau.html.twig', [
             'ria' => $ria,
-            'zones_disponibles' => RIA::ZONES_RIA,
-            'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
+            'zones_disponibles' => RIA::ZONES,
         ]);
     }
 
@@ -630,10 +648,10 @@ class EquipementsController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Vérifier s'il y a déjà une inspection récente
-        $derniereInspection = $inspectionRepository->getDerniereInspection($ria->getId());
-        if ($derniereInspection && $derniereInspection->getDateInspection() > new \DateTime('-1 day')) {
-            $this->addFlash('error', 'Ce RIA a déjà été inspecté récemment');
+        // Vérifier s'il existe déjà une inspection pour ce RIA
+        $derniereInspection = $ria->getDerniereInspection();
+        if ($derniereInspection) {
+            $this->addFlash('error', 'Ce RIA a déjà une inspection. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
             return $this->redirectToRoute('app_equipements_ria');
         }
 
@@ -698,41 +716,28 @@ class EquipementsController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Vérifier si la porte est valide pour ce monte-charge
-        $portesDisponibles = MonteCharge::getPortesForType($monteCharge->getType());
-        if (!array_key_exists($porte, $portesDisponibles)) {
-            throw $this->createNotFoundException('Porte non trouvée pour ce monte-charge');
-        }
-
-        // Vérifier s'il y a déjà une inspection récente (dans les 24h)
-        $derniereInspection = $inspectionRepository->findOneBy([
+        // Vérifier s'il existe déjà une inspection active pour ce monte-charge
+        $existingInspection = $inspectionRepository->findOneBy([
             'monteCharge' => $monteCharge,
-            'numeroPorte' => $porte
-        ], ['dateInspection' => 'DESC']);
+            'isActive' => true
+        ]);
 
-        if ($derniereInspection && $derniereInspection->getDateInspection() > new \DateTime('-1 day')) {
-            $this->addFlash('error', 'Cette porte a déjà été inspectée récemment');
+        if ($existingInspection) {
+            $this->addFlash('error', 'Ce monte-charge a déjà une inspection active. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
             return $this->redirectToRoute('app_equipements_monte_charge');
         }
 
         if ($request->isMethod('POST')) {
             $inspection = new InspectionMonteCharge();
             $inspection->setMonteCharge($monteCharge);
-            $inspection->setNumeroPorte($porte);
-            $inspection->setInspectePar($user);
+            $inspection->setInspecteur($user);
 
             // Récupérer les réponses aux questions
-            $reponses = [];
-            foreach (InspectionMonteCharge::QUESTIONS as $key => $question) {
-                $reponses[$key] = $request->request->get('question_' . $key) === 'oui';
-            }
-
-            $inspection->setReponses($reponses);
+            $inspection->setPortesFermees($request->request->get('question_portes_fermees') === 'oui' ? 'Oui' : 'Non');
+            $inspection->setConsignesRespectees($request->request->get('question_consignes_respectees') === 'oui' ? 'Oui' : 'Non');
+            $inspection->setFinsCoursesFonctionnent($request->request->get('question_fins_courses_fonctionnent') === 'oui' ? 'Oui' : 'Non');
+            $inspection->setEssaiVideRealise($request->request->get('question_essai_vide_realise') === 'oui' ? 'Oui' : 'Non');
             $inspection->setObservations($request->request->get('observations'));
-
-            // Valider si toutes les questions sont OK
-            $toutesValides = !in_array(false, $reponses, true);
-            $inspection->setValide($toutesValides);
 
             // Gérer l'upload de photo si présent
             $photoFile = $request->files->get('photo_observation');
@@ -817,12 +822,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/extincteurs/modifier.html.twig', [
             'extincteur' => $extincteur,
-            'zones_disponibles' => $zonesDisponibles,
-            'agents_disponibles' => Extincteur::AGENTS_EXTINCTEUR,
-            'types_disponibles' => Extincteur::TYPES_DISPONIBLES,
-            'capacites_disponibles' => Extincteur::CAPACITES_DISPONIBLES,
-            'emplacements_simtis' => RapportHSE::ZONES_SIMTIS,
-            'emplacements_simtis_tissage' => RapportHSE::ZONES_SIMTIS_TISSAGE,
+            'zones_disponibles' => Extincteur::getZonesForUser($user),
         ]);
     }
 
@@ -883,8 +883,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/ria/modifier.html.twig', [
             'ria' => $ria,
-            'zones_disponibles' => RIA::ZONES_RIA,
-            'agents_disponibles' => RIA::AGENTS_DISPONIBLES,
+            'zones_disponibles' => RIA::ZONES,
         ]);
     }
 
@@ -1131,21 +1130,25 @@ class EquipementsController extends AbstractController
     }
 
     #[Route('/monte-charge-inspection/{id}/supprimer', name: 'app_equipements_monte_charge_inspection_supprimer')]
-    #[IsGranted('ROLE_SUPER_ADMIN')]
+    #[IsGranted('ROLE_ADMIN')]
     public function supprimerInspectionMonteCharge(
         InspectionMonteCharge $inspection,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        Request $request
     ): Response {
-        try {
-            $monteCharge = $inspection->getMonteCharge()->getType();
-            $porte = $inspection->getNumeroPorte();
+        if ($this->isCsrfTokenValid('delete_inspection_monte_charge', $request->request->get('_token'))) {
+            try {
+                $monteChargeId = $inspection->getMonteCharge()->getId();
+                $monteCharge = $inspection->getMonteCharge()->getNumeroMonteCharge();
 
-            $entityManager->remove($inspection);
-            $entityManager->flush();
+                $entityManager->remove($inspection);
+                $entityManager->flush();
 
-            $this->addFlash('success', 'L\'inspection du monte-charge ' . $monteCharge . ' (porte ' . $porte . ') a été supprimée.');
-        } catch (\Exception $e) {
-            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+                $this->addFlash('success', 'L\'inspection du monte-charge ' . $monteCharge . ' a été supprimée avec succès.');
+                return $this->redirectToRoute('app_monte_charge_show', ['id' => $monteChargeId]);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
         }
 
         return $this->redirectToRoute('app_equipements_monte_charge');
@@ -1154,6 +1157,174 @@ class EquipementsController extends AbstractController
     /**
      * Export PDF - Détail d'une inspection monte-charge
      */
+    // ===== SUPPRESSION INSPECTIONS RAM =====
+    #[Route('/ram-inspection/{id}/supprimer', name: 'app_equipements_supprimer_inspection_ram')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionRAM(
+        InspectionExtinctionRAM $inspection,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): Response {
+        if ($this->isCsrfTokenValid('delete_inspection_ram', $request->request->get('_token'))) {
+            try {
+                $ram = $inspection->getExtinctionLocaliseeRAM()->getNumerotation();
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+                
+                $this->addFlash('success', 'L\'inspection RAM ' . $ram . ' a été supprimée avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        }
+        
+        return $this->redirectToRoute('app_equipements_extinction_ram');
+    }
+
+    // ===== SUPPRESSION INSPECTIONS SIRÈNE =====
+    #[Route('/sirene-inspection/{id}/supprimer', name: 'app_equipements_supprimer_inspection_sirene')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionSirene(
+        InspectionSirene $inspection,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): Response {
+        if ($this->isCsrfTokenValid('delete_inspection_sirene', $request->request->get('_token'))) {
+            try {
+                $sirene = $inspection->getSirene()->getNumerotation();
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+                
+                $this->addFlash('success', 'L\'inspection Sirène ' . $sirene . ' a été supprimée avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        }
+        
+        return $this->redirectToRoute('app_equipements_sirenes');
+    }
+
+    // ===== SUPPRESSION INSPECTIONS DÉSENFUMAGE =====
+    #[Route('/desenfumage-inspection/{id}/supprimer', name: 'app_equipements_supprimer_inspection_desenfumage')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionDesenfumage(
+        InspectionDesenfumage $inspection,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): Response {
+        if ($this->isCsrfTokenValid('delete_inspection_desenfumage', $request->request->get('_token'))) {
+            try {
+                $desenfumage = $inspection->getDesenfumage()->getNumerotation();
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+                
+                $this->addFlash('success', 'L\'inspection Désenfumage ' . $desenfumage . ' a été supprimée avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        }
+        
+        return $this->redirectToRoute('app_equipements_desenfumage');
+    }
+
+    // ===== SUPPRESSION INSPECTIONS ISSUES DE SECOURS =====
+    #[Route('/issue-secours-inspection/{id}/supprimer', name: 'app_equipements_supprimer_inspection_issue_secours')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionIssueSecours(
+        InspectionIssueSecours $inspection,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): Response {
+        if ($this->isCsrfTokenValid('delete_inspection_issue_secours', $request->request->get('_token'))) {
+            try {
+                $issueId = $inspection->getIssueSecours()->getId();
+                $issue = $inspection->getIssueSecours()->getNumerotation();
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+                
+                $this->addFlash('success', 'L\'inspection Issue de Secours ' . $issue . ' a été supprimée avec succès.');
+                return $this->redirectToRoute('app_equipements_issue_secours_details', ['id' => $issueId]);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        }
+        
+        return $this->redirectToRoute('app_equipements_issues_secours');
+    }
+    
+    // ===== SUPPRESSION INSPECTIONS RIA =====
+    #[Route('/ria-inspection/{id}/supprimer', name: 'app_equipements_supprimer_inspection_ria')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionRIA(
+        InspectionRIA $inspection,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): Response {
+        if ($this->isCsrfTokenValid('delete_inspection_ria', $request->request->get('_token'))) {
+            try {
+                $riaId = $inspection->getRia()->getId();
+                $ria = $inspection->getRia()->getNumerotation();
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+                
+                $this->addFlash('success', 'L\'inspection RIA ' . $ria . ' a été supprimée avec succès.');
+                return $this->redirectToRoute('app_equipements_ria_details', ['id' => $riaId]);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        }
+        
+        return $this->redirectToRoute('app_equipements_ria');
+    }
+    
+    // ===== SUPPRESSION INSPECTIONS PRISES POMPIERS =====
+    #[Route('/prise-pompier-inspection/{id}/supprimer', name: 'app_equipements_supprimer_inspection_prise_pompier')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function supprimerInspectionPrisePompier(
+        InspectionPrisePompier $inspection,
+        EntityManagerInterface $entityManager,
+        Request $request
+    ): Response {
+        if ($this->isCsrfTokenValid('delete_inspection_prise_pompier', $request->request->get('_token'))) {
+            try {
+                $priseId = $inspection->getPrisePompier()->getId();
+                $prise = $inspection->getPrisePompier()->getZone() . ' - ' . $inspection->getPrisePompier()->getEmplacement();
+                $entityManager->remove($inspection);
+                $entityManager->flush();
+                
+                $this->addFlash('success', 'L\'inspection Prise Pompier ' . $prise . ' a été supprimée avec succès.');
+                return $this->redirectToRoute('app_equipements_prise_pompier_details', ['id' => $priseId]);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+            }
+        }
+        
+        return $this->redirectToRoute('app_equipements_prises_pompiers');
+    }
+
+    // ===== RÉCAPITULATIF RAM =====
+    #[Route('/extinction-ram/recapitulatif', name: 'app_equipements_recapitulatif_extinction_ram')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function recapitulatifExtinctionRAM(EntityManagerInterface $entityManager): Response
+    {
+        $ramList = $entityManager->getRepository(ExtinctionLocaliseeRAM::class)->findAll();
+        
+        return $this->render('equipements/extinction_ram/recapitulatif.html.twig', [
+            'ramList' => $ramList,
+        ]);
+    }
+
+    // ===== RÉCAPITULATIF SIRÈNE =====
+    #[Route('/sirenes/recapitulatif', name: 'app_equipements_recapitulatif_sirenes')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function recapitulatifSirenes(EntityManagerInterface $entityManager): Response
+    {
+        $sirenes = $entityManager->getRepository(Sirene::class)->findAll();
+        
+        return $this->render('equipements/sirenes/recapitulatif.html.twig', [
+            'sirenes' => $sirenes,
+        ]);
+    }
+
     #[Route('/monte-charge-inspection/{id}/export-pdf', name: 'app_equipements_monte_charge_inspection_export_pdf')]
     public function exportInspectionMonteChargePDF(InspectionMonteCharge $inspection): Response
     {
@@ -1531,9 +1702,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/prises_pompiers/nouveau.html.twig', [
             'prise' => $prise,
-            'zones_disponibles' => PrisePompier::ZONES_PRISES,
-            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES,
-            'diametres_disponibles' => PrisePompier::DIAMETRES_DISPONIBLES,
+            'zones_disponibles' => PrisePompier::ZONES,
         ]);
     }
 
@@ -1557,9 +1726,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/prises_pompiers/modifier.html.twig', [
             'prise' => $prise,
-            'zones_disponibles' => PrisePompier::ZONES_PRISES,
-            'emplacements_disponibles' => PrisePompier::EMPLACEMENTS_PRISES,
-            'diametres_disponibles' => PrisePompier::DIAMETRES_DISPONIBLES,
+            'zones_disponibles' => PrisePompier::ZONES,
         ]);
     }
 
@@ -1628,11 +1795,11 @@ class EquipementsController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Vérifier s'il y a déjà une inspection récente (optionnel pour prises pompiers)
-        $derniereInspection = $inspectionRepository->getDerniereInspection($prise->getId());
-        if ($derniereInspection && $derniereInspection->getDateInspection() > new \DateTime('-1 day')) {
-            $this->addFlash('warning', 'Cette prise pompier a déjà été inspectée il y a moins de 24h');
-            // On ne bloque pas, on affiche juste un warning
+        // Vérifier s'il existe déjà une inspection pour cette prise pompier
+        $derniereInspection = $prise->getDerniereInspection();
+        if ($derniereInspection) {
+            $this->addFlash('error', 'Cette prise pompier a déjà une inspection. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            return $this->redirectToRoute('app_equipements_prises_pompiers');
         }
 
         if ($request->isMethod('POST')) {
@@ -1736,7 +1903,19 @@ class EquipementsController extends AbstractController
         $issue = new IssueSecours();
 
         if ($request->isMethod('POST')) {
-            $issue->setNumerotation($request->request->get('numerotation'));
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation existe déjà
+            $existing = $entityManager->getRepository(IssueSecours::class)->findOneBy(['numerotation' => $numerotation]);
+            if ($existing) {
+                $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                return $this->render('equipements/issues_secours/nouveau.html.twig', [
+                    'issue' => $issue,
+                    'zones_disponibles' => IssueSecours::ZONES,
+                ]);
+            }
+            
+            $issue->setNumerotation($numerotation);
             $issue->setZone($request->request->get('zone'));
             $issue->setType($request->request->get('type'));
             $issue->setBarreAntipanique($request->request->get('barre_antipanique'));
@@ -1750,10 +1929,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/issues_secours/nouveau.html.twig', [
             'issue' => $issue,
-            'zones_disponibles' => IssueSecours::ZONES_ISSUES,
-            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES,
-            'types_disponibles' => IssueSecours::TYPES_ISSUES,
-            'etats_barre' => IssueSecours::ETAT_BARRE,
+            'zones_disponibles' => IssueSecours::ZONES,
         ]);
     }
 
@@ -1778,10 +1954,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/issues_secours/modifier.html.twig', [
             'issue' => $issue,
-            'zones_disponibles' => IssueSecours::ZONES_ISSUES,
-            'numerotations_disponibles' => IssueSecours::NUMEROTATIONS_ISSUES,
-            'types_disponibles' => IssueSecours::TYPES_ISSUES,
-            'etats_barre' => IssueSecours::ETAT_BARRE,
+            'zones_disponibles' => IssueSecours::ZONES,
         ]);
     }
 
@@ -1848,6 +2021,13 @@ class EquipementsController extends AbstractController
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
+        
+        // Vérifier s'il existe déjà une inspection pour cette issue de secours
+        $derniereInspection = $issue->getDerniereInspection();
+        if ($derniereInspection) {
+            $this->addFlash('error', 'Cette issue de secours a déjà une inspection. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            return $this->redirectToRoute('app_equipements_issues_secours');
+        }
 
         if ($request->isMethod('POST')) {
             $inspection = new InspectionIssueSecours();
@@ -1949,7 +2129,19 @@ class EquipementsController extends AbstractController
         $sirene = new Sirene();
 
         if ($request->isMethod('POST')) {
-            $sirene->setNumerotation($request->request->get('numerotation'));
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation existe déjà
+            $existing = $entityManager->getRepository(Sirene::class)->findOneBy(['numerotation' => $numerotation]);
+            if ($existing) {
+                $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                return $this->render('equipements/sirenes/nouveau.html.twig', [
+                    'sirene' => $sirene,
+                    'zones_disponibles' => Sirene::ZONES,
+                ]);
+            }
+            
+            $sirene->setNumerotation($numerotation);
             $sirene->setZone($request->request->get('zone'));
             $sirene->setEmplacement($request->request->get('emplacement'));
             $sirene->setType($request->request->get('type'));
@@ -1963,8 +2155,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/sirenes/nouveau.html.twig', [
             'sirene' => $sirene,
-            'zones_disponibles' => Sirene::ZONES_SIRENE,
-            'emplacements_disponibles' => Sirene::EMPLACEMENTS_SIRENE,
+            'zones_disponibles' => Sirene::ZONES,
         ]);
     }
 
@@ -2012,6 +2203,13 @@ class EquipementsController extends AbstractController
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
+        
+        // Vérifier s'il existe déjà une inspection pour cette sirène
+        $derniereInspection = $sirene->getDerniereInspection();
+        if ($derniereInspection && $derniereInspection->isActive()) {
+            $this->addFlash('error', 'Cette sirène a déjà une inspection. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            return $this->redirectToRoute('app_equipements_sirenes');
+        }
 
         if ($request->isMethod('POST')) {
             $inspection = new InspectionSirene();
@@ -2108,7 +2306,18 @@ class EquipementsController extends AbstractController
         $desenfumage = new Desenfumage();
 
         if ($request->isMethod('POST')) {
-            $desenfumage->setNumerotation($request->request->get('numerotation'));
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation existe déjà
+            $existing = $entityManager->getRepository(Desenfumage::class)->findOneBy(['numerotation' => $numerotation]);
+            if ($existing) {
+                $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                return $this->render('equipements/desenfumage/nouveau.html.twig', [
+                    'desenfumage' => $desenfumage,
+                ]);
+            }
+            
+            $desenfumage->setNumerotation($numerotation);
             $desenfumage->setZone($request->request->get('zone'));
             $desenfumage->setEmplacement($request->request->get('emplacement'));
             $desenfumage->setType($request->request->get('type'));
@@ -2171,6 +2380,13 @@ class EquipementsController extends AbstractController
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
+        
+        // Vérifier s'il existe déjà une inspection pour ce désenfumage
+        $derniereInspection = $desenfumage->getDerniereInspection();
+        if ($derniereInspection) {
+            $this->addFlash('error', 'Ce désenfumage a déjà une inspection. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            return $this->redirectToRoute('app_equipements_desenfumage');
+        }
 
         if ($request->isMethod('POST')) {
             $inspection = new InspectionDesenfumage();
@@ -2272,7 +2488,18 @@ class EquipementsController extends AbstractController
         $extinction = new ExtinctionLocaliseeRAM();
 
         if ($request->isMethod('POST')) {
-            $extinction->setNumerotation($request->request->get('numerotation'));
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation existe déjà
+            $existing = $entityManager->getRepository(ExtinctionLocaliseeRAM::class)->findOneBy(['numerotation' => $numerotation]);
+            if ($existing) {
+                $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                return $this->render('equipements/extinction_ram/nouveau.html.twig', [
+                    'extinction' => $extinction,
+                ]);
+            }
+            
+            $extinction->setNumerotation($numerotation);
             $extinction->setZone($request->request->get('zone'));
             $extinction->setEmplacement($request->request->get('emplacement'));
             $extinction->setType($request->request->get('type'));
@@ -2334,6 +2561,13 @@ class EquipementsController extends AbstractController
     ): Response {
         /** @var User $user */
         $user = $this->getUser();
+        
+        // Vérifier s'il existe déjà une inspection pour ce RAM
+        $derniereInspection = $extinction->getDerniereInspection();
+        if ($derniereInspection && $derniereInspection->isActive()) {
+            $this->addFlash('error', 'Ce système RAM a déjà une inspection. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            return $this->redirectToRoute('app_equipements_extinction_ram');
+        }
 
         if ($request->isMethod('POST')) {
             $inspection = new InspectionExtinctionRAM();
@@ -3220,5 +3454,12 @@ class EquipementsController extends AbstractController
                 'Content-Disposition' => 'attachment; filename="sirenes_' . date('Y-m-d_His') . '.pdf"'
             ]
         );
+    }
+
+    // ===== TEST DATALIST =====
+    #[Route('/test-datalist', name: 'app_test_datalist')]
+    public function testDatalist(): Response
+    {
+        return $this->render('test_datalist.html.twig');
     }
 }

@@ -13,17 +13,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'ria')]
 class RIA
 {
-    public const ZONES_RIA = [
+    public const ZONES = [
         '1ER ETAGE STARSS' => '1ER ETAGE STARSS',
         '2EME ETAGE EMBALLAGE' => '2EME ETAGE EMBALLAGE',
         '3EME ETAGE CHALES ET FOULARDS' => '3EME ETAGE CHALES ET FOULARDS',
         'BRODERIE' => 'BRODERIE',
         'BUREAUX D\'ETUDES' => 'BUREAUX D\'ETUDES',
-    ];
-
-    public const AGENTS_DISPONIBLES = [
-        'Eau' => 'Eau',
-        'Mousse' => 'Mousse',
     ];
 
     #[ORM\Id]
@@ -37,6 +32,7 @@ class RIA
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
     #[ORM\Column(length: 50, nullable: true)]

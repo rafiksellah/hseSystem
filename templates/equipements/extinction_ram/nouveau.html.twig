@@ -3,6 +3,7 @@
 {% block title %}Ajouter Extinction RAM{% endblock %}
 
 {% block body %}
+{% include '_partials/datalists.html.twig' %}
 <div class="container-fluid">
   <div class="row justify-content-center">
     <div class="col-md-8">
@@ -29,17 +30,9 @@
 
               <div class="col-md-6 mb-3">
                 <label for="emplacement" class="form-label">Emplacement</label>
-                <select class="form-select" id="emplacement" name="emplacement">
-                  <option value="">Sélectionner</option>
-                  <option value="RAM 1">RAM 1</option>
-                  <option value="RAM 2">RAM 2</option>
-                  <option value="RAM 3">RAM 3</option>
-                  <option value="RAM 4">RAM 4</option>
-                  <option value="RAM 5">RAM 5</option>
-                  <option value="RAM 6">RAM 6</option>
-                  <option value="RAM 7">RAM 7</option>
-                  <option value="RAM 8">RAM 8</option>
-                </select>
+                <input type="text" class="form-control" id="emplacement" name="emplacement" 
+                       list="emplacement-ram-options" placeholder="Saisir ou sélectionner un emplacement">
+                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
 
               <div class="col-md-6 mb-3">

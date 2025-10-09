@@ -171,6 +171,15 @@
                                                    title="Modifier l'inspection">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                {% if is_granted('ROLE_ADMIN') %}
+                                                <form method="POST" action="{{ path('app_equipements_monte_charge_inspection_supprimer', {'id': inspection.id}) }}" 
+                                                      style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?')">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_inspection_monte_charge') }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer l'inspection">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
                                             </td>
                                         </tr>
                                     {% endfor %}

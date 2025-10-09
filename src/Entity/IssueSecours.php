@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'issue_secours')]
 class IssueSecours
 {
-    public const ZONES_ISSUES = [
+    public const ZONES = [
         'GRATTAGE' => 'GRATTAGE',
         'CONFECTION DECATHLON' => 'CONFECTION DECATHLON',
         'STOCK DECATHLON' => 'STOCK DECATHLON',
@@ -100,6 +100,7 @@ class IssueSecours
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
     #[ORM\Column(length: 100, nullable: true)]

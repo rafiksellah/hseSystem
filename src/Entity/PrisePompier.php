@@ -13,7 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'prise_pompier')]
 class PrisePompier
 {
-    public const ZONES_PRISES = [
+    public const ZONES = [
         'RAMS-DEGRAISSAGE-DETORTIONNEUSES' => 'RAMS-DEGRAISSAGE-DETORTIONNEUSES',
         'ROULAGE-CALANDRE-ROTATIVE-RAMS SUR DALLES-LAVAGE' => 'ROULAGE-CALANDRE-ROTATIVE-RAMS SUR DALLES-LAVAGE',
         'LIVRAISON' => 'LIVRAISON',
@@ -23,21 +23,6 @@ class PrisePompier
         'BRODERIE' => 'BRODERIE',
         'PREPARATION' => 'PREPARATION',
         'RDC STOCK DECATHLON' => 'RDC STOCK DECATHLON',
-    ];
-
-    public const EMPLACEMENTS_PRISES = [
-        'PORTE TRANSFERT ENTRE RAM ET SIMI 6 COTE RAM' => 'PORTE TRANSFERT ENTRE RAM ET SIMI 6 COTE RAM',
-        'BUREAUX MAINTENANCE' => 'BUREAUX MAINTENANCE',
-        'RAM 2 - ENTREE SOUS DALE' => 'RAM 2 - ENTREE SOUS DALE',
-        'EN FACE IMPRESSION ROTATIVE' => 'EN FACE IMPRESSION ROTATIVE',
-        'EN FACE MONTECHARGE N°1' => 'EN FACE MONTECHARGE N°1',
-        'BUREAU LIVRAISON' => 'BUREAU LIVRAISON',
-        'A COTE ZONE FIOUL' => 'A COTE ZONE FIOUL',
-        'ENTREE GRATTAGE' => 'ENTREE GRATTAGE',
-        'ENTREE EMBALLAGE' => 'ENTREE EMBALLAGE',
-        'ENTREE BRODERIE' => 'ENTREE BRODERIE',
-        'ENTREE PREPARATION' => 'ENTREE PREPARATION',
-        'PORTE DE CHARGEMENT' => 'PORTE DE CHARGEMENT',
     ];
 
     public const DIAMETRES_DISPONIBLES = [
@@ -52,6 +37,7 @@ class PrisePompier
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
     #[ORM\Column(length: 255, nullable: true)]

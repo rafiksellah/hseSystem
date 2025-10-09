@@ -12,23 +12,28 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: ExtincteurRepository::class)]
 class Extincteur
 {
-    public const AGENTS_EXTINCTEUR = [
-        'CO2' => 'CO2',
-        'Poudre ABC' => 'Poudre ABC',
-        'EAU PULVIRISEE AVEC ADDITIF' => 'EAU PULVIRISEE AVEC ADDITIF',
+    public const ZONES = [
+        'SIMTIS' => 'SIMTIS',
+        'SIMTIS TISSAGE' => 'SIMTIS TISSAGE'
     ];
 
-    public const TYPES_DISPONIBLES = [
-        'Portatif P. permanente' => 'Portatif P. permanente',
-        'Portatif auxiliaire' => 'Portatif auxiliaire',
+    public const AGENTS_EXTINCTEUR_SUGGESTIONS = [
+        'CO2',
+        'Poudre ABC',
+        'EAU PULVIRISEE AVEC ADDITIF',
     ];
 
-    public const CAPACITES_DISPONIBLES = [
-        '2KG' => '2KG',
-        '5KG' => '5KG',
-        '9 kg' => '9 kg',
-        '6L' => '6L',
-        '9L' => '9L',
+    public const TYPES_DISPONIBLES_SUGGESTIONS = [
+        'Portatif P. permanente',
+        'Portatif auxiliaire',
+    ];
+
+    public const CAPACITES_DISPONIBLES_SUGGESTIONS = [
+        '2KG',
+        '5KG',
+        '9 kg',
+        '6L',
+        '9L',
     ];
 
 
@@ -43,6 +48,7 @@ class Extincteur
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -95,26 +101,11 @@ class Extincteur
     public static function getZonesForUser(User $user): array
     {
         if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            return [
-                'SIMTIS' => 'SIMTIS',
-                'SIMTIS TISSAGE' => 'SIMTIS TISSAGE'
-            ];
+            return self::ZONES;
         }
 
         // Pour admin normal, retourner sa zone
         return [$user->getZone() => $user->getZone()];
-    }
-
-    /**
-     * Obtient les emplacements disponibles selon la zone
-     */
-    public static function getEmplacementsByZone(string $zone): array
-    {
-        return match ($zone) {
-            'SIMTIS' => RapportHSE::ZONES_SIMTIS,
-            'SIMTIS TISSAGE' => RapportHSE::ZONES_SIMTIS_TISSAGE,
-            default => []
-        };
     }
     public function getId(): ?int
     {
@@ -303,11 +294,12 @@ class Extincteur
     }
 
     /**
-     * Retourne la dernière inspection
+     * Retourne la dernière inspection (seulement les inspections actives)
      */
     public function getDerniereInspection(): ?InspectionExtincteur
     {
-        $inspections = $this->inspections->toArray();
+        // Filtrer uniquement les inspections actives
+        $inspections = $this->inspections->filter(fn($inspection) => $inspection->isActive())->toArray();
         usort($inspections, fn($a, $b) => $b->getDateInspection() <=> $a->getDateInspection());
         return $inspections[0] ?? null;
     }

@@ -73,6 +73,62 @@
               {% endif %}
             </div>
           </div>
+          
+          <!-- Historique des inspections -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <h6 class="text-info border-bottom pb-2">
+                <i class="fas fa-history"></i> Historique des Inspections
+              </h6>
+              
+              {% if ria.inspections|length > 0 %}
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Date</th>
+                      <th>Inspecteur</th>
+                      <th>Résultat</th>
+                      <th>Observations</th>
+                      {% if is_granted('ROLE_ADMIN') %}<th>Actions</th>{% endif %}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for inspection in ria.inspections %}
+                    <tr>
+                      <td>{{ inspection.dateInspection|date('d/m/Y H:i') }}</td>
+                      <td>{{ inspection.inspectePar.fullName }}</td>
+                      <td>
+                        {% if inspection.valide %}
+                          <span class="badge bg-success">Conforme</span>
+                        {% else %}
+                          <span class="badge bg-danger">Non conforme</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ inspection.observations ?? '-' }}</td>
+                      {% if is_granted('ROLE_ADMIN') %}
+                      <td>
+                        <form method="POST" action="{{ path('app_equipements_supprimer_inspection_ria', {'id': inspection.id}) }}" 
+                              style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?')">
+                          <input type="hidden" name="_token" value="{{ csrf_token('delete_inspection_ria') }}">
+                          <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer l'inspection">
+                            <i class="fas fa-trash"></i>
+                          </button>
+                        </form>
+                      </td>
+                      {% endif %}
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Aucune inspection pour le moment
+              </div>
+              {% endif %}
+            </div>
+          </div>
         </div>
 
         <!-- Actions -->

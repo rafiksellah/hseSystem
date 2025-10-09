@@ -26,7 +26,7 @@ class ResetInspectionsCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addArgument('type', InputArgument::OPTIONAL, 'Type d\'équipement (extincteur, sirene, extinction_ram, monte_charge, all)', 'all')
+            ->addArgument('type', InputArgument::OPTIONAL, 'Type d\'équipement (extincteur, sirene, extinction_ram, monte_charge, ria, desenfumage, issue_secours, prise_pompier, all)', 'all')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Forcer la réinitialisation même si pas nécessaire')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Simuler sans effectuer les changements')
             ->addOption('reason', 'r', InputOption::VALUE_REQUIRED, 'Raison de la réinitialisation', 'Réinitialisation automatique');
@@ -47,12 +47,11 @@ class ResetInspectionsCommand extends Command
         }
 
         $equipmentTypes = $type === 'all' 
-            ? ['extincteur', 'sirene', 'extinction_ram', 'monte_charge']
+            ? ['extincteur', 'sirene', 'extinction_ram', 'monte_charge', 'ria', 'desenfumage', 'issue_secours', 'prise_pompier']
             : [$type];
 
         $totalResults = [
-            'archived' => 0,
-            'reset' => 0,
+            'deleted' => 0,
             'skipped' => 0,
             'errors' => []
         ];
@@ -87,8 +86,7 @@ class ResetInspectionsCommand extends Command
                 $io->table(
                     ['Métrique', 'Valeur'],
                     [
-                        ['Archivées', $results['archived']],
-                        ['Réinitialisées', $results['reset']],
+                        ['Supprimées', $results['deleted']],
                         ['Erreurs', count($results['errors'])]
                     ]
                 );
@@ -101,8 +99,7 @@ class ResetInspectionsCommand extends Command
                 }
 
                 // Mettre à jour les totaux
-                $totalResults['archived'] += $results['archived'];
-                $totalResults['reset'] += $results['reset'];
+                $totalResults['deleted'] += $results['deleted'];
                 $totalResults['errors'] = array_merge($totalResults['errors'], $results['errors']);
 
                 $io->success("✅ {$equipmentType}: Réinitialisation terminée");
@@ -118,8 +115,7 @@ class ResetInspectionsCommand extends Command
         $io->table(
             ['Métrique', 'Total'],
             [
-                ['Inspections archivées', $totalResults['archived']],
-                ['Inspections réinitialisées', $totalResults['reset']],
+                ['Inspections supprimées', $totalResults['deleted']],
                 ['Types ignorés', $totalResults['skipped']],
                 ['Erreurs', count($totalResults['errors'])]
             ]

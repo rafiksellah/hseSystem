@@ -9,6 +9,7 @@
 {% endblock %}
 
 {% block body %}
+{% include '_partials/datalists.html.twig' %}
 	<div class="container-fluid">
 		<div class="row justify-content-center">
 			<div class="col-lg-8">
@@ -58,43 +59,28 @@
 									</div>
 									<div class="col-md-6 mb-3">
 										<label for="emplacement" class="form-label">Emplacement</label>
-										<select name="emplacement" id="emplacement" class="form-select">
-											<option value="">Sélectionnez d'abord une zone</option>
-										</select>
-										<small class="text-muted">Les emplacements dépendent de la zone sélectionnée</small>
+										<input type="text" name="emplacement" id="emplacement" class="form-control" 
+											   list="emplacement-extincteur-options" 
+											   placeholder="Sélectionnez d'abord une zone">
+										<small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
 									</div>
 									<div class="col-md-6 mb-3">
 										<label for="agent_extincteur" class="form-label">Agent extincteur</label>
-										<select name="agent_extincteur" id="agent_extincteur" class="form-select">
-											<option value="">Sélectionnez un agent</option>
-											{% for key, agent in agents_disponibles %}
-												<option value="{{ key }}" {{ extincteur.agentExtincteur==key ? 'selected' : '' }}>
-													{{ agent }}
-												</option>
-											{% endfor %}
-										</select>
+										<input type="text" name="agent_extincteur" id="agent_extincteur" class="form-control" 
+											   value="{{ extincteur.agentExtincteur }}" placeholder="Ex: CO2, Poudre ABC">
+										<small class="text-muted">Saisie libre</small>
 									</div>
 									<div class="col-md-6 mb-3">
 										<label for="type" class="form-label">Type</label>
-										<select name="type" id="type" class="form-select">
-											<option value="">Sélectionnez un type</option>
-											{% for key, type_name in types_disponibles %}
-												<option value="{{ key }}" {{ extincteur.type==key ? 'selected' : '' }}>
-													{{ type_name }}
-												</option>
-											{% endfor %}
-										</select>
+										<input type="text" name="type" id="type" class="form-control" 
+											   value="{{ extincteur.type }}" placeholder="Ex: Portatif, Fixe">
+										<small class="text-muted">Saisie libre</small>
 									</div>
 									<div class="col-md-6 mb-3">
 										<label for="capacite" class="form-label">Capacité</label>
-										<select name="capacite" id="capacite" class="form-select">
-											<option value="">Sélectionnez une capacité</option>
-											{% for key, cap in capacites_disponibles %}
-												<option value="{{ key }}" {{ extincteur.capacite==key ? 'selected' : '' }}>
-													{{ cap }}
-												</option>
-											{% endfor %}
-										</select>
+										<input type="text" name="capacite" id="capacite" class="form-control" 
+											   value="{{ extincteur.capacite }}" placeholder="Ex: 6L, 9L">
+										<small class="text-muted">Saisie libre</small>
 									</div>
 								</div>
 
@@ -149,48 +135,4 @@
 				</div>
 			</div>
 		</div>
-
-
-		<script>
-			// Emplacements pour chaque zone
-const emplacementsSIMTIS = {{ emplacements_simtis|json_encode|raw }};
-const emplacementsSIMTISTISSAGE = {{ emplacements_simtis_tissage|json_encode|raw }};
-
-// Fonction pour charger les emplacements selon la zone
-function chargerEmplacements() {
-const zoneSelect = document.getElementById('zone');
-const emplacementSelect = document.getElementById('emplacement');
-const zone = zoneSelect.value;
-
-// Réinitialiser le select
-emplacementSelect.innerHTML = '<option value="">-- Choisir un emplacement --</option>';
-
-if (! zone) {
-emplacementSelect.innerHTML = '<option value="">Sélectionnez d\'abord une zone</option>';
-return;
-}
-
-// Choisir les bons emplacements selon la zone
-const emplacements = zone === 'SIMTIS' ? emplacementsSIMTIS : emplacementsSIMTISTISSAGE;
-
-// Remplir le select avec les emplacements
-Object.entries(emplacements).forEach(([key, value]) => {
-const option = document.createElement('option');
-option.value = value;
-option.textContent = value;
-emplacementSelect.appendChild(option);
-});
-
-// Pré-sélectionner si une valeur existe déjà
-{% if extincteur.emplacement %}emplacementSelect.value = "{{ extincteur.emplacement }}";{% endif %}
-}
-
-// Événement sur le changement de zone
-document.getElementById('zone').addEventListener('change', chargerEmplacements);
-
-// Charger les emplacements au chargement de la page si une zone est déjà sélectionnée
-document.addEventListener('DOMContentLoaded', function (){
-{% if extincteur.zone %}chargerEmplacements();{% endif %}
-});
-		</script>
-	{% endblock %}
+{% endblock %}

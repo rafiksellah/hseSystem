@@ -3,6 +3,7 @@
 {% block title %}Ajouter un Désenfumage{% endblock %}
 
 {% block body %}
+{% include '_partials/datalists.html.twig' %}
 <div class="container-fluid">
   <div class="row justify-content-center">
     <div class="col-md-8">
@@ -30,12 +31,9 @@
 
               <div class="col-md-6 mb-3">
                 <label for="emplacement" class="form-label">Emplacement</label>
-                <select class="form-select" id="emplacement" name="emplacement">
-                  <option value="">Sélectionner</option>
-                  <option value="LAVAGE A LA CONTINUE">LAVAGE A LA CONTINUE</option>
-                  <option value="Entre Vaporisateur 1 & 2">Entre Vaporisateur 1 & 2</option>
-                  <option value="ROTATIVE">ROTATIVE</option>
-                </select>
+                <input type="text" class="form-control" id="emplacement" name="emplacement" 
+                       list="emplacement-desenfumage-options" placeholder="Saisir ou sélectionner un emplacement">
+                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
 
               <div class="col-md-6 mb-3">

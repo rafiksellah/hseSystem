@@ -1,0 +1,544 @@
+{# Datalists pour les champs de type 2 (Saisie + Liste déroulante) #}
+
+<style>
+/* Style pour améliorer l'apparence des datalists */
+.form-control[list] {
+    position: relative;
+}
+
+.form-control[list]:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Améliorer la visibilité des options de datalist */
+datalist {
+    position: absolute;
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+datalist option {
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+datalist option:hover {
+    background-color: #f8f9fa;
+}
+</style>
+
+<script>
+// Système d'emplacements dynamiques avec ajout en BDD
+document.addEventListener('DOMContentLoaded', function() {
+    // Remplacer les inputs avec datalist par des selects avec option d'ajout
+    const datalistInputs = document.querySelectorAll('input[list]');
+    
+    datalistInputs.forEach(input => {
+        const datalistId = input.getAttribute('list');
+        const datalist = document.getElementById(datalistId);
+        
+        if (datalist && datalistId.includes('emplacement')) {
+            createEmplacementSelect(input, datalist);
+        } else if (datalist) {
+            createSimpleSelect(input, datalist);
+        }
+    });
+    
+    function createEmplacementSelect(input, datalist) {
+        // Déterminer le type d'équipement depuis le datalist ID
+        const datalistId = input.getAttribute('list') || '';
+        let typeEquipement = '';
+        
+        if (datalistId.includes('extincteur')) typeEquipement = 'extincteur';
+        else if (datalistId.includes('ram')) typeEquipement = 'ram';
+        else if (datalistId.includes('sirene')) typeEquipement = 'sirene';
+        else if (datalistId.includes('desenfumage')) typeEquipement = 'desenfumage';
+        else if (datalistId.includes('monte-charge') || datalistId.includes('monte_charge')) typeEquipement = 'monte_charge';
+        else if (datalistId.includes('ria')) typeEquipement = 'ria';
+        else if (datalistId.includes('prises') || datalistId.includes('pompier')) typeEquipement = 'prise_pompier';
+        else if (datalistId.includes('issues') || datalistId.includes('issue')) typeEquipement = 'issue_secours';
+        
+        console.log('Type équipement détecté depuis datalist:', typeEquipement, 'ID:', datalistId);
+        
+        // Créer un conteneur
+        const container = document.createElement('div');
+        container.className = 'emplacement-container';
+        container.style.position = 'relative';
+        container.setAttribute('data-type-equipement', typeEquipement);
+        
+        // Créer un select en préservant le nom original du formulaire
+        const select = document.createElement('select');
+        select.className = input.className;
+        select.name = input.name; // Préserve monte_charge[emplacement] ou juste emplacement
+        select.id = input.id;
+        select.required = input.required;
+        
+        console.log('Select emplacement créé avec name:', select.name, 'et id:', select.id);
+        
+        // Ajouter l'option par défaut
+        const optionDefault = document.createElement('option');
+        optionDefault.value = '';
+        optionDefault.textContent = 'Sélectionner un emplacement...';
+        optionDefault.selected = true;
+        select.appendChild(optionDefault);
+        
+        // Ajouter l'option "Ajouter nouvel emplacement" (Super Admin seulement)
+        {% if is_granted('ROLE_SUPER_ADMIN') %}
+        const optionAdd = document.createElement('option');
+        optionAdd.value = 'add_new';
+        optionAdd.textContent = '+ Ajouter nouvel emplacement';
+        select.appendChild(optionAdd);
+        {% endif %}
+        
+        // Charger les emplacements pour ce type d'équipement
+        console.log('Chargement initial pour type:', typeEquipement);
+        loadEmplacementsByType(select, typeEquipement);
+        
+        // Créer un input pour l'ajout (ne change PAS le name du select)
+        const inputAdd = document.createElement('input');
+        inputAdd.type = 'text';
+        inputAdd.className = input.className;
+        inputAdd.name = 'temp_add_emplacement'; // Nom temporaire qui ne sera pas soumis
+        inputAdd.id = input.id + '_add';
+        inputAdd.placeholder = 'Nom du nouvel emplacement';
+        inputAdd.required = false; // Pas requis car c'est un champ temporaire
+        inputAdd.style.display = 'none';
+        
+        console.log('Input original name:', input.name, '→ Select name:', select.name);
+        
+        // Bouton d'ajout
+        const btnAdd = document.createElement('button');
+        btnAdd.type = 'button';
+        btnAdd.className = 'btn btn-success btn-sm mt-2';
+        btnAdd.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+        btnAdd.style.display = 'none';
+        
+        // Bouton d'annulation
+        const btnCancel = document.createElement('button');
+        btnCancel.type = 'button';
+        btnCancel.className = 'btn btn-secondary btn-sm mt-2 ms-2';
+        btnCancel.innerHTML = '<i class="fas fa-times"></i> Annuler';
+        btnCancel.style.display = 'none';
+        
+        // Ajouter les éléments au conteneur
+        container.appendChild(select);
+        container.appendChild(inputAdd);
+        container.appendChild(btnAdd);
+        container.appendChild(btnCancel);
+        
+        // Remplacer l'input original
+        input.parentNode.insertBefore(container, input);
+        input.remove();
+        
+        // Gestion des événements
+        select.addEventListener('change', function() {
+            if (this.value === 'add_new') {
+                // Afficher le formulaire d'ajout
+                this.style.display = 'none';
+                inputAdd.style.display = 'block';
+                btnAdd.style.display = 'inline-block';
+                btnCancel.style.display = 'inline-block';
+                inputAdd.focus();
+            }
+        });
+        
+        btnCancel.addEventListener('click', function() {
+            // Revenir au select
+            select.style.display = 'block';
+            inputAdd.style.display = 'none';
+            btnAdd.style.display = 'none';
+            btnCancel.style.display = 'none';
+            inputAdd.value = '';
+            select.value = '';
+        });
+        
+        btnAdd.addEventListener('click', function() {
+            const form = select.closest('form');
+            const zoneSelect = form ? form.querySelector('select[name="zone"]') : null;
+            const zone = zoneSelect ? zoneSelect.value : '';
+            const typeEquipement = getTypeEquipement(select);
+            addNewEmplacement(inputAdd.value, zone, typeEquipement, select, container);
+        });
+        
+        inputAdd.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const form = select.closest('form');
+                const zoneSelect = form ? form.querySelector('select[name="zone"]') : null;
+                const zone = zoneSelect ? zoneSelect.value : '';
+                const typeEquipement = getTypeEquipement(select);
+                addNewEmplacement(inputAdd.value, zone, typeEquipement, select, container);
+            }
+        });
+    }
+    
+    function createSimpleSelect(input, datalist) {
+        // Créer un conteneur
+        const container = document.createElement('div');
+        container.className = 'simple-select-container';
+        
+        // Créer un select
+        const select = document.createElement('select');
+        select.className = input.className;
+        select.name = input.name;
+        select.id = input.id;
+        select.required = input.required;
+        
+        // Ajouter l'option par défaut
+        const optionDefault = document.createElement('option');
+        optionDefault.value = '';
+        optionDefault.textContent = 'Sélectionner...';
+        optionDefault.selected = true;
+        select.appendChild(optionDefault);
+        
+        // Ajouter les options du datalist
+        Array.from(datalist.options).forEach(option => {
+            const newOption = document.createElement('option');
+            newOption.value = option.value;
+            newOption.textContent = option.value;
+            select.appendChild(newOption);
+        });
+        
+        container.appendChild(select);
+        input.parentNode.insertBefore(container, input);
+        input.remove();
+    }
+    
+    function getTypeEquipement(element) {
+        // Récupérer le type depuis le container
+        const container = element.closest('.emplacement-container');
+        if (container) {
+            const type = container.getAttribute('data-type-equipement');
+            console.log('Type récupéré depuis container:', type);
+            return type || '';
+        }
+        
+        console.log('Container non trouvé pour element:', element);
+        return '';
+    }
+    
+    function getCurrentZone(input) {
+        // Trouver le champ zone dans le même formulaire
+        const form = input.closest('form');
+        const zoneSelect = form ? form.querySelector('select[name="zone"]') : null;
+        return zoneSelect ? zoneSelect.value : '';
+    }
+    
+    function loadEmplacementsByType(select, typeEquipement) {
+        if (!typeEquipement) {
+            console.log('Type équipement non défini');
+            return;
+        }
+        
+        console.log('Chargement emplacements pour type:', typeEquipement);
+        
+        fetch(`/emplacements/ajax/by-type/${encodeURIComponent(typeEquipement)}`)
+            .then(response => {
+                console.log('Réponse reçue:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Emplacements reçus:', data.length);
+                console.log('Données:', data);
+                
+                // Sauvegarder les options spéciales AVANT de vider
+                const defaultOptionHTML = '<option value="">Sélectionner un emplacement...</option>';
+                const addOptionHTML = '{% if is_granted("ROLE_SUPER_ADMIN") %}<option value="add_new">+ Ajouter nouvel emplacement</option>{% endif %}';
+                
+                // Vider complètement le select
+                select.innerHTML = defaultOptionHTML + addOptionHTML;
+                
+                // Ajouter les emplacements
+                data.forEach(emplacement => {
+                    const option = document.createElement('option');
+                    option.value = emplacement.nom;
+                    option.textContent = emplacement.nom;
+                    select.appendChild(option);
+                });
+                
+                console.log('Total options dans select:', select.options.length);
+                console.log('Select est dans le DOM:', document.contains(select));
+                console.log('Select parent:', select.parentElement);
+            })
+            .catch(error => console.error('Erreur lors du chargement des emplacements:', error));
+    }
+    
+    function loadAllEmplacements(select) {
+        console.log('Chargement de TOUS les emplacements...');
+        
+        fetch('/emplacements/ajax/all')
+            .then(response => {
+                console.log('Réponse reçue:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Emplacements reçus:', data.length);
+                
+                // Garder les options par défaut et d'ajout
+                const defaultOption = select.querySelector('option[value=""]');
+                const addOption = select.querySelector('option[value="add_new"]');
+                
+                // Vider le select sauf les options spéciales
+                select.innerHTML = '';
+                if (defaultOption) select.appendChild(defaultOption);
+                if (addOption) select.appendChild(addOption);
+                
+                // Ajouter les emplacements groupés par zone
+                const grouped = {};
+                data.forEach(emplacement => {
+                    if (!grouped[emplacement.zone]) {
+                        grouped[emplacement.zone] = [];
+                    }
+                    grouped[emplacement.zone].push(emplacement);
+                });
+                
+                // Ajouter les emplacements avec optgroups
+                Object.keys(grouped).sort().forEach(zone => {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = zone;
+                    
+                    grouped[zone].forEach(emplacement => {
+                        const option = document.createElement('option');
+                        option.value = emplacement.nom;
+                        option.textContent = emplacement.nom;
+                        optgroup.appendChild(option);
+                    });
+                    
+                    select.appendChild(optgroup);
+                });
+                
+                console.log('Total emplacements affichés:', data.length);
+            })
+            .catch(error => console.error('Erreur lors du chargement des emplacements:', error));
+    }
+    
+    function loadEmplacements(select, zone) {
+        if (!zone) {
+            console.log('Aucune zone sélectionnée');
+            return;
+        }
+        
+        console.log('Chargement emplacements pour zone:', zone);
+        
+        fetch(`/emplacements/ajax/by-zone/${encodeURIComponent(zone)}`)
+            .then(response => {
+                console.log('Réponse reçue:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Emplacements reçus:', data.length);
+                
+                // Garder les options par défaut et d'ajout
+                const defaultOption = select.querySelector('option[value=""]');
+                const addOption = select.querySelector('option[value="add_new"]');
+                
+                // Vider le select sauf les options spéciales
+                select.innerHTML = '';
+                if (defaultOption) select.appendChild(defaultOption);
+                if (addOption) select.appendChild(addOption);
+                
+                // Ajouter les emplacements
+                data.forEach(emplacement => {
+                    const option = document.createElement('option');
+                    option.value = emplacement.nom;
+                    option.textContent = emplacement.nom;
+                    select.appendChild(option);
+                    console.log('Ajouté emplacement:', emplacement.nom);
+                });
+            })
+            .catch(error => console.error('Erreur lors du chargement des emplacements:', error));
+    }
+    
+    function addNewEmplacement(nom, zone, typeEquipement, select, container) {
+        if (!nom.trim()) {
+            alert('Veuillez saisir un nom d\'emplacement');
+            return;
+        }
+        
+        if (!typeEquipement) {
+            alert('Type d\'équipement non détecté');
+            return;
+        }
+        
+        console.log('Ajout emplacement:', nom, 'pour type:', typeEquipement, 'zone:', zone);
+        
+        fetch('/emplacements/ajax/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nom: nom.trim(),
+                zone: zone || null,
+                typeEquipement: typeEquipement
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Recharger les emplacements de ce type pour afficher le nouveau
+                loadEmplacementsByType(select, typeEquipement);
+                
+                // Pré-sélectionner le nouvel emplacement
+                setTimeout(() => {
+                    select.value = data.emplacement.nom;
+                }, 500);
+                
+                // Revenir au select
+                select.style.display = 'block';
+                container.querySelector('input').style.display = 'none';
+                container.querySelector('button[type="button"]').style.display = 'none';
+                container.querySelector('button[type="button"]').nextElementSibling.style.display = 'none';
+                container.querySelector('input').value = '';
+                
+                // Afficher un message de succès
+                showSuccessMessage('Emplacement ajouté avec succès !');
+            } else {
+                alert('Erreur: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Erreur lors de l\'ajout de l\'emplacement');
+        });
+    }
+    
+    function showSuccessMessage(message) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success alert-dismissible fade show';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const form = document.querySelector('form');
+        if (form) {
+            form.insertBefore(alert, form.firstChild);
+            
+            // Supprimer automatiquement après 3 secondes
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 3000);
+        }
+    }
+    
+    // Note: On charge TOUS les emplacements dès le départ, pas besoin de recharger quand la zone change
+});
+</script>
+
+<style>
+.datalist-indicator {
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    font-size: 0.75rem;
+    color: #0d6efd !important;
+    z-index: 1000;
+}
+
+.datalist-input {
+    position: relative;
+}
+</style>
+
+<!-- Emplacements pour Prise Pompiers -->
+<datalist id="emplacement-prises-options">
+  <option value="RDC TISSAGE-RENTRAGE-OURDISSOIR">
+  <option value="RDC TISSAGE-MEZZANINE-PRATO">
+  <option value="Bâtiment confection">
+  <option value="Teinture –préparation-broderie">
+  <option value="2eme étage emballage">
+  <option value="Zone décathlon">
+  <option value="Broderie-la stock PF">
+  <option value="Préparation-diamantine-broderie">
+</datalist>
+
+<!-- Emplacements pour RAM -->
+<datalist id="emplacement-ram-options">
+  <option value="RAM 1">
+  <option value="RAM 2">
+  <option value="RAM 3">
+  <option value="RAM 4">
+  <option value="RAM 5">
+  <option value="RAM 6">
+  <option value="RAM 7">
+  <option value="RAM 8">
+</datalist>
+
+<!-- Emplacements pour Sirène -->
+<datalist id="emplacement-sirene-options">
+  <option value="RDC TISSAGE-RENTRAGE-OURDISSOIR">
+  <option value="RDC TISSAGE-MEZZANINE-PRATO">
+  <option value="Bâtiment confection">
+  <option value="Teinture –préparation-broderie">
+  <option value="2eme étage emballage">
+  <option value="Zone décathlon">
+  <option value="Broderie-la stock PF">
+  <option value="Préparation-diamantine-broderie">
+</datalist>
+
+<!-- Emplacements pour Désenfumage -->
+<datalist id="emplacement-desenfumage-options">
+  <option value="LAVAGE A LA CONTINUE">
+  <option value="Entre Vaporisateur 1 & 2">
+  <option value="ROTATIVE">
+</datalist>
+
+<!-- Emplacements pour Monte-Charge -->
+<datalist id="emplacement-monte-charge-options">
+  <option value="RDC TISSAGE-RENTRAGE-OURDISSOIR">
+  <option value="RDC TISSAGE-MEZZANINE-PRATO">
+  <option value="Bâtiment confection">
+  <option value="Teinture –préparation-broderie">
+  <option value="2eme étage emballage">
+  <option value="Zone décathlon">
+  <option value="Broderie-la stock PF">
+  <option value="Préparation-diamantine-broderie">
+</datalist>
+
+<!-- Emplacements pour Extincteur -->
+<datalist id="emplacement-extincteur-options">
+  <option value="RDC TISSAGE-RENTRAGE-OURDISSOIR">
+  <option value="RDC TISSAGE-MEZZANINE-PRATO">
+  <option value="Bâtiment confection">
+  <option value="Teinture –préparation-broderie">
+  <option value="2eme étage emballage">
+  <option value="Zone décathlon">
+  <option value="Broderie-la stock PF">
+  <option value="Préparation-diamantine-broderie">
+</datalist>
+
+<!-- Types pour Sirène -->
+<datalist id="type-sirene-options">
+  <option value="Type 1">
+  <option value="Type 2">
+  <option value="Type 3">
+  <option value="Sonnerie">
+  <option value="Alarme">
+</datalist>
+
+<!-- Types pour Issues de Secours -->
+<datalist id="type-issues-options">
+  <option value="Porte simple">
+  <option value="Porte double">
+  <option value="Porte coupe-feu">
+  <option value="Sortie de secours">
+  <option value="Issue principale">
+</datalist>
+
+<!-- Barre Antipanique pour Issues de Secours -->
+<datalist id="barre-antipanique-options">
+  <option value="Oui">
+  <option value="Non">
+  <option value="Présent">
+  <option value="Absent">
+  <option value="Fonctionnel">
+  <option value="Défaillant">
+</datalist>

@@ -25,6 +25,9 @@
                class="btn btn-danger btn-sm me-2">
               <i class="fas fa-file-pdf"></i> Export PDF
             </a>
+            <a href="{{ path('app_equipements_recapitulatif_sirenes') }}" class="btn btn-info btn-sm me-2">
+              <i class="fas fa-table"></i> Récapitulatif
+            </a>
             {% if is_granted('ROLE_ADMIN') %}
             <a href="{{ path('app_equipements_sirenes_nouveau') }}" class="btn btn-primary btn-sm">
               <i class="fas fa-plus"></i> Ajouter
@@ -38,7 +41,7 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
-                {% for key, zone_name in constant('App\\Entity\\Sirene::ZONES_SIRENE') %}
+                {% for key, zone_name in constant('App\\Entity\\Sirene::ZONES') %}
                   <option value="{{ zone_name }}" {{ search_params.zone == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>

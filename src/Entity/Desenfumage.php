@@ -13,15 +13,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Table(name: 'desenfumage')]
 class Desenfumage
 {
-    public const ZONES_DESENFUMAGE = [
+    public const ZONES = [
         'STOCK PF' => 'STOCK PF',
         'IMPRESSION NUMERIQUE' => 'IMPRESSION NUMERIQUE',
-    ];
-
-    public const EMPLACEMENTS_DESENFUMAGE = [
-        'LAVAGE A LA CONTINUE' => 'LAVAGE A LA CONTINUE',
-        'Entre Vaporisateur 1 & 2' => 'Entre Vaporisateur 1 & 2',
-        'ROTATIVE' => 'ROTATIVE',
     ];
 
     #[ORM\Id]
@@ -35,6 +29,7 @@ class Desenfumage
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
+    #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
     #[ORM\Column(length: 255, nullable: true)]

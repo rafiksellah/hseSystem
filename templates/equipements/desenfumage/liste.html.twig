@@ -39,7 +39,7 @@
               <label for="zone" class="form-label">Zone</label>
               <select name="zone" id="zone" class="form-select form-select-sm">
                 <option value="">Toutes les zones</option>
-                {% for key, zone_name in constant('App\\Entity\\Desenfumage::ZONES_DESENFUMAGE') %}
+                {% for key, zone_name in constant('App\\Entity\\Desenfumage::ZONES') %}
                   <option value="{{ zone_name }}" {{ app.request.get('zone') == zone_name ? 'selected' : '' }}>{{ zone_name }}</option>
                 {% endfor %}
               </select>

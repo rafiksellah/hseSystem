@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block body %}
+{% include '_partials/datalists.html.twig' %}
 <div class="container-fluid">
   <div class="row justify-content-center">
     <div class="col-md-8">
@@ -32,22 +33,16 @@
 
               <div class="col-md-6 mb-3">
                 <label for="emplacement" class="form-label">Emplacement <span class="text-danger">*</span></label>
-                <select class="form-select" id="emplacement" name="emplacement" required>
-                  <option value="">Sélectionner un emplacement</option>
-                  {% for key, empl in emplacements_disponibles %}
-                    <option value="{{ empl }}">{{ empl }}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" class="form-control" id="emplacement" name="emplacement" 
+                       list="emplacement-prises-options" placeholder="Saisir ou sélectionner un emplacement" required>
+                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="dimatere" class="form-label">Diamètre <span class="text-danger">*</span></label>
-                <select class="form-select" id="dimatere" name="dimatere" required>
-                  <option value="">Sélectionner un diamètre</option>
-                  {% for key, diam in diametres_disponibles %}
-                    <option value="{{ diam }}">{{ diam }}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" name="dimatere" id="dimatere" class="form-control" 
+                       value="{{ prise.dimatere }}" placeholder="Ex: 2*45 MM, 70 MM" required>
+                <small class="text-muted">Saisie libre</small>
               </div>
             </div>
 

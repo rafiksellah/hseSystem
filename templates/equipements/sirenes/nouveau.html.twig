@@ -3,6 +3,7 @@
 {% block title %}Ajouter une Sirène{% endblock %}
 
 {% block body %}
+{% include '_partials/datalists.html.twig' %}
 <div class="container-fluid">
   <div class="row justify-content-center">
     <div class="col-md-8">
@@ -32,21 +33,17 @@
 
               <div class="col-md-6 mb-3">
                 <label for="emplacement" class="form-label">Emplacement</label>
-                <select class="form-select" id="emplacement" name="emplacement">
-                  <option value="">Sélectionner un emplacement</option>
-                  {% for key, empl in emplacements_disponibles %}
-                    <option value="{{ empl }}">{{ empl }}</option>
-                  {% endfor %}
-                </select>
+                <input type="text" class="form-control" id="emplacement" name="emplacement" 
+                       list="emplacement-sirene-options" placeholder="Saisir ou sélectionner un emplacement">
+                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="type" class="form-label">Type <span class="text-danger">*</span></label>
-                <select class="form-select" id="type" name="type" required>
-                  <option value="">Sélectionner</option>
-                  <option value="Sirène">Sirène</option>
-                  <option value="Diffuseur sonore">Diffuseur sonore</option>
-                </select>
+                <input type="text" name="type" id="type" class="form-control" 
+                       value="{{ sirene.type }}" list="type-sirene-options" 
+                       placeholder="Saisir ou sélectionner un type" required>
+                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
             </div>
 

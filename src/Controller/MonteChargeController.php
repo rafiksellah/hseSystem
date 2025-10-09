@@ -73,6 +73,16 @@ class MonteChargeController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Vérifier si le numéro de monte-charge existe déjà
+            $existing = $this->monteChargeRepository->findOneBy(['numeroMonteCharge' => $monteCharge->getNumeroMonteCharge()]);
+            if ($existing) {
+                $this->addFlash('error', 'Le numéro "' . $monteCharge->getNumeroMonteCharge() . '" est déjà utilisé. Veuillez en choisir un autre.');
+                return $this->render('monte_charge/new.html.twig', [
+                    'monte_charge' => $monteCharge,
+                    'form' => $form,
+                ]);
+            }
+            
             $this->entityManager->persist($monteCharge);
             $this->entityManager->flush();
 
@@ -83,8 +93,6 @@ class MonteChargeController extends AbstractController
         return $this->render('monte_charge/new.html.twig', [
             'monte_charge' => $monteCharge,
             'form' => $form,
-            'emplacements_simtis' => MonteCharge::EMPLACEMENTS_SIMTIS,
-            'emplacements_simtis_tissage' => MonteCharge::EMPLACEMENTS_TISSAGE,
         ]);
     }
 
@@ -116,8 +124,6 @@ class MonteChargeController extends AbstractController
         return $this->render('monte_charge/edit.html.twig', [
             'monte_charge' => $monteCharge,
             'form' => $form,
-            'emplacements_simtis' => MonteCharge::EMPLACEMENTS_SIMTIS,
-            'emplacements_simtis_tissage' => MonteCharge::EMPLACEMENTS_TISSAGE,
         ]);
     }
 
@@ -138,6 +144,17 @@ class MonteChargeController extends AbstractController
     #[Route('/{id}/inspection/new', name: 'app_monte_charge_inspection_new', methods: ['GET', 'POST'])]
     public function newInspection(Request $request, MonteCharge $monteCharge): Response
     {
+        // Vérifier s'il existe déjà une inspection active pour ce monte-charge
+        $existingInspection = $this->entityManager->getRepository(InspectionMonteCharge::class)->findOneBy([
+            'monteCharge' => $monteCharge,
+            'isActive' => true
+        ]);
+
+        if ($existingInspection) {
+            $this->addFlash('error', 'Ce monte-charge a déjà une inspection active. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            return $this->redirectToRoute('app_monte_charge_show', ['id' => $monteCharge->getId()]);
+        }
+        
         if ($request->isMethod('POST')) {
             $inspection = new InspectionMonteCharge();
             $inspection->setMonteCharge($monteCharge);

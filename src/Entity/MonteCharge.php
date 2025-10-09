@@ -31,6 +31,13 @@ class MonteCharge
         'SIMTIS TISSAGE' => 'SIMTIS TISSAGE',
     ];
 
+    public const NUMEROS_PORTE = [
+        'PORTE 01' => 'PORTE 01',
+        'PORTE 02' => 'PORTE 02',
+        'PORTE 03' => 'PORTE 03',
+        'PORTE 04' => 'PORTE 04',
+    ];
+
     public const EMPLACEMENTS_TISSAGE = [
         'RDC TISSAGE-RENTRAGE-OURDISSOIR' => 'RDC TISSAGE-RENTRAGE-OURDISSOIR',
         'RDC TISSAGE-MEZZANINE-PRATO' => 'RDC TISSAGE-MEZZANINE-PRATO',
@@ -57,19 +64,13 @@ class MonteCharge
         };
     }
 
-    public const NUMEROS_PORTE = [
-        'PORTE 01' => 'PORTE 01',
-        'PORTE 02' => 'PORTE 02',
-        'PORTE 03' => 'PORTE 03',
-        'PORTE 04' => 'PORTE 04',
-    ];
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 50, unique: true)]
     #[Assert\NotBlank(message: 'Le numéro de monte-charge ne peut pas être vide')]
     #[Assert\Choice(choices: self::NUMEROS_MONTE_CHARGE, message: 'Numéro de monte-charge invalide')]
     private ?string $numeroMonteCharge = null;
