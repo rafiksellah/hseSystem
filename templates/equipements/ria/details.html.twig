@@ -108,13 +108,72 @@
                       <td>{{ inspection.observations ?? '-' }}</td>
                       {% if is_granted('ROLE_ADMIN') %}
                       <td>
-                        <form method="POST" action="{{ path('app_equipements_supprimer_inspection_ria', {'id': inspection.id}) }}" 
-                              style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?')">
-                          <input type="hidden" name="_token" value="{{ csrf_token('delete_inspection_ria') }}">
-                          <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer l'inspection">
-                            <i class="fas fa-trash"></i>
+                        <div class="btn-group" role="group">
+                          <button type="button" class="btn btn-info btn-sm" 
+                                  data-bs-toggle="modal" data-bs-target="#inspectionModal{{ inspection.id }}"
+                                  title="Voir détails">
+                            <i class="fas fa-eye"></i>
                           </button>
-                        </form>
+                          <form method="POST" action="{{ path('app_equipements_supprimer_inspection_ria', {'id': inspection.id}) }}" 
+                                style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette inspection ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_inspection_ria') }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Supprimer l'inspection">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </form>
+                        </div>
+                        
+                        <!-- Modal pour détails inspection -->
+                        <div class="modal fade" id="inspectionModal{{ inspection.id }}" tabindex="-1">
+                          <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                              <div class="modal-header bg-info text-white">
+                                <h5 class="modal-title">
+                                  <i class="fas fa-clipboard-check"></i> Détails Inspection RIA - {{ inspection.dateInspection|date('d/m/Y H:i') }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                              </div>
+                              <div class="modal-body">
+                                <h6><strong>RIA:</strong> {{ ria.numerotation }}</h6>
+                                <p><strong>Inspecté par:</strong> {{ inspection.inspectePar.fullName }}</p>
+                                <p><strong>Résultat:</strong> 
+                                  {% if inspection.valide %}
+                                    <span class="badge bg-success">Conforme</span>
+                                  {% else %}
+                                    <span class="badge bg-danger">Non conforme</span>
+                                  {% endif %}
+                                </p>
+                                
+                                <h6 class="mt-3">Critères vérifiés:</h6>
+                                {% for key, label in constant('App\\Entity\\InspectionRIA::CRITERES') %}
+                                  <div class="d-flex align-items-center mb-2">
+                                    {% if inspection.criteres[key] is defined and inspection.criteres[key] %}
+                                      <i class="fas fa-check-circle text-success me-2"></i>
+                                      <span>{{ label }}</span>
+                                    {% else %}
+                                      <i class="fas fa-times-circle text-danger me-2"></i>
+                                      <span><strong>{{ label }}</strong></span>
+                                    {% endif %}
+                                  </div>
+                                {% endfor %}
+                                
+                                {% if inspection.observations %}
+                                <hr>
+                                <h6>Observations:</h6>
+                                <p>{{ inspection.observations|nl2br }}</p>
+                                {% endif %}
+                                {% if inspection.photoObservation %}
+                                <hr>
+                                <h6>Photo:</h6>
+                                <img src="{{ asset('uploads/photos/' ~ inspection.photoObservation) }}" class="img-fluid" alt="Photo">
+                                {% endif %}
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </td>
                       {% endif %}
                     </tr>

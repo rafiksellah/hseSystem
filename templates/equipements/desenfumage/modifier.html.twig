@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Ajouter un Désenfumage{% endblock %}
+{% block title %}Modifier Désenfumage{% endblock %}
 
 {% block body %}
 {% include '_partials/datalists.html.twig' %}
@@ -9,7 +9,7 @@
     <div class="col-md-8">
       <div class="card">
         <div class="card-header">
-          <h5><i class="fas fa-wind"></i> Nouveau Système de Désenfumage</h5>
+          <h5><i class="fas fa-wind"></i> Modifier Système de Désenfumage</h5>
         </div>
         <div class="card-body">
           <form method="POST">
@@ -17,7 +17,8 @@
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="zone" name="zone" 
-                       list="zone-desenfumage-options" placeholder="Saisir ou sélectionner une zone" required>
+                       value="{{ desenfumage.zone }}" list="zone-desenfumage-options" 
+                       placeholder="Saisir ou sélectionner une zone" required>
                 <datalist id="zone-desenfumage-options">
                   {% for key, zone in zones_disponibles %}
                     <option value="{{ zone }}">
@@ -29,32 +30,33 @@
               <div class="col-md-6 mb-3">
                 <label for="numerotation" class="form-label">Numérotation <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="numerotation" name="numerotation" 
-                       placeholder="Ex: DES-001" required>
+                       value="{{ desenfumage.numerotation }}" placeholder="Ex: DES-001" required>
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="emplacement" class="form-label">Emplacement</label>
                 <input type="text" class="form-control" id="emplacement" name="emplacement" 
-                       list="emplacement-desenfumage-options" placeholder="Saisir ou sélectionner un emplacement">
+                       value="{{ desenfumage.emplacement }}" list="emplacement-desenfumage-options" 
+                       placeholder="Saisir ou sélectionner un emplacement">
                 <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="type" class="form-label">Type</label>
                 <input type="text" class="form-control" id="type" name="type" 
-                       placeholder="Ex: Naturel, Mécanique">
+                       value="{{ desenfumage.type }}" placeholder="Ex: Naturel, Mécanique">
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="etat_commande" class="form-label">État Commande</label>
                 <input type="text" class="form-control" id="etat_commande" name="etat_commande" 
-                       placeholder="Ex: Fonctionnelle">
+                       value="{{ desenfumage.etatCommande }}" placeholder="Ex: Fonctionnelle">
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="etat_skydome" class="form-label">État Skydome</label>
                 <input type="text" class="form-control" id="etat_skydome" name="etat_skydome" 
-                       placeholder="Ex: Bon état">
+                       value="{{ desenfumage.etatSkydome }}" placeholder="Ex: Bon état">
               </div>
             </div>
 
@@ -62,8 +64,8 @@
               <a href="{{ path('app_equipements_desenfumage') }}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> Annuler
               </a>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Enregistrer
+              <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save"></i> Enregistrer les modifications
               </button>
             </div>
           </form>

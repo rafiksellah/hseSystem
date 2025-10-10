@@ -916,8 +916,22 @@ class EquipementsController extends AbstractController
         $monteCharge = new MonteCharge();
 
         if ($request->isMethod('POST')) {
-            $monteCharge->setType($request->request->get('type'));
+            $numeroMonteCharge = $request->request->get('numero_monte_charge');
+            
+            // Vérifier si le numéro existe déjà
+            $existing = $entityManager->getRepository(MonteCharge::class)->findOneBy(['numeroMonteCharge' => $numeroMonteCharge]);
+            if ($existing) {
+                $this->addFlash('error', 'Le numéro "' . $numeroMonteCharge . '" existe déjà. Veuillez en choisir un autre.');
+                return $this->render('equipements/monte_charge/nouveau.html.twig', [
+                    'monte_charge' => $monteCharge,
+                    'zones_disponibles' => MonteCharge::ZONES,
+                ]);
+            }
+            
+            $monteCharge->setNumeroMonteCharge($numeroMonteCharge);
             $monteCharge->setZone($request->request->get('zone'));
+            $monteCharge->setEmplacement($request->request->get('emplacement') ?? '');
+            $monteCharge->setNumeroPorte($request->request->get('numero_porte'));
 
             $entityManager->persist($monteCharge);
             $entityManager->flush();
@@ -928,7 +942,6 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/monte_charge/nouveau.html.twig', [
             'monte_charge' => $monteCharge,
-            'types_disponibles' => MonteCharge::TYPES,
             'zones_disponibles' => MonteCharge::ZONES,
         ]);
     }
@@ -941,8 +954,24 @@ class EquipementsController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response {
         if ($request->isMethod('POST')) {
-            $monteCharge->setType($request->request->get('type'));
+            $numeroMonteCharge = $request->request->get('numero_monte_charge');
+            
+            // Vérifier si le numéro a changé et s'il existe déjà
+            if ($numeroMonteCharge !== $monteCharge->getNumeroMonteCharge()) {
+                $existing = $entityManager->getRepository(MonteCharge::class)->findOneBy(['numeroMonteCharge' => $numeroMonteCharge]);
+                if ($existing) {
+                    $this->addFlash('error', 'Le numéro "' . $numeroMonteCharge . '" existe déjà. Veuillez en choisir un autre.');
+                    return $this->render('equipements/monte_charge/modifer.html.twig', [
+                        'monte_charge' => $monteCharge,
+                        'zones_disponibles' => MonteCharge::ZONES,
+                    ]);
+                }
+            }
+            
+            $monteCharge->setNumeroMonteCharge($numeroMonteCharge);
             $monteCharge->setZone($request->request->get('zone'));
+            $monteCharge->setEmplacement($request->request->get('emplacement') ?? '');
+            $monteCharge->setNumeroPorte($request->request->get('numero_porte'));
 
             $entityManager->flush();
 
@@ -2166,6 +2195,72 @@ class EquipementsController extends AbstractController
         ]);
     }
 
+    #[Route('/sirenes/{id}/modifier', name: 'app_equipements_sirene_modifier')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function modifierSirene(
+        Sirene $sirene,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Vérifier les permissions
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles()) && $sirene->getZone() !== $user->getZone()) {
+            throw $this->createAccessDeniedException('Accès non autorisé à cette sirène');
+        }
+
+        if ($request->isMethod('POST')) {
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation a changé et existe déjà
+            if ($numerotation !== $sirene->getNumerotation()) {
+                $existing = $entityManager->getRepository(Sirene::class)->findOneBy(['numerotation' => $numerotation]);
+                if ($existing) {
+                    $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                    return $this->render('equipements/sirenes/modifier.html.twig', [
+                        'sirene' => $sirene,
+                        'zones_disponibles' => Sirene::ZONES,
+                    ]);
+                }
+            }
+            
+            $sirene->setNumerotation($numerotation);
+            $sirene->setZone($request->request->get('zone'));
+            $sirene->setEmplacement($request->request->get('emplacement'));
+            $sirene->setType($request->request->get('type'));
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Sirène modifiée avec succès !');
+            return $this->redirectToRoute('app_equipements_sirenes');
+        }
+
+        return $this->render('equipements/sirenes/modifier.html.twig', [
+            'sirene' => $sirene,
+            'zones_disponibles' => Sirene::ZONES,
+        ]);
+    }
+
+    #[Route('/sirenes/{id}/supprimer', name: 'app_equipements_sirene_supprimer')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    public function supprimerSirene(
+        Sirene $sirene,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            $numerotation = $sirene->getNumerotation();
+            $entityManager->remove($sirene);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Sirène "' . $numerotation . '" supprimée avec succès !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression de la sirène : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_equipements_sirenes');
+    }
+
     #[Route('/sirenes/{id}/export-pdf', name: 'app_equipements_sirene_export_detail_pdf')]
     public function exportSireneDetailPDF(Sirene $sirene): Response
     {
@@ -2332,6 +2427,7 @@ class EquipementsController extends AbstractController
 
         return $this->render('equipements/desenfumage/nouveau.html.twig', [
             'desenfumage' => $desenfumage,
+            'zones_disponibles' => Desenfumage::ZONES,
         ]);
     }
 
@@ -2341,6 +2437,72 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/desenfumage/details.html.twig', [
             'desenfumage' => $desenfumage,
         ]);
+    }
+
+    #[Route('/desenfumage/{id}/modifier', name: 'app_equipements_desenfumage_modifier')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function modifierDesenfumage(
+        Desenfumage $desenfumage,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles()) && $desenfumage->getZone() !== $user->getZone()) {
+            throw $this->createAccessDeniedException('Accès non autorisé');
+        }
+
+        if ($request->isMethod('POST')) {
+            $numerotation = $request->request->get('numerotation');
+            
+            if ($numerotation !== $desenfumage->getNumerotation()) {
+                $existing = $entityManager->getRepository(Desenfumage::class)->findOneBy(['numerotation' => $numerotation]);
+                if ($existing) {
+                    $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà.');
+                    return $this->render('equipements/desenfumage/modifier.html.twig', [
+                        'desenfumage' => $desenfumage,
+                        'zones_disponibles' => Desenfumage::ZONES,
+                    ]);
+                }
+            }
+            
+            $desenfumage->setNumerotation($numerotation);
+            $desenfumage->setZone($request->request->get('zone'));
+            $desenfumage->setEmplacement($request->request->get('emplacement'));
+            $desenfumage->setType($request->request->get('type'));
+            $desenfumage->setEtatCommande($request->request->get('etat_commande'));
+            $desenfumage->setEtatSkydome($request->request->get('etat_skydome'));
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Désenfumage modifié avec succès !');
+            return $this->redirectToRoute('app_equipements_desenfumage');
+        }
+
+        return $this->render('equipements/desenfumage/modifier.html.twig', [
+            'desenfumage' => $desenfumage,
+            'zones_disponibles' => Desenfumage::ZONES,
+        ]);
+    }
+
+    #[Route('/desenfumage/{id}/supprimer', name: 'app_equipements_desenfumage_supprimer')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    public function supprimerDesenfumage(
+        Desenfumage $desenfumage,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            $numerotation = $desenfumage->getNumerotation();
+            $entityManager->remove($desenfumage);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Désenfumage "' . $numerotation . '" supprimé avec succès !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_equipements_desenfumage');
     }
 
     #[Route('/desenfumage/{id}/export-pdf', name: 'app_equipements_desenfumage_export_detail_pdf')]
@@ -2522,6 +2684,65 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/extinction_ram/details.html.twig', [
             'ram' => $ram,
         ]);
+    }
+
+    #[Route('/extinction-ram/{id}/modifier', name: 'app_equipements_extinction_ram_modifier')]
+    #[IsGranted('ROLE_ADMIN')]
+    public function modifierExtinctionRAM(
+        ExtinctionLocaliseeRAM $ram,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles()) && $ram->getZone() !== $user->getZone()) {
+            throw $this->createAccessDeniedException('Accès non autorisé');
+        }
+
+        if ($request->isMethod('POST')) {
+            $numerotation = $request->request->get('numerotation');
+            
+            if ($numerotation !== $ram->getNumerotation()) {
+                $existing = $entityManager->getRepository(ExtinctionLocaliseeRAM::class)->findOneBy(['numerotation' => $numerotation]);
+                if ($existing) {
+                    $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà.');
+                    return $this->render('equipements/extinction_ram/modifier.html.twig', ['ram' => $ram]);
+                }
+            }
+            
+            $ram->setNumerotation($numerotation);
+            $ram->setZone($request->request->get('zone'));
+            $ram->setEmplacement($request->request->get('emplacement'));
+            $ram->setType($request->request->get('type'));
+            $ram->setVanne($request->request->get('vanne'));
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Système RAM modifié avec succès !');
+            return $this->redirectToRoute('app_equipements_extinction_ram');
+        }
+
+        return $this->render('equipements/extinction_ram/modifier.html.twig', ['ram' => $ram]);
+    }
+
+    #[Route('/extinction-ram/{id}/supprimer', name: 'app_equipements_extinction_ram_supprimer')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    public function supprimerExtinctionRAM(
+        ExtinctionLocaliseeRAM $ram,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            $numerotation = $ram->getNumerotation();
+            $entityManager->remove($ram);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Système RAM "' . $numerotation . '" supprimé avec succès !');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_equipements_extinction_ram');
     }
 
     #[Route('/extinction-ram/{id}/export-pdf', name: 'app_equipements_extinction_ram_export_detail_pdf')]
@@ -3460,5 +3681,188 @@ class EquipementsController extends AbstractController
     public function testDatalist(): Response
     {
         return $this->render('test_datalist.html.twig');
+    }
+
+    #[Route('/statistiques', name: 'app_equipements_statistiques')]
+    public function statistiques(
+        ExtincteurRepository $extincteurRepository,
+        RIARepository $riaRepository,
+        MonteChargeRepository $monteChargeRepository,
+        PrisePompierRepository $prisePompierRepository,
+        IssueSecoursRepository $issueSecoursRepository,
+        SireneRepository $sireneRepository,
+        DesenfumageRepository $desenfumageRepository,
+        ExtinctionLocaliseeRAMRepository $ramRepository,
+        InspectionExtincteurRepository $inspectionExtincteurRepository,
+        InspectionRIARepository $inspectionRIARepository,
+        InspectionMonteChargeRepository $inspectionMonteChargeRepository,
+        InspectionPrisePompierRepository $inspectionPrisePompierRepository,
+        InspectionIssueSecoursRepository $inspectionIssueSecoursRepository,
+        InspectionSireneRepository $inspectionSireneRepository,
+        InspectionDesenfumageRepository $inspectionDesenfumageRepository,
+        InspectionExtinctionRAMRepository $inspectionRAMRepository,
+        EntityManagerInterface $entityManager
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+        
+        // Compter les équipements par type (simple count)
+        $countExtincteurs = $extincteurRepository->count([]);
+        $countRIA = $riaRepository->count([]);
+        $countMonteCharge = $monteChargeRepository->count([]);
+        $countPrisePompier = $prisePompierRepository->count([]);
+        $countIssueSecours = $issueSecoursRepository->count([]);
+        $countSirene = $sireneRepository->count([]);
+        $countDesenfumage = $desenfumageRepository->count([]);
+        $countRAM = $ramRepository->count([]);
+        
+        $totalEquipements = $countExtincteurs + $countRIA + $countMonteCharge + $countPrisePompier + $countIssueSecours + $countSirene + $countDesenfumage + $countRAM;
+        
+        // Fonction helper pour compter les statuts par équipement
+        $getStatsForEquipment = function($repository) use ($entityManager) {
+            $conformes = 0;
+            $nonConformes = 0;
+            $nonInspectes = 0;
+            
+            try {
+                $items = $repository->findAll();
+                foreach ($items as $item) {
+                    $statut = $item->getStatutConformite();
+                    if ($statut === 'Conforme') {
+                        $conformes++;
+                    } elseif ($statut === 'Non conforme') {
+                        $nonConformes++;
+                    } else {
+                        $nonInspectes++;
+                    }
+                }
+            } catch (\Exception $e) {
+                // Si erreur, retourner 0 pour tout
+                return ['conformes' => 0, 'non_conformes' => 0, 'non_inspectes' => 0];
+            }
+            
+            return [
+                'conformes' => $conformes,
+                'non_conformes' => $nonConformes,
+                'non_inspectes' => $nonInspectes
+            ];
+        };
+        
+        // Calculer les stats pour chaque type
+        $statsExtincteurs = $getStatsForEquipment($extincteurRepository);
+        $statsRIA = $getStatsForEquipment($riaRepository);
+        $statsMonteCharge = ['conformes' => 0, 'non_conformes' => 0, 'non_inspectes' => $countMonteCharge]; // Temporaire
+        $statsSirene = $getStatsForEquipment($sireneRepository);
+        $statsDesenfumage = $getStatsForEquipment($desenfumageRepository);
+        $statsRAM = $getStatsForEquipment($ramRepository);
+        $statsIssueSecours = $getStatsForEquipment($issueSecoursRepository);
+        $statsPrisePompier = $getStatsForEquipment($prisePompierRepository);
+        
+        $stats_par_type = [
+            [
+                'nom' => 'Extincteurs',
+                'icon' => 'fas fa-fire-extinguisher',
+                'color' => 'danger',
+                'total' => $countExtincteurs,
+                'conformes' => $statsExtincteurs['conformes'],
+                'non_conformes' => $statsExtincteurs['non_conformes'],
+                'non_inspectes' => $statsExtincteurs['non_inspectes'],
+            ],
+            [
+                'nom' => 'RIA',
+                'icon' => 'fas fa-tint',
+                'color' => 'info',
+                'total' => $countRIA,
+                'conformes' => $statsRIA['conformes'],
+                'non_conformes' => $statsRIA['non_conformes'],
+                'non_inspectes' => $statsRIA['non_inspectes'],
+            ],
+            [
+                'nom' => 'Monte-Charge',
+                'icon' => 'fas fa-elevator',
+                'color' => 'primary',
+                'total' => $countMonteCharge,
+                'conformes' => $statsMonteCharge['conformes'],
+                'non_conformes' => $statsMonteCharge['non_conformes'],
+                'non_inspectes' => $statsMonteCharge['non_inspectes'],
+            ],
+            [
+                'nom' => 'Sirènes',
+                'icon' => 'fas fa-bell',
+                'color' => 'warning',
+                'total' => $countSirene,
+                'conformes' => $statsSirene['conformes'],
+                'non_conformes' => $statsSirene['non_conformes'],
+                'non_inspectes' => $statsSirene['non_inspectes'],
+            ],
+            [
+                'nom' => 'Désenfumage',
+                'icon' => 'fas fa-wind',
+                'color' => 'secondary',
+                'total' => $countDesenfumage,
+                'conformes' => $statsDesenfumage['conformes'],
+                'non_conformes' => $statsDesenfumage['non_conformes'],
+                'non_inspectes' => $statsDesenfumage['non_inspectes'],
+            ],
+            [
+                'nom' => 'Extinction RAM',
+                'icon' => 'fas fa-spray-can',
+                'color' => 'danger',
+                'total' => $countRAM,
+                'conformes' => $statsRAM['conformes'],
+                'non_conformes' => $statsRAM['non_conformes'],
+                'non_inspectes' => $statsRAM['non_inspectes'],
+            ],
+            [
+                'nom' => 'Issues de Secours',
+                'icon' => 'fas fa-door-open',
+                'color' => 'success',
+                'total' => $countIssueSecours,
+                'conformes' => $statsIssueSecours['conformes'],
+                'non_conformes' => $statsIssueSecours['non_conformes'],
+                'non_inspectes' => $statsIssueSecours['non_inspectes'],
+            ],
+            [
+                'nom' => 'Prises Pompiers',
+                'icon' => 'fas fa-fire-hydrant',
+                'color' => 'primary',
+                'total' => $countPrisePompier,
+                'conformes' => $statsPrisePompier['conformes'],
+                'non_conformes' => $statsPrisePompier['non_conformes'],
+                'non_inspectes' => $statsPrisePompier['non_inspectes'],
+            ],
+        ];
+        
+        // Totaux globaux
+        $totalConformes = array_sum(array_column($stats_par_type, 'conformes'));
+        $totalNonConformes = array_sum(array_column($stats_par_type, 'non_conformes'));
+        $totalNonInspectes = array_sum(array_column($stats_par_type, 'non_inspectes'));
+        
+        // Compteur d'inspections (utiliser count simple)
+        $totalInspections = 
+            $inspectionExtincteurRepository->count([]) +
+            $inspectionRIARepository->count([]) +
+            $inspectionMonteChargeRepository->count([]) +
+            $inspectionPrisePompierRepository->count([]) +
+            $inspectionIssueSecoursRepository->count([]) +
+            $inspectionSireneRepository->count([]) +
+            $inspectionDesenfumageRepository->count([]) +
+            $inspectionRAMRepository->count([]);
+        
+        // Inspections du mois (estimation simple)
+        $inspectionsMois = intval($totalInspections / 12); // Estimation basique
+        
+        return $this->render('equipements/statistiques.html.twig', [
+            'stats' => [
+                'total_equipements' => $totalEquipements,
+                'total_conformes' => $totalConformes,
+                'total_non_conformes' => $totalNonConformes,
+                'total_non_inspectes' => $totalNonInspectes,
+                'par_type' => $stats_par_type,
+                'par_zone' => [], // À implémenter si nécessaire
+                'inspections_mois' => $inspectionsMois,
+                'total_inspections' => $totalInspections,
+            ],
+        ]);
     }
 }

@@ -124,8 +124,8 @@
 </div>
 
 <script>
+// Fonction pour sélectionner tous les critères
 function selectAll(value) {
-  // Sélectionner tous les radio buttons avec la valeur spécifiée
   const radios = document.querySelectorAll('input[type="radio"][value="' + value + '"]');
   radios.forEach(radio => {
     radio.checked = true;

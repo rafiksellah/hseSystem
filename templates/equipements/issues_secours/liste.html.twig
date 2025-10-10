@@ -135,16 +135,29 @@
                     {% endif %}
                   </td>
                   <td>
-                    <div class="btn-group" role="group">
-                      <a href="{{ path('app_equipements_issue_secours_details', {id: issue.id}) }}" 
-                         class="btn btn-info btn-sm" title="Voir détails">
-                        <i class="fas fa-eye"></i>
-                      </a>
-                      <a href="{{ path('app_equipements_issues_secours_inspecter', {id: issue.id}) }}" 
-                         class="btn btn-success btn-sm" title="Inspecter">
-                        <i class="fas fa-clipboard-check"></i>
-                      </a>
-                    </div>
+                  <div class="btn-group" role="group">
+                    <a href="{{ path('app_equipements_issue_secours_details', {id: issue.id}) }}" 
+                       class="btn btn-info btn-sm" title="Voir détails">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ path('app_equipements_issues_secours_inspecter', {id: issue.id}) }}" 
+                       class="btn btn-success btn-sm" title="Inspecter">
+                      <i class="fas fa-clipboard-check"></i>
+                    </a>
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_equipements_issue_secours_modifier', {id: issue.id}) }}" 
+                       class="btn btn-warning btn-sm" title="Modifier">
+                      <i class="fas fa-edit"></i>
+                    </a>
+                    {% endif %}
+                    {% if is_granted('ROLE_SUPER_ADMIN') %}
+                    <a href="{{ path('app_equipements_issue_secours_supprimer', {id: issue.id}) }}" 
+                       class="btn btn-danger btn-sm" title="Supprimer"
+                       onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette issue de secours ?')">
+                      <i class="fas fa-trash"></i>
+                    </a>
+                    {% endif %}
+                  </div>
                   </td>
                 </tr>
                 {% endfor %}

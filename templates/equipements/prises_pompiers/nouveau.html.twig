@@ -23,12 +23,14 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone <span class="text-danger">*</span></label>
-                <select class="form-select" id="zone" name="zone" required>
-                  <option value="">Sélectionner une zone</option>
+                <input type="text" class="form-control" id="zone" name="zone" 
+                       list="zone-prises-options" placeholder="Saisir ou sélectionner une zone" required>
+                <datalist id="zone-prises-options">
                   {% for key, zone_name in zones_disponibles %}
-                    <option value="{{ zone_name }}">{{ zone_name }}</option>
+                    <option value="{{ zone_name }}">
                   {% endfor %}
-                </select>
+                </datalist>
+                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
 
               <div class="col-md-6 mb-3">

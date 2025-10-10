@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block body %}
+{% include '_partials/datalists.html.twig' %}
 <div class="container-fluid">
   <div class="row justify-content-center">
     <div class="col-lg-6">
@@ -21,19 +22,15 @@
           <form method="POST">
             <div class="row mb-3">
               <div class="col-12">
-                <label for="type" class="form-label">Type *</label>
-                <select name="type" id="type" class="form-select" required>
-                  <option value="">Sélectionnez un type</option>
-                  {% for key, type_name in types_disponibles %}
-                  <option value="{{ key }}" {{ monte_charge.type==key ? 'selected' : '' }}>
-                    {{ type_name }}
-                  </option>
-                  {% endfor %}
-                </select>
+                <label for="numero_monte_charge" class="form-label">Numéro Monte-Charge *</label>
+                <input type="text" name="numero_monte_charge" id="numero_monte_charge" 
+                       class="form-control" list="numeros-monte-charge-options"
+                       placeholder="Ex: MONTE CHARGE 01" required>
+                <small class="text-muted">Saisie libre - Ex: MONTE CHARGE 01 à 10</small>
               </div>
             </div>
 
-            <div class="row mb-4">
+            <div class="row mb-3">
               <div class="col-12">
                 <label for="zone" class="form-label">Zone *</label>
                 <select name="zone" id="zone" class="form-select" required>
@@ -42,6 +39,27 @@
                   <option value="{{ key }}" {{ monte_charge.zone==key ? 'selected' : '' }}>
                     {{ zone_name }}
                   </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-12">
+                <label for="emplacement" class="form-label">Emplacement *</label>
+                <input type="text" name="emplacement" id="emplacement" 
+                       class="form-control" list="emplacement-monte-charge-options"
+                       placeholder="Sélectionner un emplacement" required>
+              </div>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-12">
+                <label for="numero_porte" class="form-label">Numéro de Porte *</label>
+                <select name="numero_porte" id="numero_porte" class="form-select" required>
+                  <option value="">Sélectionnez une porte</option>
+                  {% for key, porte_name in constant('App\\Entity\\MonteCharge::NUMEROS_PORTE') %}
+                  <option value="{{ key }}">{{ porte_name }}</option>
                   {% endfor %}
                 </select>
               </div>

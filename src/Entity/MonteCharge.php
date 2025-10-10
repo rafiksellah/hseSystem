@@ -21,6 +21,12 @@ class MonteCharge
         'SIMTIS TISSAGE' => 'SIMTIS TISSAGE',
     ];
 
+    public const TYPES = [
+        'Monte-charge' => 'Monte-charge',
+        'Ascenseur' => 'Ascenseur',
+        'Élévateur' => 'Élévateur',
+    ];
+
     public const NUMEROS_PORTE = [
         'PORTE 01' => 'PORTE 01',
         'PORTE 02' => 'PORTE 02',
@@ -75,9 +81,6 @@ class MonteCharge
     #[ORM\Column(length: 50)]
     #[Assert\NotBlank(message: 'Le numéro de porte ne peut pas être vide')]
     private ?string $numeroPorte = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?int $nombrePortes = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $dateCreation = null;
@@ -211,17 +214,6 @@ class MonteCharge
     public function getNombreInspections(): int
     {
         return $this->inspections->count();
-    }
-
-    public function getNombrePortes(): ?int
-    {
-        return $this->nombrePortes;
-    }
-
-    public function setNombrePortes(?int $nombrePortes): static
-    {
-        $this->nombrePortes = $nombrePortes;
-        return $this;
     }
 
     public function __toString(): string

@@ -53,14 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                {{ form_label(form.nombrePortes, 'Nombre de Portes', {'label_attr': {'class': 'form-label'}}) }}
-                                {{ form_widget(form.nombrePortes) }}
-                                {{ form_errors(form.nombrePortes) }}
-                            </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
                                 {{ form_label(form.numeroPorte, 'Numéro de Porte', {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.numeroPorte) }}
                                 {{ form_errors(form.numeroPorte) }}

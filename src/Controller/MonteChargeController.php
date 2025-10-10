@@ -65,7 +65,7 @@ class MonteChargeController extends AbstractController
     }
 
     #[Route('/new', name: 'app_monte_charge_new', methods: ['GET', 'POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function new(Request $request): Response
     {
         $monteCharge = new MonteCharge();
@@ -108,7 +108,7 @@ class MonteChargeController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_monte_charge_edit', methods: ['GET', 'POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function edit(Request $request, MonteCharge $monteCharge): Response
     {
         $originalNumero = $monteCharge->getNumeroMonteCharge();
@@ -146,7 +146,7 @@ class MonteChargeController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_monte_charge_delete', methods: ['POST'])]
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
     public function delete(Request $request, MonteCharge $monteCharge): Response
     {
         if ($this->isCsrfTokenValid('delete'.$monteCharge->getId(), $request->request->get('_token'))) {

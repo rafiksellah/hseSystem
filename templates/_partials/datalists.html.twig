@@ -42,11 +42,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const datalistId = input.getAttribute('list');
         const datalist = document.getElementById(datalistId);
         
+        // NE PAS transformer certains champs qui doivent rester en Type 2 (saisie + liste)
+        const keepAsDatalist = [
+            'type-issues-options',
+            'barre-antipanique-options',
+            'type-sirene-options',
+            'zone-issues-options',
+            'zone-sirene-options',
+            'zone-desenfumage-options',
+            'zone-prises-options',
+            'numeros-monte-charge-options'
+        ];
+        
         if (datalist && datalistId.includes('emplacement')) {
             createEmplacementSelect(input, datalist);
-        } else if (datalist) {
+        } else if (datalist && !keepAsDatalist.includes(datalistId)) {
             createSimpleSelect(input, datalist);
         }
+        // Sinon, laisser le datalist HTML5 natif (Type 2)
     });
     
     function createEmplacementSelect(input, datalist) {
@@ -501,6 +514,20 @@ document.addEventListener('DOMContentLoaded', function() {
   <option value="Zone décathlon">
   <option value="Broderie-la stock PF">
   <option value="Préparation-diamantine-broderie">
+</datalist>
+
+<!-- Numéros de Monte-Charge (suggestions) -->
+<datalist id="numeros-monte-charge-options">
+  <option value="MONTE CHARGE 01">
+  <option value="MONTE CHARGE 02">
+  <option value="MONTE CHARGE 03">
+  <option value="MONTE CHARGE 04">
+  <option value="MONTE CHARGE 05">
+  <option value="MONTE CHARGE 06">
+  <option value="MONTE CHARGE 07">
+  <option value="MONTE CHARGE 08">
+  <option value="MONTE CHARGE 09">
+  <option value="MONTE CHARGE 10">
 </datalist>
 
 <!-- Emplacements pour Extincteur -->

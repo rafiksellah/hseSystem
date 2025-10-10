@@ -15,13 +15,14 @@ class MonteChargeType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('numeroMonteCharge', ChoiceType::class, [
+            ->add('numeroMonteCharge', TextType::class, [
                 'label' => 'Numéro Monte-Charge',
-                'choices' => array_flip(MonteCharge::NUMEROS_MONTE_CHARGE),
-                'placeholder' => 'Sélectionnez un numéro',
                 'attr' => [
-                    'class' => 'form-select'
-                ]
+                    'class' => 'form-control',
+                    'placeholder' => 'Ex: MONTE CHARGE 01, MC-001',
+                    'list' => 'numeros-monte-charge-options'
+                ],
+                'help' => 'Saisie libre - Ex: MONTE CHARGE 01 à 10'
             ])
             ->add('zone', ChoiceType::class, [
                 'label' => 'Zone',

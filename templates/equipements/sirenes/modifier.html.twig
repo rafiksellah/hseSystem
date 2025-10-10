@@ -1,6 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Ajouter une Sirène{% endblock %}
+{% block title %}Modifier Sirène{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-bell text-warning"></i> Modifier Sirène
+{% endblock %}
 
 {% block body %}
 {% include '_partials/datalists.html.twig' %}
@@ -8,8 +12,11 @@
   <div class="row justify-content-center">
     <div class="col-md-8">
       <div class="card">
-        <div class="card-header">
-          <h5><i class="fas fa-bell"></i> Nouvelle Sirène</h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="fas fa-edit"></i> Modifier Sirène</h5>
+          <a href="{{ path('app_equipements_sirenes') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
         </div>
         <div class="card-body">
           <form method="POST">
@@ -17,7 +24,8 @@
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="zone" name="zone" 
-                       list="zone-sirene-options" placeholder="Saisir ou sélectionner une zone" required>
+                       value="{{ sirene.zone }}" list="zone-sirene-options" 
+                       placeholder="Saisir ou sélectionner une zone" required>
                 <datalist id="zone-sirene-options">
                   {% for key, zone in zones_disponibles %}
                     <option value="{{ zone }}">
@@ -29,14 +37,15 @@
               <div class="col-md-6 mb-3">
                 <label for="numerotation" class="form-label">Numérotation <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="numerotation" name="numerotation" 
-                       placeholder="Ex: SIR-001" required>
+                       value="{{ sirene.numerotation }}" placeholder="Ex: SIR-001" required>
                 <small class="text-muted">Numérotation libre (saisie manuelle)</small>
               </div>
 
               <div class="col-md-6 mb-3">
                 <label for="emplacement" class="form-label">Emplacement</label>
                 <input type="text" class="form-control" id="emplacement" name="emplacement" 
-                       list="emplacement-sirene-options" placeholder="Saisir ou sélectionner un emplacement">
+                       value="{{ sirene.emplacement }}" list="emplacement-sirene-options" 
+                       placeholder="Saisir ou sélectionner un emplacement">
                 <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
               </div>
 
@@ -45,15 +54,16 @@
                 <input type="text" name="type" id="type" class="form-control" 
                        value="{{ sirene.type }}" list="type-sirene-options" 
                        placeholder="Saisir ou sélectionner un type" required>
-                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>              </div>
+                <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
+              </div>
             </div>
 
             <div class="d-flex justify-content-between mt-4">
               <a href="{{ path('app_equipements_sirenes') }}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> Annuler
               </a>
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Enregistrer
+              <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save"></i> Enregistrer les modifications
               </button>
             </div>
           </form>

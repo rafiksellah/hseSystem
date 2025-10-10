@@ -1,0 +1,390 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques Équipements - HSE System{% endblock %}
+
+{% block page_title %}
+<i class="fas fa-chart-bar text-primary"></i> Statistiques Globales des Équipements
+<small class="text-muted">Vue d'ensemble complète</small>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  
+  <!-- Bouton retour -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Retour au Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Statistiques Générales -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="text-primary mb-3">
+        <i class="fas fa-info-circle"></i> Vue d'Ensemble
+      </h5>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <!-- Total Équipements -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Total Équipements
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ stats.total_equipements }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-tools fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conformes -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Équipements Conformes
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ stats.total_conformes }}
+                <small class="text-muted">
+                  ({{ ((stats.total_conformes / stats.total_equipements) * 100)|round }}%)
+                </small>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Non Conformes -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-danger shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                Non Conformes
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ stats.total_non_conformes }}
+                <small class="text-muted">
+                  ({{ ((stats.total_non_conformes / stats.total_equipements) * 100)|round }}%)
+                </small>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Non Inspectés -->
+    <div class="col-xl-3 col-md-6 mb-4">
+      <div class="card border-left-warning shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                Non Inspectés
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ stats.total_non_inspectes }}
+                <small class="text-muted">
+                  ({{ ((stats.total_non_inspectes / stats.total_equipements) * 100)|round }}%)
+                </small>
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-clock fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques par Type d'Équipement -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="text-primary mb-3">
+        <i class="fas fa-list"></i> Statistiques par Type d'Équipement
+      </h5>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-table"></i> Répartition par Équipement
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Équipement</th>
+                  <th class="text-center">Total</th>
+                  <th class="text-center">Conformes</th>
+                  <th class="text-center">Non Conformes</th>
+                  <th class="text-center">Non Inspectés</th>
+                  <th class="text-center">Taux Conformité</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for equipement in stats.par_type %}
+                <tr>
+                  <td>
+                    <i class="{{ equipement.icon }} text-{{ equipement.color }}"></i>
+                    <strong>{{ equipement.nom }}</strong>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-secondary">{{ equipement.total }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-success">{{ equipement.conformes }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-danger">{{ equipement.non_conformes }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-warning">{{ equipement.non_inspectes }}</span>
+                  </td>
+                  <td class="text-center">
+                    {% set taux = equipement.total > 0 ? ((equipement.conformes / equipement.total) * 100)|round : 0 %}
+                    <div class="progress" style="height: 25px;">
+                      <div class="progress-bar bg-{{ taux >= 80 ? 'success' : (taux >= 50 ? 'warning' : 'danger') }}" 
+                           role="progressbar" 
+                           style="width: {{ taux }}%"
+                           aria-valuenow="{{ taux }}" 
+                           aria-valuemin="0" 
+                           aria-valuemax="100">
+                        {{ taux }}%
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <th><strong>TOTAL</strong></th>
+                  <th class="text-center">
+                    <span class="badge bg-dark">{{ stats.total_equipements }}</span>
+                  </th>
+                  <th class="text-center">
+                    <span class="badge bg-success">{{ stats.total_conformes }}</span>
+                  </th>
+                  <th class="text-center">
+                    <span class="badge bg-danger">{{ stats.total_non_conformes }}</span>
+                  </th>
+                  <th class="text-center">
+                    <span class="badge bg-warning">{{ stats.total_non_inspectes }}</span>
+                  </th>
+                  <th class="text-center">
+                    {% set taux_global = ((stats.total_conformes / stats.total_equipements) * 100)|round %}
+                    <div class="progress" style="height: 25px;">
+                      <div class="progress-bar bg-{{ taux_global >= 80 ? 'success' : (taux_global >= 50 ? 'warning' : 'danger') }}" 
+                           role="progressbar" 
+                           style="width: {{ taux_global }}%">
+                        <strong>{{ taux_global }}%</strong>
+                      </div>
+                    </div>
+                  </th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistiques par Zone -->
+  {% if is_granted('ROLE_SUPER_ADMIN') %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="text-primary mb-3">
+        <i class="fas fa-map-marker-alt"></i> Statistiques par Zone
+      </h5>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header py-3 bg-info text-white">
+          <h6 class="m-0 font-weight-bold">
+            <i class="fas fa-building"></i> SIMTIS
+          </h6>
+        </div>
+        <div class="card-body">
+          <p><strong>Total:</strong> {{ stats.par_zone.SIMTIS.total ?? 0 }} équipements</p>
+          <p><strong>Conformes:</strong> <span class="badge bg-success">{{ stats.par_zone.SIMTIS.conformes ?? 0 }}</span></p>
+          <p><strong>Non Conformes:</strong> <span class="badge bg-danger">{{ stats.par_zone.SIMTIS.non_conformes ?? 0 }}</span></p>
+          <p><strong>Non Inspectés:</strong> <span class="badge bg-warning">{{ stats.par_zone.SIMTIS.non_inspectes ?? 0 }}</span></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow">
+        <div class="card-header py-3 bg-success text-white">
+          <h6 class="m-0 font-weight-bold">
+            <i class="fas fa-industry"></i> SIMTIS TISSAGE
+          </h6>
+        </div>
+        <div class="card-body">
+          <p><strong>Total:</strong> {{ stats.par_zone['SIMTIS TISSAGE'].total ?? 0 }} équipements</p>
+          <p><strong>Conformes:</strong> <span class="badge bg-success">{{ stats.par_zone['SIMTIS TISSAGE'].conformes ?? 0 }}</span></p>
+          <p><strong>Non Conformes:</strong> <span class="badge bg-danger">{{ stats.par_zone['SIMTIS TISSAGE'].non_conformes ?? 0 }}</span></p>
+          <p><strong>Non Inspectés:</strong> <span class="badge bg-warning">{{ stats.par_zone['SIMTIS TISSAGE'].non_inspectes ?? 0 }}</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Inspections du Mois -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="text-primary mb-3">
+        <i class="fas fa-calendar-check"></i> Inspections du Mois
+      </h5>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                Inspections ce Mois
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ stats.inspections_mois }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-clipboard-check fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-left-primary shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                Moyenne / Jour
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ (stats.inspections_mois / 'now'|date('d'))|round(1) }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card border-left-success shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                Inspections Totales
+              </div>
+              <div class="h5 mb-0 font-weight-bold text-gray-800">
+                {{ stats.total_inspections }}
+              </div>
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-check-double fa-2x text-gray-300"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions Rapides -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h5 class="text-primary mb-3">
+        <i class="fas fa-bolt"></i> Actions Rapides
+      </h5>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <a href="{{ path('app_equipements_extincteurs') }}" class="btn btn-outline-danger btn-block w-100 py-3">
+        <i class="fas fa-fire-extinguisher fa-2x mb-2 d-block"></i>
+        Extincteurs
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{{ path('app_equipements_ria') }}" class="btn btn-outline-info btn-block w-100 py-3">
+        <i class="fas fa-tint fa-2x mb-2 d-block"></i>
+        RIA
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{{ path('app_equipements_sirenes') }}" class="btn btn-outline-warning btn-block w-100 py-3">
+        <i class="fas fa-bell fa-2x mb-2 d-block"></i>
+        Sirènes
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{{ path('app_equipements_dashboard') }}" class="btn btn-outline-primary btn-block w-100 py-3">
+        <i class="fas fa-home fa-2x mb-2 d-block"></i>
+        Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Note d'information -->
+  <div class="row">
+    <div class="col-12">
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Note:</strong> Les statistiques sont mises à jour en temps réel. 
+        Les taux de conformité sont calculés sur la base des dernières inspections effectuées.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
