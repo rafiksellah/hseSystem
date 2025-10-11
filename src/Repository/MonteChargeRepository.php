@@ -93,9 +93,25 @@ class MonteChargeRepository extends ServiceEntityRepository
 
         if (!empty($statut)) {
             if ($statut === 'Conforme') {
-                $qb->andWhere('i.isConforme = true');
+                // Une inspection est conforme si tous les critères sont "Oui"
+                $qb->andWhere('i.portesFermees = :oui')
+                   ->andWhere('i.consignesRespectees = :oui')
+                   ->andWhere('i.finsCoursesFonctionnent = :oui')
+                   ->andWhere('i.essaiVideRealise = :oui')
+                   ->andWhere('i.isActive = true')
+                   ->setParameter('oui', 'Oui');
             } elseif ($statut === 'Non conforme') {
-                $qb->andWhere('i.isConforme = false');
+                // Une inspection est non conforme si au moins un critère est "Non"
+                $qb->andWhere(
+                    $qb->expr()->orX(
+                        $qb->expr()->eq('i.portesFermees', ':non'),
+                        $qb->expr()->eq('i.consignesRespectees', ':non'),
+                        $qb->expr()->eq('i.finsCoursesFonctionnent', ':non'),
+                        $qb->expr()->eq('i.essaiVideRealise', ':non')
+                    )
+                )
+                ->andWhere('i.isActive = true')
+                ->setParameter('non', 'Non');
             } elseif ($statut === 'Non inspecté') {
                 $qb->andWhere('i.id IS NULL');
             }
