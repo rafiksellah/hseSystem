@@ -43,12 +43,15 @@ class MonteChargeType extends AbstractType
                 ]
             ])
             ->add('numeroPorte', ChoiceType::class, [
-                'label' => 'Numéro de Porte',
+                'label' => 'Numéros de Porte',
                 'choices' => array_flip(MonteCharge::NUMEROS_PORTE),
-                'placeholder' => 'Sélectionnez une porte',
+                'multiple' => true,
+                'expanded' => true,
+                'required' => true,
                 'attr' => [
-                    'class' => 'form-select'
-                ]
+                    'class' => 'checkboxes-vertical'
+                ],
+                'help' => 'Cochez une ou plusieurs portes'
             ]);
     }
 

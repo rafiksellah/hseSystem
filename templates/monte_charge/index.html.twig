@@ -98,7 +98,15 @@
                                             </td>
                                             <td>{{ monte_charge.zone }}</td>
                                             <td>{{ monte_charge.emplacement }}</td>
-                                            <td>{{ monte_charge.numeroPorte }}</td>
+                                            <td>
+                                                {% if monte_charge.numeroPorte is iterable %}
+                                                    {% for porte in monte_charge.numeroPorte %}
+                                                        <span class="badge bg-primary">{{ porte }}</span>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {{ monte_charge.numeroPorteAsString }}
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 {% set statut = monte_charge.statutConformite %}
                                                 {% if statut == 'Conforme' %}

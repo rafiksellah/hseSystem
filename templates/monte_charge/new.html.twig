@@ -2,6 +2,42 @@
 
 {% block title %}Nouveau Monte-Charge{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Affichage vertical des checkboxes pour les portes */
+    div[id*="numeroPorte"] {
+        display: flex !important;
+        gap: 0.5rem;
+    }
+    div[id*="numeroPorte"] > div {
+        margin-bottom: 0;
+    }
+    div[id*="numeroPorte"] .form-check {
+        display: flex !important;
+        align-items: center !important;
+        padding-left: 0 !important;
+        margin-bottom: 0.5rem;
+    }
+    div[id*="numeroPorte"] .form-check-input {
+        margin-top: 0 !important;
+        margin-right: 0.5rem !important;
+        margin-left: 0 !important;
+        position: relative !important;
+        float: none !important;
+        width: 1.2em;
+        height: 1.2em;
+        cursor: pointer;
+    }
+    div[id*="numeroPorte"] .form-check-label {
+        cursor: pointer;
+        font-size: 1rem;
+        margin-bottom: 0 !important;
+        padding-left: 0 !important;
+    }
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="container">
 <script>
@@ -53,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <small class="text-muted">Type 2 : Saisie + Liste déroulante</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                {{ form_label(form.numeroPorte, 'Numéro de Porte', {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_label(form.numeroPorte, 'Numéros de Porte', {'label_attr': {'class': 'form-label'}}) }}
                                 {{ form_widget(form.numeroPorte) }}
                                 {{ form_errors(form.numeroPorte) }}
                             </div>

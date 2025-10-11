@@ -74,13 +74,14 @@ class MonteCharge
     #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 100, nullable: false)]
     #[Assert\NotBlank(message: 'L\'emplacement ne peut pas être vide')]
-    private ?string $emplacement = null;
+    private string $emplacement = '';
 
-    #[ORM\Column(length: 50)]
-    #[Assert\NotBlank(message: 'Le numéro de porte ne peut pas être vide')]
-    private ?string $numeroPorte = null;
+    #[ORM\Column(type: Types::JSON)]
+    #[Assert\NotBlank(message: 'Vous devez sélectionner au moins une porte')]
+    #[Assert\Count(min: 1, minMessage: 'Vous devez sélectionner au moins une porte')]
+    private array $numeroPorte = [];
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $dateCreation = null;
@@ -92,6 +93,8 @@ class MonteCharge
     {
         $this->inspections = new ArrayCollection();
         $this->dateCreation = new \DateTime();
+        $this->emplacement = '';
+        $this->numeroPorte = [];
     }
 
     public function getId(): ?int
@@ -121,26 +124,44 @@ class MonteCharge
         return $this;
     }
 
-    public function getEmplacement(): ?string
+    public function getEmplacement(): string
     {
         return $this->emplacement;
     }
 
-    public function setEmplacement(string $emplacement): static
+    public function setEmplacement(?string $emplacement): static
     {
-        $this->emplacement = $emplacement;
+        // Protection contre les valeurs null
+        $this->emplacement = $emplacement ?? '';
         return $this;
     }
 
-    public function getNumeroPorte(): ?string
+    public function getNumeroPorte(): array
     {
+        // Sécurité : s'assurer que c'est toujours un tableau
+        if (!is_array($this->numeroPorte)) {
+            return [];
+        }
+        // Si c'est un double tableau, on le corrige
+        if (!empty($this->numeroPorte) && is_array($this->numeroPorte[0])) {
+            return $this->numeroPorte[0];
+        }
         return $this->numeroPorte;
     }
 
-    public function setNumeroPorte(string $numeroPorte): static
+    public function setNumeroPorte(array $numeroPorte): static
     {
         $this->numeroPorte = $numeroPorte;
         return $this;
+    }
+
+    /**
+     * Retourne les portes sous forme de chaîne de caractères
+     */
+    public function getNumeroPorteAsString(): string
+    {
+        $portes = $this->getNumeroPorte();
+        return implode(', ', $portes);
     }
 
     public function getDateCreation(): ?\DateTimeInterface

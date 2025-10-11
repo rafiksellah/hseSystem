@@ -49,8 +49,16 @@
                                     <td>{{ monte_charge.emplacement }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Porte :</strong></td>
-                                    <td>{{ monte_charge.numeroPorte }}</td>
+                                    <td><strong>Porte(s) :</strong></td>
+                                    <td>
+                                        {% if monte_charge.numeroPorte is iterable %}
+                                            {% for porte in monte_charge.numeroPorte %}
+                                                <span class="badge bg-primary me-1">{{ porte }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            {{ monte_charge.numeroPorteAsString }}
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Date de création :</strong></td>
