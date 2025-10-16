@@ -3,7 +3,19 @@
 ## 🚧 Activation du mode maintenance
 
 ### Méthode 1 : Via .htaccess (Recommandée pour Apache)
-Le fichier `.htaccess` dans le dossier `public/` redirige automatiquement tous les visiteurs vers la page de maintenance.
+1. **Pour activer la maintenance :**
+   ```bash
+   cd public/
+   mv .htaccess .htaccess.normal
+   mv .htaccess.maintenance .htaccess
+   ```
+
+2. **Pour désactiver la maintenance :**
+   ```bash
+   cd public/
+   mv .htaccess .htaccess.maintenance
+   mv .htaccess.normal .htaccess
+   ```
 
 ### Méthode 2 : Via Symfony (Pour les environnements sans Apache)
 1. Décommentez la route dans `src/Controller/MaintenanceController.php`
@@ -53,8 +65,11 @@ Changez la valeur dans :
 ## 🚀 Désactivation du mode maintenance
 
 ### Pour Apache (.htaccess)
-1. Renommez `public/.htaccess` en `public/.htaccess.backup`
-2. Ou supprimez les lignes de redirection dans le fichier
+```bash
+cd public/
+mv .htaccess .htaccess.maintenance
+mv .htaccess.normal .htaccess
+```
 
 ### Pour Symfony
 1. Commentez la route de maintenance dans `MaintenanceController.php`

@@ -1,16 +1,30 @@
-# Apache configuration for maintenance mode
+# Apache configuration for Symfony
 RewriteEngine On
 
-# Redirect all requests to maintenance page
-RewriteCond %{REQUEST_URI} !^/maintenance\.html$
-RewriteCond %{REQUEST_URI} !^/assets/
-RewriteCond %{REQUEST_URI} !^/uploads/
-RewriteCond %{REQUEST_URI} !^/favicon\.ico$
-RewriteRule ^(.*)$ /maintenance.html [R=302,L]
+# Handle Angular and other frontend routes
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
 
-# Cache control for maintenance page
-<Files "maintenance.html">
-    Header set Cache-Control "no-cache, no-store, must-revalidate"
-    Header set Pragma "no-cache"
-    Header set Expires "0"
-</Files>
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Cache control for static assets
+<FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+    Header set Cache-Control "public, immutable"
+</FilesMatch>
+
+# Disable directory browsing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "\.(env|log|ini|conf|sql|bak|backup)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
