@@ -571,3 +571,4 @@ Les fonctionnalités importantes sont **validées et sécurisées** ✅
 *Pour toute question, consultez le fichier GUIDE_TESTS_UNITAIRES.md*
 
 
+

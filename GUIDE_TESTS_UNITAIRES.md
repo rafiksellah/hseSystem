@@ -711,3 +711,4 @@ php bin/phpunit
 *Document généré le 9 Octobre 2025*
 
 
+
