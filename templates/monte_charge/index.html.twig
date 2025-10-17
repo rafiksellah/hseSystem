@@ -139,13 +139,8 @@
                                                 <div class="btn-group" role="group">
                                                     <a href="{{ path('app_monte_charge_show', {'id': monte_charge.id}) }}" 
                                                        class="btn btn-sm btn-outline-primary" 
-                                                       title="Voir les détails">
+                                                       title="Voir les détails et portes">
                                                         <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <a href="{{ path('app_monte_charge_inspection_new', {'id': monte_charge.id}) }}" 
-                                                       class="btn btn-sm btn-outline-success" 
-                                                       title="Nouvelle inspection">
-                                                        <i class="fas fa-clipboard-check"></i>
                                                     </a>
                                                     {% if is_granted('ROLE_ADMIN') %}
                                                         <a href="{{ path('app_monte_charge_edit', {'id': monte_charge.id}) }}" 

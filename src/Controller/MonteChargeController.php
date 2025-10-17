@@ -159,17 +159,18 @@ class MonteChargeController extends AbstractController
         return $this->redirectToRoute('app_monte_charge_index');
     }
 
-    #[Route('/{id}/inspection/new', name: 'app_monte_charge_inspection_new', methods: ['GET', 'POST'])]
-    public function newInspection(Request $request, MonteCharge $monteCharge): Response
+    #[Route('/{id}/inspection/new/{porte}', name: 'app_monte_charge_inspection_new', methods: ['GET', 'POST'])]
+    public function newInspection(Request $request, MonteCharge $monteCharge, string $porte): Response
     {
-        // Vérifier s'il existe déjà une inspection active pour ce monte-charge
+        // Vérifier s'il existe déjà une inspection active pour cette porte spécifique
         $existingInspection = $this->entityManager->getRepository(InspectionMonteCharge::class)->findOneBy([
             'monteCharge' => $monteCharge,
+            'numeroPorte' => $porte,
             'isActive' => true
         ]);
 
         if ($existingInspection) {
-            $this->addFlash('error', 'Ce monte-charge a déjà une inspection active. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            $this->addFlash('error', 'Cette porte a déjà une inspection active. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
             return $this->redirectToRoute('app_monte_charge_show', ['id' => $monteCharge->getId()]);
         }
         
@@ -177,6 +178,7 @@ class MonteChargeController extends AbstractController
             $inspection = new InspectionMonteCharge();
             $inspection->setMonteCharge($monteCharge);
             $inspection->setInspecteur($this->getUser());
+            $inspection->setNumeroPorte($porte);
 
             // Récupération des données du formulaire
             $data = $request->request->all('inspection_monte_charge');
@@ -214,6 +216,8 @@ class MonteChargeController extends AbstractController
 
         return $this->render('monte_charge/inspection_new.html.twig', [
             'monte_charge' => $monteCharge,
+            'porte' => $porte,
+            'porte_nom' => MonteCharge::NUMEROS_PORTE[$porte] ?? $porte,
         ]);
     }
 

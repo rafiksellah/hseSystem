@@ -130,11 +130,11 @@
                                                 <br>
                                                 <small class="text-muted">
                                                     {{ derniereInspection.dateInspection|date('d/m/Y H:i') }}<br>
-                                                    par {{ derniereInspection.inspectePar.nom }} {{
-                                                    derniereInspection.inspectePar.prenom }}
+                                                    par {{ derniereInspection.inspecteur.nom }} {{
+                                                    derniereInspection.inspecteur.prenom }}
                                                 </small>
                                             </div>
-                                            {% if derniereInspection.valide %}
+                                            {% if derniereInspection.isConforme %}
                                             <div class="badge bg-success">
                                                 <i class="fas fa-thumbs-up"></i> Conforme
                                             </div>
@@ -226,9 +226,9 @@
                                     </td>
                                     <td><span class="badge bg-secondary">{{ inspection.numeroPorte }}</span></td>
                                     <td>{{ inspection.dateInspection|date('d/m/Y H:i') }}</td>
-                                    <td>{{ inspection.inspectePar.nom }} {{ inspection.inspectePar.prenom }}</td>
+                                    <td>{{ inspection.inspecteur.nom }} {{ inspection.inspecteur.prenom }}</td>
                                     <td>
-                                        {% if inspection.valide %}
+                                        {% if inspection.isConforme %}
                                         <span class="badge bg-success">
                                             <i class="fas fa-check"></i> Conforme
                                         </span>

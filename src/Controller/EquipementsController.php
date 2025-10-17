@@ -715,14 +715,15 @@ class EquipementsController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Vérifier s'il existe déjà une inspection active pour ce monte-charge
+        // Vérifier s'il existe déjà une inspection active pour cette porte spécifique
         $existingInspection = $inspectionRepository->findOneBy([
             'monteCharge' => $monteCharge,
+            'numeroPorte' => $porte,
             'isActive' => true
         ]);
 
         if ($existingInspection) {
-            $this->addFlash('error', 'Ce monte-charge a déjà une inspection active. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
+            $this->addFlash('error', 'Cette porte a déjà une inspection active. Vous devez d\'abord supprimer l\'inspection existante pour en créer une nouvelle.');
             return $this->redirectToRoute('app_equipements_monte_charge');
         }
 
@@ -730,6 +731,7 @@ class EquipementsController extends AbstractController
             $inspection = new InspectionMonteCharge();
             $inspection->setMonteCharge($monteCharge);
             $inspection->setInspecteur($user);
+            $inspection->setNumeroPorte($porte);
 
             // Récupérer les réponses aux questions
             $inspection->setPortesFermees($request->request->get('question_portes_fermees') === 'oui' ? 'Oui' : 'Non');
@@ -766,7 +768,7 @@ class EquipementsController extends AbstractController
         return $this->render('equipements/monte_charge/inspecter.html.twig', [
             'monte_charge' => $monteCharge,
             'porte' => $porte,
-            'porte_nom' => InspectionMonteCharge::PORTES[$porte],
+            'porte_nom' => MonteCharge::NUMEROS_PORTE[$porte] ?? $porte,
             'questions' => InspectionMonteCharge::QUESTIONS,
         ]);
     }
@@ -931,7 +933,8 @@ class EquipementsController extends AbstractController
             $monteCharge->setNumeroMonteCharge($numeroMonteCharge);
             $monteCharge->setZone($request->request->get('zone'));
             $monteCharge->setEmplacement($request->request->get('emplacement') ?? '');
-            $monteCharge->setNumeroPorte($request->request->get('numero_porte'));
+            $numeroPorte = $request->request->all('numero_porte');
+            $monteCharge->setNumeroPorte($numeroPorte);
 
             $entityManager->persist($monteCharge);
             $entityManager->flush();
@@ -971,7 +974,8 @@ class EquipementsController extends AbstractController
             $monteCharge->setNumeroMonteCharge($numeroMonteCharge);
             $monteCharge->setZone($request->request->get('zone'));
             $monteCharge->setEmplacement($request->request->get('emplacement') ?? '');
-            $monteCharge->setNumeroPorte($request->request->get('numero_porte'));
+            $numeroPorte = $request->request->all('numero_porte');
+            $monteCharge->setNumeroPorte($numeroPorte);
 
             $entityManager->flush();
 
@@ -993,7 +997,7 @@ class EquipementsController extends AbstractController
         EntityManagerInterface $entityManager
     ): Response {
         try {
-            $type = $monteCharge->getType();
+            $type = $monteCharge->getNumeroMonteCharge();
 
             $entityManager->remove($monteCharge);
             $entityManager->flush();
@@ -1377,7 +1381,7 @@ class EquipementsController extends AbstractController
             Response::HTTP_OK,
             [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="inspection_monte_charge_' . $inspection->getMonteCharge()->getType() . '_' . $inspection->getNumeroPorte() . '_' . date('Y-m-d') . '.pdf"'
+                'Content-Disposition' => 'attachment; filename="inspection_monte_charge_' . $inspection->getMonteCharge()->getNumeroMonteCharge() . '_' . $inspection->getNumeroPorte() . '_' . date('Y-m-d') . '.pdf"'
             ]
         );
     }
@@ -1396,12 +1400,12 @@ class EquipementsController extends AbstractController
 
         // Créer les monte-charges par défaut
         $mc1 = new MonteCharge();
-        $mc1->setType('CHARGE01');
+        $mc1->setNumeroMonteCharge('CHARGE01');
         $mc1->setZone('RDC TISSAGE-RENTRAGE-OURDISSOIR');
         $entityManager->persist($mc1);
 
         $mc2 = new MonteCharge();
-        $mc2->setType('CHARGE02');
+        $mc2->setNumeroMonteCharge('CHARGE02');
         $mc2->setZone('RDC TISSAGE-MEZZANINE-PRATO');
         $entityManager->persist($mc2);
 
@@ -3344,7 +3348,7 @@ class EquipementsController extends AbstractController
         // Données
         $row = 2;
         foreach ($inspections as $inspection) {
-            $sheet->setCellValue('A' . $row, $inspection->getMonteCharge()->getType());
+            $sheet->setCellValue('A' . $row, $inspection->getMonteCharge()->getNumeroMonteCharge());
             $sheet->setCellValue('B' . $row, $inspection->getMonteCharge()->getZone());
             $sheet->setCellValue('C' . $row, $inspection->getNumeroPorte());
             $sheet->setCellValue('D' . $row, $inspection->getDateInspection()->format('d/m/Y H:i'));

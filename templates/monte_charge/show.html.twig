@@ -13,11 +13,6 @@
                         {{ monte_charge.numeroMonteCharge }}
                     </h3>
                     <div>
-                        <a href="{{ path('app_monte_charge_inspection_new', {'id': monte_charge.id}) }}" 
-                           class="btn btn-success me-2">
-                            <i class="fas fa-clipboard-check me-1"></i>
-                            Nouvelle Inspection
-                        </a>
                         {% if is_granted('ROLE_ADMIN') %}
                             <a href="{{ path('app_monte_charge_edit', {'id': monte_charge.id}) }}" 
                                class="btn btn-warning me-2">
@@ -95,6 +90,72 @@
 
                     <hr>
 
+                    <h5>Portes et Inspections</h5>
+                    <div class="row">
+                        {% for porte in monte_charge.numeroPorte %}
+                            {% set derniereInspection = null %}
+                            {% for inspection in inspections %}
+                                {% if inspection.numeroPorte == porte and (derniereInspection is null or inspection.dateInspection > derniereInspection.dateInspection) %}
+                                    {% set derniereInspection = inspection %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="card border {{ derniereInspection and derniereInspection.dateInspection > date('-1 day') ? 'border-success' : 'border-warning' }}">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-door-open"></i> {{ porte }}
+                                        </h6>
+                                        {% if derniereInspection and derniereInspection.dateInspection > date('-1 day') %}
+                                            {% if derniereInspection.isConforme %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check"></i> Conforme
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times"></i> Non conforme
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-question"></i> Non inspectée
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body text-center">
+                                        {% if derniereInspection and derniereInspection.dateInspection > date('-1 day') %}
+                                            <div class="mb-2">
+                                                <small class="text-muted">
+                                                    Inspectée le {{ derniereInspection.dateInspection|date('d/m/Y H:i') }}<br>
+                                                    par {{ derniereInspection.inspecteur.nom }} {{ derniereInspection.inspecteur.prenom }}
+                                                </small>
+                                            </div>
+                                            <a href="{{ path('app_monte_charge_inspection_edit', {'id': derniereInspection.id}) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i> Modifier
+                                            </a>
+                                        {% else %}
+                                            <p class="text-muted small mb-3">
+                                                {% if derniereInspection %}
+                                                    Dernière inspection :<br>
+                                                    {{ derniereInspection.dateInspection|date('d/m/Y H:i') }}
+                                                {% else %}
+                                                    Jamais inspectée
+                                                {% endif %}
+                                            </p>
+                                            <a href="{{ path('app_monte_charge_inspection_new', {'id': monte_charge.id, 'porte': porte}) }}" 
+                                               class="btn btn-warning btn-sm">
+                                                <i class="fas fa-clipboard-check"></i> Inspecter
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr>
+
                     <h5>Historique des Inspections</h5>
                     {% if inspections is empty %}
                         <div class="alert alert-info text-center">
@@ -107,6 +168,7 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>Date</th>
+                                        <th>Porte</th>
                                         <th>Inspecteur</th>
                                         <th>Portes Fermées</th>
                                         <th>Consignes Respectées</th>
@@ -121,6 +183,7 @@
                                     {% for inspection in inspections %}
                                         <tr>
                                             <td>{{ inspection.dateInspection|date('d/m/Y H:i') }}</td>
+                                            <td><span class="badge bg-secondary">{{ inspection.numeroPorte }}</span></td>
                                             <td>{{ inspection.inspecteur.nom }} {{ inspection.inspecteur.prenom }}</td>
                                             <td>
                                                 {% if inspection.portesFermees == 'Oui' %}

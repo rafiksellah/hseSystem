@@ -74,6 +74,10 @@ class InspectionMonteCharge
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $resetReason = null;
 
+    #[ORM\Column(length: 50)]
+    #[Assert\NotBlank(message: 'Le numéro de porte ne peut pas être vide')]
+    private ?string $numeroPorte = null;
+
     public function __construct()
     {
         $this->dateInspection = new \DateTime();
@@ -214,6 +218,17 @@ class InspectionMonteCharge
     public function setResetReason(?string $resetReason): static
     {
         $this->resetReason = $resetReason;
+        return $this;
+    }
+
+    public function getNumeroPorte(): ?string
+    {
+        return $this->numeroPorte;
+    }
+
+    public function setNumeroPorte(string $numeroPorte): static
+    {
+        $this->numeroPorte = $numeroPorte;
         return $this;
     }
 
