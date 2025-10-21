@@ -74,7 +74,7 @@ class MonteChargeRepository extends ServiceEntityRepository
     /**
      * @return MonteCharge[] Returns an array of MonteCharge objects with filters
      */
-    public function findWithFilters(string $search = '', string $zone = '', string $statut = ''): array
+    public function findWithFilters(string $search = '', string $zone = '', string $statut = '', string $emplacement = ''): array
     {
         $qb = $this->createQueryBuilder('m')
             ->leftJoin('m.inspections', 'i')
@@ -89,6 +89,11 @@ class MonteChargeRepository extends ServiceEntityRepository
         if (!empty($zone)) {
             $qb->andWhere('m.zone = :zone')
                 ->setParameter('zone', $zone);
+        }
+
+        if (!empty($emplacement)) {
+            $qb->andWhere('m.emplacement = :emplacement')
+                ->setParameter('emplacement', $emplacement);
         }
 
         if (!empty($statut)) {

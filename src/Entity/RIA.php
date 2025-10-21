@@ -21,6 +21,14 @@ class RIA
         'BUREAUX D\'ETUDES' => 'BUREAUX D\'ETUDES',
     ];
 
+    /**
+     * Obtient toutes les zones disponibles (statiques + dynamiques de la BDD)
+     */
+    public static function getAllZones(): array
+    {
+        return self::ZONES;
+    }
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -34,6 +42,7 @@ class RIA
     #[Assert\NotBlank(message: 'La zone ne peut pas être vide')]
     #[Assert\Choice(choices: self::ZONES, message: 'Zone invalide')]
     private ?string $zone = null;
+
 
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $agentExtincteur = null;
@@ -91,6 +100,7 @@ class RIA
         $this->zone = $zone;
         return $this;
     }
+
 
     public function getAgentExtincteur(): ?string
     {

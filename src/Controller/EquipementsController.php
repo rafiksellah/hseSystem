@@ -517,8 +517,21 @@ class EquipementsController extends AbstractController
         $rias = $result['items'];
         $pagination = $result['pagination'];
 
-        // Les zones RIA sont fixes (pas liées à SIMTIS/TISSAGE)
-        $zonesDisponibles = RIA::ZONES;
+        // Récupérer toutes les zones existantes dans la BDD
+        $zonesExistant = $riaRepository->createQueryBuilder('r')
+            ->select('DISTINCT r.zone')
+            ->orderBy('r.zone', 'ASC')
+            ->getQuery()
+            ->getResult();
+        
+        $zonesBDD = [];
+        foreach ($zonesExistant as $zone) {
+            $zonesBDD[$zone['zone']] = $zone['zone'];
+        }
+        
+        // Combiner les zones statiques avec celles de la BDD
+        $zonesDisponibles = array_merge(RIA::ZONES, $zonesBDD);
+        $zonesDisponibles = array_unique($zonesDisponibles);
         return $this->render('equipements/ria/liste.html.twig', [
             'rias' => $rias,
             'pagination' => $pagination,
@@ -557,7 +570,17 @@ class EquipementsController extends AbstractController
             }
             
             $ria->setNumerotation($numerotation);
-            $ria->setZone($request->request->get('zone'));
+            $zone = $request->request->get('zone_finale') ?: $request->request->get('zone');
+            if (empty($zone)) {
+                $this->addFlash('error', 'La zone est obligatoire.');
+                $zonesDisponibles = $this->getZonesDisponibles($entityManager);
+                
+                return $this->render('equipements/ria/nouveau.html.twig', [
+                    'ria' => $ria,
+                    'zones_disponibles' => $zonesDisponibles,
+                ]);
+            }
+            $ria->setZone($zone);
             $ria->setAgentExtincteur($request->request->get('agent_extincteur'));
             $ria->setDimatere($request->request->get('dimatere') ? (int)$request->request->get('dimatere') : null);
             $ria->setLongueur($request->request->get('longueur') ? (int)$request->request->get('longueur') : null);
@@ -569,18 +592,15 @@ class EquipementsController extends AbstractController
             return $this->redirectToRoute('app_equipements_ria');
         }
 
-        $zonesDisponibles = [];
-        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            $zonesDisponibles = User::ZONES_DISPONIBLES;
-        } else {
-            $zonesDisponibles = [$user->getZone() => $user->getZone()];
-        }
+        $zonesDisponibles = $this->getZonesDisponibles($entityManager);
 
         return $this->render('equipements/ria/nouveau.html.twig', [
             'ria' => $ria,
-            'zones_disponibles' => RIA::ZONES,
+            'zones_disponibles' => $zonesDisponibles,
         ]);
     }
+
+
 
     #[Route('/ria/{id}/details', name: 'app_equipements_ria_details')]
     public function detailsRIA(RIA $ria): Response
@@ -848,66 +868,6 @@ class EquipementsController extends AbstractController
         return $this->redirectToRoute('app_equipements_extincteurs');
     }
 
-    #[Route('/ria/{id}/modifier', name: 'app_equipements_ria_modifier')]
-    #[IsGranted('ROLE_ADMIN')]
-    public function modifierRIA(
-        RIA $ria,
-        Request $request,
-        EntityManagerInterface $entityManager
-    ): Response {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        if (!in_array('ROLE_SUPER_ADMIN', $user->getRoles()) && $ria->getZone() !== $user->getZone()) {
-            throw $this->createAccessDeniedException('Accès non autorisé à ce RIA');
-        }
-
-        if ($request->isMethod('POST')) {
-            $ria->setNumerotation($request->request->get('numerotation'));
-            $ria->setZone($request->request->get('zone'));
-            $ria->setAgentExtincteur($request->request->get('agent_extincteur'));
-            $ria->setDimatere($request->request->get('dimatere') ? (int)$request->request->get('dimatere') : null);
-            $ria->setLongueur($request->request->get('longueur') ? (int)$request->request->get('longueur') : null);
-
-            $entityManager->flush();
-
-            $this->addFlash('success', 'RIA modifié avec succès !');
-            return $this->redirectToRoute('app_equipements_ria');
-        }
-
-        $zonesDisponibles = [];
-        if (in_array('ROLE_SUPER_ADMIN', $user->getRoles())) {
-            $zonesDisponibles = User::ZONES_DISPONIBLES;
-        } else {
-            $zonesDisponibles = [$user->getZone() => $user->getZone()];
-        }
-
-        return $this->render('equipements/ria/modifier.html.twig', [
-            'ria' => $ria,
-            'zones_disponibles' => RIA::ZONES,
-        ]);
-    }
-
-    #[Route('/ria/{id}/supprimer', name: 'app_equipements_ria_supprimer')]
-    #[IsGranted('ROLE_SUPER_ADMIN')]
-    public function supprimerRIA(
-        RIA $ria,
-        EntityManagerInterface $entityManager
-    ): Response {
-        try {
-            $numerotation = $ria->getNumerotation();
-            $zone = $ria->getZone();
-
-            $entityManager->remove($ria);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Le RIA ' . $numerotation . ' (' . $zone . ') a été supprimé avec succès.');
-        } catch (\Exception $e) {
-            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
-        }
-
-        return $this->redirectToRoute('app_equipements_ria');
-    }
 
     #[Route('/monte-charge/nouveau', name: 'app_equipements_monte_charge_nouveau')]
     #[IsGranted('ROLE_SUPER_ADMIN')]
@@ -1306,6 +1266,101 @@ class EquipementsController extends AbstractController
         }
         
         return $this->redirectToRoute('app_equipements_ria');
+    }
+
+    #[Route('/ria/{id}/modifier', name: 'app_equipements_ria_modifier')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    public function modifierRIA(
+        RIA $ria,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Seuls les Super Admin peuvent modifier
+
+        if ($request->isMethod('POST')) {
+            $numerotation = $request->request->get('numerotation');
+            
+            // Vérifier si la numérotation existe déjà (sauf pour ce RIA)
+            $existing = $entityManager->getRepository(RIA::class)->findOneBy(['numerotation' => $numerotation]);
+            if ($existing && $existing->getId() !== $ria->getId()) {
+                $this->addFlash('error', 'La numérotation "' . $numerotation . '" existe déjà. Veuillez en choisir une autre.');
+                return $this->render('equipements/ria/modifier.html.twig', [
+                    'ria' => $ria,
+                    'zones_disponibles' => $this->getZonesDisponibles($entityManager),
+                ]);
+            }
+            
+            $zone = $request->request->get('zone_finale') ?: $request->request->get('zone');
+            if (empty($zone)) {
+                $this->addFlash('error', 'La zone est obligatoire.');
+                return $this->render('equipements/ria/modifier.html.twig', [
+                    'ria' => $ria,
+                    'zones_disponibles' => $this->getZonesDisponibles($entityManager),
+                ]);
+            }
+            
+            $ria->setNumerotation($numerotation);
+            $ria->setZone($zone);
+            $ria->setAgentExtincteur($request->request->get('agent_extincteur'));
+            $ria->setDimatere($request->request->get('dimatere') ? (int)$request->request->get('dimatere') : null);
+            $ria->setLongueur($request->request->get('longueur') ? (int)$request->request->get('longueur') : null);
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'RIA modifié avec succès !');
+            return $this->redirectToRoute('app_equipements_ria');
+        }
+
+        return $this->render('equipements/ria/modifier.html.twig', [
+            'ria' => $ria,
+            'zones_disponibles' => $this->getZonesDisponibles($entityManager),
+        ]);
+    }
+
+    #[Route('/ria/{id}/supprimer', name: 'app_equipements_ria_supprimer')]
+    #[IsGranted('ROLE_SUPER_ADMIN')]
+    public function supprimerRIA(
+        RIA $ria,
+        EntityManagerInterface $entityManager
+    ): Response {
+        try {
+            $numerotation = $ria->getNumerotation();
+            $zone = $ria->getZone();
+
+            $entityManager->remove($ria);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Le RIA ' . $numerotation . ' (' . $zone . ') a été supprimé avec succès.');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_equipements_ria');
+    }
+
+    /**
+     * Récupère toutes les zones disponibles (statiques + BDD)
+     */
+    private function getZonesDisponibles(EntityManagerInterface $entityManager): array
+    {
+        // Récupérer toutes les zones existantes dans la BDD
+        $zonesExistant = $entityManager->getRepository(RIA::class)->createQueryBuilder('r')
+            ->select('DISTINCT r.zone')
+            ->orderBy('r.zone', 'ASC')
+            ->getQuery()
+            ->getResult();
+        
+        $zonesBDD = [];
+        foreach ($zonesExistant as $zone) {
+            $zonesBDD[$zone['zone']] = $zone['zone'];
+        }
+        
+        // Combiner les zones statiques avec celles de la BDD
+        $zonesDisponibles = array_merge(RIA::ZONES, $zonesBDD);
+        return array_unique($zonesDisponibles);
     }
     
     // ===== SUPPRESSION INSPECTIONS PRISES POMPIERS =====

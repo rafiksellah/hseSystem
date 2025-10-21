@@ -168,20 +168,18 @@
                         </a>
                       {% endif %}
                       
-                      {% if is_admin %}
+                      {% if is_granted('ROLE_SUPER_ADMIN') and not derniere %}
                       <div class="btn-group btn-group-sm mt-1" role="group">
                         <a href="{{ path('app_equipements_ria_modifier', {'id': ria.id}) }}"
                           class="btn btn-outline-secondary btn-sm" title="Modifier">
-                          <i class="fas fa-cog"></i>
+                          <i class="fas fa-edit"></i>
                         </a>
-                        {% if is_granted('ROLE_SUPER_ADMIN') %}
                         <a href="{{ path('app_equipements_ria_supprimer', {'id': ria.id}) }}"
                           class="btn btn-outline-danger btn-sm"
                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer le RIA {{ ria.numerotation }} ?')"
                           title="Supprimer">
                           <i class="fas fa-trash"></i>
                         </a>
-                        {% endif %}
                       </div>
                       {% endif %}
                     </div>

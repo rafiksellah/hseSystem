@@ -34,14 +34,20 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label for="zone" class="form-label">Zone *</label>
-                <select name="zone" id="zone" class="form-select" required>
-                  <option value="">Sélectionnez une zone</option>
-                  {% for key, zone_name in zones_disponibles %}
-                  <option value="{{ key }}" {{ ria.zone==key ? 'selected' : '' }}>
-                    {{ zone_name }}
-                  </option>
-                  {% endfor %}
-                </select>
+                <div class="input-group">
+                  <select name="zone" id="zone" class="form-select" required>
+                    <option value="">Sélectionnez une zone</option>
+                    {% for key, zone_name in zones_disponibles %}
+                    <option value="{{ key }}" {{ ria.zone==key ? 'selected' : '' }}>
+                      {{ zone_name }}
+                    </option>
+                    {% endfor %}
+                    <option value="__nouvelle_zone__">+ Ajouter une nouvelle zone</option>
+                  </select>
+                  <input type="text" id="nouvelle_zone" class="form-control" placeholder="Nouvelle zone" style="display: none;">
+                  <input type="hidden" id="zone_finale" name="zone_finale" value="">
+                </div>
+                <small class="text-muted">Sélectionnez une zone existante ou ajoutez-en une nouvelle</small>
               </div>
             </div>
 
@@ -94,4 +100,47 @@
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const zoneSelect = document.getElementById('zone');
+    const nouvelleZoneInput = document.getElementById('nouvelle_zone');
+    const zoneFinaleInput = document.getElementById('zone_finale');
+    
+    zoneSelect.addEventListener('change', function() {
+        if (this.value === '__nouvelle_zone__') {
+            nouvelleZoneInput.style.display = 'block';
+            nouvelleZoneInput.required = true;
+            nouvelleZoneInput.focus();
+        } else {
+            nouvelleZoneInput.style.display = 'none';
+            nouvelleZoneInput.required = false;
+            nouvelleZoneInput.value = '';
+            // Mettre à jour la zone finale avec la valeur sélectionnée
+            zoneFinaleInput.value = this.value;
+        }
+    });
+    
+    // Mettre à jour la zone finale quand on tape dans le champ nouvelle zone
+    nouvelleZoneInput.addEventListener('input', function() {
+        if (zoneSelect.value === '__nouvelle_zone__') {
+            zoneFinaleInput.value = this.value.trim();
+        }
+    });
+    
+    // Gérer la soumission du formulaire
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (zoneSelect.value === '__nouvelle_zone__') {
+            if (nouvelleZoneInput.value.trim() === '') {
+                e.preventDefault();
+                alert('Veuillez saisir le nom de la nouvelle zone');
+                nouvelleZoneInput.focus();
+                return;
+            }
+            // Mettre la nouvelle zone dans le champ caché
+            zoneFinaleInput.value = nouvelleZoneInput.value.trim();
+        }
+    });
+});
+</script>
 {% endblock %}

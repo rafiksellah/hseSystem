@@ -34,17 +34,31 @@
                     <div class="row mb-4">
                         <div class="col-12">
                             <form method="GET" class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label for="search" class="form-label">Recherche</label>
                                     <input type="text" class="form-control" id="search" name="search" 
-                                           value="{{ search }}" placeholder="Numéro ou emplacement...">
+                                           value="{{ search }}" placeholder="Numéro...">
                                 </div>
                                 <div class="col-md-3">
                                     <label for="zone" class="form-label">Zone</label>
                                     <select class="form-select" id="zone" name="zone">
                                         <option value="">Toutes les zones</option>
-                                        <option value="SIMTIS" {% if zone == 'SIMTIS' %}selected{% endif %}>SIMTIS</option>
-                                        <option value="SIMTIS TISSAGE" {% if zone == 'SIMTIS TISSAGE' %}selected{% endif %}>SIMTIS TISSAGE</option>
+                                        {% for key, zone_name in zones_disponibles %}
+                                        <option value="{{ key }}" {% if zone == key %}selected{% endif %}>
+                                            {{ zone_name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="emplacement" class="form-label">Emplacement</label>
+                                    <select class="form-select" id="emplacement" name="emplacement">
+                                        <option value="">Tous les emplacements</option>
+                                        {% for key, emplacement_name in emplacements_disponibles %}
+                                        <option value="{{ key }}" {% if emplacement == key %}selected{% endif %}>
+                                            {{ emplacement_name }}
+                                        </option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                                 <div class="col-md-3">

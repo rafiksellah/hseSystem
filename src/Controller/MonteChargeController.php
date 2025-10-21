@@ -40,6 +40,7 @@ class MonteChargeController extends AbstractController
     {
         $search = $request->query->get('search', '');
         $zone = $request->query->get('zone', '');
+        $emplacement = $request->query->get('emplacement', '');
         $statut = $request->query->get('statut', '');
 
         // Récupérer les paramètres de pagination
@@ -48,19 +49,57 @@ class MonteChargeController extends AbstractController
         $limit = $paginationParams['limit'];
 
         // Récupérer tous les monte-charges avec filtres
-        $allMonteCharges = $this->monteChargeRepository->findWithFilters($search, $zone, $statut);
+        $allMonteCharges = $this->monteChargeRepository->findWithFilters($search, $zone, $statut, $emplacement);
 
         // Utiliser le service de pagination
         $result = $this->paginationService->paginate($allMonteCharges, $page, $limit);
         $monteCharges = $result['items'];
         $pagination = $result['pagination'];
 
+        // Récupérer toutes les zones existantes dans la BDD
+        $zonesExistant = $this->monteChargeRepository->createQueryBuilder('mc')
+            ->select('DISTINCT mc.zone')
+            ->orderBy('mc.zone', 'ASC')
+            ->getQuery()
+            ->getResult();
+        
+        $zonesBDD = [];
+        foreach ($zonesExistant as $zoneData) {
+            $zonesBDD[$zoneData['zone']] = $zoneData['zone'];
+        }
+        
+        // Combiner les zones statiques avec celles de la BDD
+        $zonesDisponibles = array_merge(MonteCharge::ZONES, $zonesBDD);
+        $zonesDisponibles = array_unique($zonesDisponibles);
+
+        // Récupérer tous les emplacements existants dans la BDD
+        $emplacementsExistant = $this->monteChargeRepository->createQueryBuilder('mc')
+            ->select('DISTINCT mc.emplacement')
+            ->where('mc.emplacement IS NOT NULL')
+            ->andWhere('mc.emplacement != :empty')
+            ->setParameter('empty', '')
+            ->orderBy('mc.emplacement', 'ASC')
+            ->getQuery()
+            ->getResult();
+        
+        $emplacementsBDD = [];
+        foreach ($emplacementsExistant as $emplacementData) {
+            $emplacementsBDD[$emplacementData['emplacement']] = $emplacementData['emplacement'];
+        }
+        
+        // Combiner les emplacements statiques avec ceux de la BDD
+        $emplacementsDisponibles = array_merge(MonteCharge::EMPLACEMENTS_SIMTIS, $emplacementsBDD);
+        $emplacementsDisponibles = array_unique($emplacementsDisponibles);
+
         return $this->render('monte_charge/index.html.twig', [
             'monte_charges' => $monteCharges,
             'pagination' => $pagination,
             'search' => $search,
             'zone' => $zone,
+            'emplacement' => $emplacement,
             'statut' => $statut,
+            'zones_disponibles' => $zonesDisponibles,
+            'emplacements_disponibles' => $emplacementsDisponibles,
         ]);
     }
 
